@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16
+    container_name: nutrifit_pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nutrifitdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_nutrifit:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nutrifitdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  api:
+    build:
+      context: .                                   # raiz: C:\Users\pedro\projects\nutrifit
+      dockerfile: backend/Nutrifit.API/Dockerfile  # <— sem o prefixo "nutrifit/"
+    container_name: nutrifit_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=nutrifitdb;Username=postgres;Password=postgres"
+      ASPNETCORE_ENVIRONMENT: "Docker"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  pgdata_nutrifit:
+
