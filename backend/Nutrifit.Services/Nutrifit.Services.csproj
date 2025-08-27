@@ -7,6 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.13.0" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.19" />
+	  <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
+	  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
+	  <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.14.0" />
+	  <PackageReference Include="MimeKit" Version="4.13.0" />
+	  <PackageReference Include="StackExchange.Redis" Version="2.9.11" />
+	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Nutrifit.Repository\Nutrifit.Repository.csproj" />
   </ItemGroup>
 
