@@ -10,23 +10,27 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod/src/index.js";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useSendAccessEmail } from "@/services/api/auth";
 
 const loginSchema = z.object({
   email: z.email("E-mail inválido"),
 });
 
 export default function Login() {
+  const [sent, setSent] = useState<string | null>(null);
+  const sendEmail = useSendAccessEmail();
+
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-    },
+    defaultValues: { email: "" },
   });
 
-  const onSubmit = (data: z.infer<typeof loginSchema>) => {
-    console.log(data);
+  const onSubmit = async (data: z.infer<typeof loginSchema>) => {
+    await sendEmail.mutateAsync(data.email);
+    setSent(data.email);
   };
 
   return (
@@ -43,6 +47,7 @@ export default function Login() {
               <p className="text-primary">Fit</p>
             </div>
           </div>
+
           <FormField
             control={loginForm.control}
             name="email"
@@ -56,7 +61,23 @@ export default function Login() {
               </FormItem>
             )}
           />
-          <Button type="submit">Enviar e-mail de acesso</Button>
+
+          <Button type="submit" disabled={sendEmail.isPending}>
+            {sendEmail.isPending ? "Enviando..." : "Enviar e-mail de acesso"}
+          </Button>
+
+          {sent && (
+            <p className="text-sm text-muted-foreground">
+              Se existir uma conta para <strong>{sent}</strong>, você receberá
+              um link para entrar.
+            </p>
+          )}
+
+          {sendEmail.isError && (
+            <p className="text-sm text-red-500">
+              Falha ao enviar e-mail. Tente novamente.
+            </p>
+          )}
         </form>
       </Form>
     </div>

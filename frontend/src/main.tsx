@@ -5,6 +5,8 @@ import App from "./App.tsx";
 import { registerSW } from "virtual:pwa-register";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./pages/Login.tsx";
+import Callback from "./pages/CallbackLogin.tsx";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 registerSW({
   onNeedRefresh() {
@@ -21,13 +23,18 @@ const router = createBrowserRouter([
     element: <App />,
     children: [
       { path: "login", element: <Login /> },
-      { path: "*", element: <h1>404 - Página não encontrada</h1> },
+      { path: "/login/callback", element: <Callback /> },
+      { path: "*", element: <Login /> },
     ],
   },
 ]);
 
+const queryClient = new QueryClient();
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>
 );
