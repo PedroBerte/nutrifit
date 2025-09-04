@@ -26,22 +26,34 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IMailService, MailService>();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o =>
-    {
-        var cfg = builder.Configuration.GetSection("Jwt");
-        o.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = cfg["Issuer"],
-            ValidAudience = cfg["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(cfg["Key"]!))
-        };
-    });
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy("front", p => p
+        .WithOrigins("http://localhost:5173", "https://localhost:5173")
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials()
+    );
+});
+
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//    .AddJwtBearer(o =>
+//    {
+//        var cfg = builder.Configuration.GetSection("Jwt");
+//        o.TokenValidationParameters = new TokenValidationParameters
+//        {
+//            ValidateIssuer = true,
+//            ValidateAudience = true,
+//            ValidateIssuerSigningKey = true,
+//            ValidIssuer = cfg["Issuer"],
+//            ValidAudience = cfg["Audience"],
+//            IssuerSigningKey = new SymmetricSecurityKey(
+//                Encoding.UTF8.GetBytes(cfg["Key"]!))
+//        };
+//    });
 
 
 var app = builder.Build();
@@ -55,6 +67,8 @@ app.UseSwagger();
 
 app.UseHttpsRedirection();
 
+app.UseCors("front"); 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

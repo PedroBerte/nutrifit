@@ -1,4 +1,4 @@
-import api from "@/lib/axios";
+import { api } from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useSendAccessEmail() {
@@ -18,29 +18,17 @@ export function useSendAccessEmail() {
 }
 
 export function useValidateSession() {
-  const qc = useQueryClient();
   return useMutation({
     mutationFn: async (token: string) => {
-      await api.post(
-        `/authentication/validate-session?token=${encodeURIComponent(token)}`
+      var response = await api.post<string>(
+        `/authentication/validateSession?token=${encodeURIComponent(token)}`
       );
-    },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["me"] });
-    },
-  });
-}
 
-export type Me = { email: string };
-
-export function useMe() {
-  return useQuery({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const { data } = await api.get<Me>("/authentication/me");
-      return data;
+      return response.data;
     },
-    retry: false,
+    onError: async (e) => {
+      console.log("Erro ao validar sessão", e);
+    },
   });
 }
 

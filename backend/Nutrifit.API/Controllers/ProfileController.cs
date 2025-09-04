@@ -5,7 +5,7 @@ using Nutrifit.Services.Services.Interfaces;
 namespace Nutrifit.API.Controllers;
 
 [ApiController]
-[Route("v1/[controller]")]
+[Route("[controller]")]
 public class ProfileController : ControllerBase
 {
     private readonly IProfileService _service;

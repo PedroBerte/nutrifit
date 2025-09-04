@@ -65,7 +65,7 @@ namespace Nutrifit.Services.Services
 
         public async Task<string> ValidateSession(string token)
         {
-            var raw = await _mux.GetDatabase().StringGetDeleteAsync($"ml:{Sha256Hex(token)}");
+            var raw = await _mux.GetDatabase().StringGetAsync($"ml:{Sha256Hex(token)}");
             if (raw.IsNullOrEmpty) throw new UnauthorizedAccessException("Token inválido ou expirado.");
 
             var payload = JsonSerializer.Deserialize<MagicLinkPayload>(raw!);

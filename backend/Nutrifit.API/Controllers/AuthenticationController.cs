@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Services.DTO.Request;
 using Nutrifit.Services.Services.Interfaces;
 
 namespace Nutrifit.API.Controllers
 {
     [ApiController]
-    [Route("v1/[controller]")]
+    [Route("[controller]")]
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthenticationService _authService;
@@ -17,6 +18,7 @@ namespace Nutrifit.API.Controllers
         }
 
         [HttpPost("sendAccessEmail")]
+        [AllowAnonymous]
         public async Task<ActionResult> SendAccessEmail([FromBody] SendAccessEmailRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Email))
@@ -39,10 +41,18 @@ namespace Nutrifit.API.Controllers
         }
 
         [HttpPost("ValidateSession")]
-        public async Task<ActionResult> ValidateSession(string token)
+        [AllowAnonymous]
+        public async Task<ActionResult> ValidateSession([FromQuery] string token)
         {
-            var jwt = await _authService.ValidateSession(token);
-            return Ok(jwt);
+            try
+            {
+                var jwt = await _authService.ValidateSession(token);
+                return Ok(jwt);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
     }
 }

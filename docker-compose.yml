@@ -16,21 +16,38 @@ services:
       timeout: 5s
       retries: 15
 
-  api:
-    build:
-      context: .                                   # raiz: C:\Users\pedro\projects\nutrifit
-      dockerfile: backend/Nutrifit.API/Dockerfile  # <— sem o prefixo "nutrifit/"
-    container_name: nutrifit_api
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      ConnectionStrings__Default: "Host=db;Port=5432;Database=nutrifitdb;Username=postgres;Password=postgres"
-      ASPNETCORE_ENVIRONMENT: "Docker"
+  redis:
+    image: redis:7
+    container_name: nutrifit_redis
     ports:
-      - "8080:8080"
-    restart: unless-stopped
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata_nutrifit:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # api:
+  #   build:
+  #     context: .                                 
+  #     dockerfile: backend/Nutrifit.API/Dockerfile
+  #   container_name: nutrifit_api
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   environment:
+  #     ConnectionStrings__Default: "Host=db;Port=5432;Database=nutrifitdb;Username=postgres;Password=postgres"
+  #     Redis: "redis:6379,ssl=false,abortConnect=false"
+  #     ASPNETCORE_ENVIRONMENT: "Docker"
+  #   ports:
+  #     - "8080:8080"
+  #   restart: unless-stopped
 
 volumes:
   pgdata_nutrifit:
-
+  redisdata_nutrifit:

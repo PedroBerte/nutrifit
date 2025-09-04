@@ -1,12 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import App from "./App.tsx";
 import { registerSW } from "virtual:pwa-register";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Login from "./pages/Login.tsx";
-import Callback from "./pages/CallbackLogin.tsx";
+import {
+  BrowserRouter,
+} from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistGate } from "redux-persist/integration/react";
+import { persistor, store } from "./store/index.ts";
+import { Provider } from "react-redux";
+import { AuthProvider } from "./contexts/AuthContext.tsx";
+import { AppRoutes } from "./routes/AppRoutes.tsx";
 
 registerSW({
   onNeedRefresh() {
@@ -17,24 +21,20 @@ registerSW({
   },
 });
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <App />,
-    children: [
-      { path: "login", element: <Login /> },
-      { path: "/login/callback", element: <Callback /> },
-      { path: "*", element: <Login /> },
-    ],
-  },
-]);
-
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <PersistGate persistor={persistor}>
+        <Provider store={store}>
+          <AuthProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </AuthProvider>
+        </Provider>
+      </PersistGate>
     </QueryClientProvider>
   </StrictMode>
 );
