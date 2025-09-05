@@ -1,17 +1,18 @@
+// src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState } from "@/store";
 import { signOut } from "@/store/authSlice";
-import { jwtDecode } from "jwt-decode";
-import type { JwtType } from "@/types/JwtTypes";
+import { decodeAndNormalizeJwt, type DecodedJwt } from "@/lib/jwt";
 
 type AuthUser = {
   token: string | null;
   tokenType: string | null;
-  user: JwtType | null;
+  user: DecodedJwt | null;
   isExpired: boolean;
   secondsLeft: number | null;
   hasRole: (role: string) => boolean;
+  isAdmin: boolean;
   logout: () => void;
 };
 
@@ -23,14 +24,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (s: RootState) => s.auth
   );
 
-  const decoded = useMemo<JwtType | null>(() => {
-    try {
-      if (!accessToken) return null;
-      return jwtDecode<JwtType>(accessToken);
-    } catch {
-      return null;
-    }
-  }, [accessToken]);
+  const decoded = useMemo<DecodedJwt | null>(
+    () => decodeAndNormalizeJwt(accessToken),
+    [accessToken]
+  );
 
   const { isExpired, secondsLeft } = useMemo(() => {
     if (!expiresAt) return { isExpired: true, secondsLeft: null };
@@ -59,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isExpired,
       secondsLeft,
       hasRole,
+      isAdmin: !!decoded?.isAdmin,
       logout,
     }),
     [accessToken, tokenType, decoded, isExpired, secondsLeft, hasRole, logout]

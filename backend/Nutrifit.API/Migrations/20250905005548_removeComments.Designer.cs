@@ -9,11 +9,11 @@ using Nutrifit.Repository;
 
 #nullable disable
 
-namespace Nutrifit.Repository.Migrations
+namespace Nutrifit.API.Migrations
 {
     [DbContext(typeof(NutrifitContext))]
-    [Migration("20250819230828_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250905005548_removeComments")]
+    partial class removeComments
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,8 +56,9 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<string>("State")
                         .HasColumnType("text");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

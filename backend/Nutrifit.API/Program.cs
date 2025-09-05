@@ -17,7 +17,8 @@ var connString = builder.Configuration.GetConnectionString("Default")
     ?? builder.Configuration["ConnectionStrings:Default"];
 
 builder.Services.AddDbContext<NutrifitContext>(opt =>
-    opt.UseNpgsql(connString));
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default"),
+        b => b.MigrationsAssembly("Nutrifit.API")));
 
 var redisConn = builder.Configuration.GetConnectionString("Redis");
 builder.Services.AddSingleton<IConnectionMultiplexer>(

@@ -1,12 +1,19 @@
 // src/store/authSlice.ts
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { decodeAndNormalizeJwt } from "@/lib/jwt";
 
 type AuthState = {
   accessToken: string | null;
   refreshToken: string | null;
   tokenType: string;
-  expiresAt: number | null; // timestamp em ms
-  user?: { email?: string } | null;
+  expiresAt: number | null;
+  user?: {
+    id?: string | null;
+    name?: string | null;
+    email?: string | null;
+    isAdmin?: boolean;
+    roles?: string[];
+  } | null;
 };
 
 const initialState: AuthState = {
@@ -27,29 +34,77 @@ const authSlice = createSlice({
         accessToken: string;
         refreshToken?: string | null;
         tokenType?: string;
-        expiresIn: number;
+        expiresIn?: number;
         user?: AuthState["user"];
       }>
     ) => {
-      state.accessToken = action.payload.accessToken;
-      state.refreshToken = action.payload.refreshToken ?? null;
-      state.tokenType = action.payload.tokenType ?? "Bearer";
-      state.expiresAt = Date.now() + action.payload.expiresIn * 1000;
-      state.user = action.payload.user ?? null;
+      const { accessToken, refreshToken, tokenType, expiresIn, user } =
+        action.payload;
+      state.accessToken = accessToken;
+      state.refreshToken = refreshToken ?? null;
+      state.tokenType = tokenType ?? "Bearer";
+
+      const decoded = decodeAndNormalizeJwt(accessToken);
+      state.expiresAt =
+        typeof expiresIn === "number"
+          ? Date.now() + expiresIn * 1000
+          : decoded?.expMs ?? null;
+
+      state.user =
+        user ??
+        (decoded
+          ? {
+              id: decoded.id,
+              name: decoded.name,
+              email: decoded.email,
+              isAdmin: decoded.isAdmin,
+              roles: decoded.roles,
+            }
+          : null);
     },
+
+    signInFromJwt: (
+      state,
+      action: PayloadAction<{ accessToken: string; tokenType?: string }>
+    ) => {
+      const { accessToken, tokenType } = action.payload;
+      state.accessToken = accessToken;
+      state.refreshToken = null;
+      state.tokenType = tokenType ?? "Bearer";
+
+      const decoded = decodeAndNormalizeJwt(accessToken);
+      state.expiresAt = decoded?.expMs ?? null;
+      state.user = decoded
+        ? {
+            id: decoded.id,
+            name: decoded.name,
+            email: decoded.email,
+            isAdmin: decoded.isAdmin,
+            roles: decoded.roles,
+          }
+        : null;
+    },
+
     signOut: (state) => {
       Object.assign(state, initialState);
     },
+
     setTokens: (
       state,
       action: PayloadAction<{
         accessToken: string;
-        expiresIn: number;
+        expiresIn?: number;
         refreshToken?: string | null;
       }>
     ) => {
       state.accessToken = action.payload.accessToken;
-      state.expiresAt = Date.now() + action.payload.expiresIn * 1000;
+
+      const decoded = decodeAndNormalizeJwt(action.payload.accessToken);
+      state.expiresAt =
+        typeof action.payload.expiresIn === "number"
+          ? Date.now() + action.payload.expiresIn * 1000
+          : decoded?.expMs ?? null;
+
       if (action.payload.refreshToken !== undefined) {
         state.refreshToken = action.payload.refreshToken;
       }
@@ -57,5 +112,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { signIn, signOut, setTokens } = authSlice.actions;
+export const { signIn, signInFromJwt, signOut, setTokens } = authSlice.actions;
 export default authSlice.reducer;

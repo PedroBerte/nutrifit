@@ -6,7 +6,6 @@ public class ProfileRole
     public Guid RoleId { get; set; }
     public Guid ProfileId { get; set; }
 
-    // Nav
     public Role Role { get; set; } = null!;
     public Profile Profile { get; set; } = null!;
 }

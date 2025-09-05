@@ -1,0 +1,2 @@
+dotnet ef migrations add InitialCreate -o Migrations --startup-project ../Nutrifit.API
+dotnet ef database update --startup-project ../Nutrifit.API

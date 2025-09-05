@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using Nutrifit.Repository;
 using Nutrifit.Services.DTO;
 using Nutrifit.Services.Services.Interfaces;
 using StackExchange.Redis;
@@ -22,13 +24,15 @@ namespace Nutrifit.Services.Services
     {
         private readonly IConfiguration _cfg;
         private readonly IConnectionMultiplexer _mux;
+        private readonly NutrifitContext _context;
 
         private readonly IMailService _mailService;
-        public AuthenticationService(IConfiguration cfg, IConnectionMultiplexer mux, IMailService mailService)
+
+        public AuthenticationService(IConfiguration cfg, IConnectionMultiplexer mux, IMailService mailService, NutrifitContext context)
         {
             _cfg = cfg;
             _mux = mux;
-
+            _context = context;
             _mailService = mailService;
         }
 
@@ -70,10 +74,33 @@ namespace Nutrifit.Services.Services
 
             var payload = JsonSerializer.Deserialize<MagicLinkPayload>(raw!);
 
-            return IssueJwt(payload!.Email);
+            var user = await _context.User
+                .Include(x => x.UserProfiles)
+                .ThenInclude(x => x.Profile)
+                .ThenInclude(x => x.ProfileRoles)
+                .ThenInclude(x => x.Role)
+                .SingleOrDefaultAsync(u => u.Email == payload!.Email);
+
+            var request = new IssueJwtTokenRequest
+            {
+                Id = Guid.NewGuid(),
+                Name = "",
+                Email = payload.Email,
+                Roles = [],
+                IsAdmin = user?.IsAdmin ?? false
+            };
+
+            if(user is not null)
+            {
+                request.Id = user.Id;
+                request.Name = user.Name;
+                request.Roles = user.UserProfiles.SelectMany(up => up.Profile!.ProfileRoles).Select(pr => pr.Role.Id).Distinct().ToArray();
+            }
+
+            return IssueJwt(request);
         }
 
-        private string IssueJwt(string email)
+        private string IssueJwt(IssueJwtTokenRequest request)
         {
             var cfg = _cfg.GetSection("Jwt");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(cfg["Key"]!));
@@ -81,10 +108,14 @@ namespace Nutrifit.Services.Services
 
             var claims = new[]
             {
-            new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Sub, email),
-            new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Email, email),
-            new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+                new Claim("id", request.Id.ToString()),
+                new Claim("name", request.Name),
+                new Claim("isAdmin", request.IsAdmin.ToString()),
+                new Claim("roles", string.Join(",", request.Roles)),
+                new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Sub, request.Email),
+                new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Email, request.Email),
+                new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
             var token = new JwtSecurityToken(
                 issuer: cfg["Issuer"],

@@ -1,5 +1,5 @@
 import { api } from "@/lib/axios";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 export function useSendAccessEmail() {
   return useMutation({
@@ -19,27 +19,18 @@ export function useSendAccessEmail() {
 
 export function useValidateSession() {
   return useMutation({
+    mutationKey: ["validateSession"],
+    retry: 0,
     mutationFn: async (token: string) => {
-      var response = await api.post<string>(
+      console.log("Validating session with token:", token);
+      const request = await api.post<string>(
         `/authentication/validateSession?token=${encodeURIComponent(token)}`
       );
-
-      return response.data;
+      console.log("Session validated, received JWT:", request.data);
+      return request.data;
     },
-    onError: async (e) => {
-      console.log("Erro ao validar sessão", e);
-    },
-  });
-}
-
-export function useLogout() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      await api.post("/authentication/logout");
-    },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["me"] });
+    onError: (e) => {
+      console.error("Erro ao validar sessão", e);
     },
   });
 }
