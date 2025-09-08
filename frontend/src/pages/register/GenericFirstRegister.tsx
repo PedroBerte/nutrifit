@@ -9,43 +9,29 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
-export const userRegisterSchema = z.object({
-  image: z.url().optional(),
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  phone: z.string().min(8, "Celular deve ter pelo menos 8 dígitos"),
-});
+import { useRegisterForm } from "@/contexts/forms/RegisterFormContext";
 
 export default function GenericFirstRegister() {
-  const registerForm = useForm<z.infer<typeof userRegisterSchema>>({
-    resolver: zodResolver(userRegisterSchema),
-    defaultValues: { image: "", name: "", phone: "" },
-  });
-
-  const onSubmit = async (data: z.infer<typeof userRegisterSchema>) => {
-    console.log(data);
-  };
+  const { form, goNext, goBack } = useRegisterForm();
 
   return (
     <div className="flex w-full h-full items-center justify-center flex-col">
-      <Form {...registerForm}>
+      <Form {...form}>
         <form
-          onSubmit={registerForm.handleSubmit(onSubmit)}
           className="flex gap-4 flex-col w-full max-w-sm"
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
         >
           <FormField
-            control={registerForm.control}
+            control={form.control}
             name="image"
-            render={({ field }) => (
+            render={() => (
               <FormItem>
                 <PhotoUploader
                   onUpload={(file) => {
                     const url = URL.createObjectURL(file);
-                    registerForm.setValue("image", url);
+                    form.setValue("image", url, { shouldValidate: true });
                   }}
                 />
                 <FormMessage />
@@ -54,7 +40,7 @@ export default function GenericFirstRegister() {
           />
 
           <FormField
-            control={registerForm.control}
+            control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem className="mt-5">
@@ -68,7 +54,7 @@ export default function GenericFirstRegister() {
           />
 
           <FormField
-            control={registerForm.control}
+            control={form.control}
             name="phone"
             render={({ field }) => (
               <FormItem>
@@ -80,11 +66,19 @@ export default function GenericFirstRegister() {
               </FormItem>
             )}
           />
+
           <div className="flex flex-row gap-2 mt-3">
-            <Button className="flex-1" variant="dark">
+            <Button
+              className="flex-1"
+              variant="dark"
+              type="button"
+              onClick={goBack}
+            >
               Voltar
             </Button>
-            <Button className="flex-1">Próximo</Button>
+            <Button className="flex-1" type="button" onClick={goNext}>
+              Próximo
+            </Button>
           </div>
         </form>
       </Form>
