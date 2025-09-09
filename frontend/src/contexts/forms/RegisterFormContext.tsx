@@ -27,6 +27,7 @@ const addressSchema = z.object({
 const professionalDataSchema = z.object({
   idType: z.enum(["CRN", "CREF", "OUTRO"]),
   credential: z.string().min(3, "Credencial obrigatória"),
+  biography: z.string().max(500, "Máximo 500 caracteres").optional(),
 });
 
 const quizSchema = z.object({

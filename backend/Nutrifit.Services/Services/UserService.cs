@@ -17,7 +17,7 @@ public class UserService : IUserService
     {
         try
         {
-            return await _context.User.ToListAsync();
+            return await _context.User.Include(x => x.Address).ToListAsync();
         }
         catch (Exception ex)
         {
@@ -29,8 +29,8 @@ public class UserService : IUserService
     {
         try
         {
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
+            var user = await _context.User.Include(x => x.Address).FirstOrDefaultAsync(x => x.Id == id);
+            if (user is null)
                 throw new InvalidOperationException("Usuário não encontrado.");
             return user;
         }
@@ -47,7 +47,17 @@ public class UserService : IUserService
             user.Id = Guid.NewGuid();
             user.CreatedAt = DateTime.UtcNow;
             _context.User.Add(user);
+
+            if (user.Address != null)
+            {
+                user.Address.Id = Guid.NewGuid();
+                user.Address.CreatedAt = DateTime.UtcNow;
+                user.Address.Status = "A";
+                _context.Address.Add(user.Address);
+            }
+
             await _context.SaveChangesAsync();
+
             return user;
         }
         catch (Exception ex)

@@ -1,28 +1,33 @@
+using Nutrifit.Services.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Repository.Entities;
-using Nutrifit.Services.Services.Interfaces;
+using AutoMapper;
+using ProfileEntity = Nutrifit.Repository.Entities.Profile;
+using Nutrifit.Services.DTO;
 
 namespace Nutrifit.API.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class ProfileController : ControllerBase
 {
     private readonly IProfileService _service;
-    public ProfileController(IProfileService service)
+    private readonly IMapper _mapper;
+    public ProfileController(IProfileService service, IMapper mapper)
     {
         _service = service;
+        _mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Profile>>> GetAll()
+    public async Task<ActionResult<List<ProfileDto>>> GetAll()
     {
         try
         {
             var profiles = await _service.GetAllAsync();
             if (profiles.Count == 0)
                 return NoContent();
-            return Ok(profiles);
+            return Ok(_mapper.Map<List<ProfileDto>>(profiles));
         }
         catch (Exception ex)
         {
@@ -31,12 +36,12 @@ public class ProfileController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Profile>> GetById(Guid id)
+    public async Task<ActionResult<ProfileDto>> GetById(Guid id)
     {
         try
         {
             var profile = await _service.GetByIdAsync(id);
-            return Ok(profile);
+            return Ok(_mapper.Map<ProfileDto>(profile));
         }
         catch (InvalidOperationException ex)
         {
@@ -49,14 +54,15 @@ public class ProfileController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Profile>> Create([FromBody] Profile profile)
+    public async Task<ActionResult<ProfileDto>> Create([FromBody] ProfileDto profileDto)
     {
-        if (profile == null)
+        if (profileDto == null)
             return BadRequest("Perfil inválido.");
         try
         {
+            var profile = _mapper.Map<ProfileEntity>(profileDto);
             var created = await _service.AddAsync(profile);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, _mapper.Map<ProfileDto>(created));
         }
         catch (Exception ex)
         {
@@ -65,14 +71,15 @@ public class ProfileController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<Profile>> Update(Guid id, [FromBody] Profile profile)
+    public async Task<ActionResult<ProfileDto>> Update(Guid id, [FromBody] ProfileDto profileDto)
     {
-        if (id != profile.Id)
+        if (id != profileDto.Id)
             return BadRequest("Id do perfil não corresponde ao parâmetro.");
         try
         {
+            var profile = _mapper.Map<ProfileEntity>(profileDto);
             var updated = await _service.UpdateAsync(profile);
-            return Ok(updated);
+            return Ok(_mapper.Map<ProfileDto>(updated));
         }
         catch (InvalidOperationException ex)
         {

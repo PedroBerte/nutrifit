@@ -50,7 +50,7 @@ export default function AddressRegister() {
               <FormItem>
                 <FormLabel>Rua</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Rua das Dietas" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -63,7 +63,7 @@ export default function AddressRegister() {
               <FormItem>
                 <FormLabel>Número</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="123" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -76,7 +76,7 @@ export default function AddressRegister() {
               <FormItem>
                 <FormLabel>Bairro</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Centro" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -89,7 +89,7 @@ export default function AddressRegister() {
               <FormItem>
                 <FormLabel>Cidade</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="São Paulo" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -102,7 +102,7 @@ export default function AddressRegister() {
               <FormItem>
                 <FormLabel>Estado</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="SP" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,7 +115,7 @@ export default function AddressRegister() {
               <FormItem>
                 <FormLabel>País</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Brasil" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

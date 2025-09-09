@@ -8,6 +8,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useRegisterForm } from "@/contexts/forms/RegisterFormContext";
 
 export default function ProfessionalRegister() {
@@ -50,6 +51,20 @@ export default function ProfessionalRegister() {
                 <FormLabel>Credencial</FormLabel>
                 <FormControl>
                   <Input placeholder="Ex: CRN-12345" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            name="biography"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Biografia</FormLabel>
+                <FormControl>
+                  <Textarea {...field} placeholder="Conte-nos sobre você" />
                 </FormControl>
                 <FormMessage />
               </FormItem>

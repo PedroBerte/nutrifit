@@ -18,6 +18,5 @@ public class User
 
     // Nav
     public Address? Address { get; set; }
-    public Profile? Profile { get; set; }
     public ICollection<UserProfile> UserProfiles { get; set; } = new List<UserProfile>();
 }

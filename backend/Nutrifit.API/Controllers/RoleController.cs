@@ -1,28 +1,32 @@
+using Nutrifit.Services.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Repository.Entities;
-using Nutrifit.Services.Services.Interfaces;
+using AutoMapper;
+using Nutrifit.Services.DTO;
 
 namespace Nutrifit.API.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class RoleController : ControllerBase
 {
     private readonly IRoleService _service;
-    public RoleController(IRoleService service)
+    private readonly IMapper _mapper;
+    public RoleController(IRoleService service, IMapper mapper)
     {
         _service = service;
+        _mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Role>>> GetAll()
+    public async Task<ActionResult<List<RoleDto>>> GetAll()
     {
         try
         {
             var roles = await _service.GetAllAsync();
             if (roles.Count == 0)
                 return NoContent();
-            return Ok(roles);
+            return Ok(_mapper.Map<List<RoleDto>>(roles));
         }
         catch (Exception ex)
         {
@@ -31,12 +35,12 @@ public class RoleController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Role>> GetById(Guid id)
+    public async Task<ActionResult<RoleDto>> GetById(Guid id)
     {
         try
         {
             var role = await _service.GetByIdAsync(id);
-            return Ok(role);
+            return Ok(_mapper.Map<RoleDto>(role));
         }
         catch (InvalidOperationException ex)
         {
@@ -49,14 +53,15 @@ public class RoleController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Role>> Create([FromBody] Role role)
+    public async Task<ActionResult<RoleDto>> Create([FromBody] RoleDto roleDto)
     {
-        if (role == null)
+        if (roleDto == null)
             return BadRequest("Role inválido.");
         try
         {
+            var role = _mapper.Map<Role>(roleDto);
             var created = await _service.AddAsync(role);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, _mapper.Map<RoleDto>(created));
         }
         catch (Exception ex)
         {
@@ -65,14 +70,15 @@ public class RoleController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<Role>> Update(Guid id, [FromBody] Role role)
+    public async Task<ActionResult<RoleDto>> Update(Guid id, [FromBody] RoleDto roleDto)
     {
-        if (id != role.Id)
+        if (id != roleDto.Id)
             return BadRequest("Id do role não corresponde ao parâmetro.");
         try
         {
+            var role = _mapper.Map<Role>(roleDto);
             var updated = await _service.UpdateAsync(role);
-            return Ok(updated);
+            return Ok(_mapper.Map<RoleDto>(updated));
         }
         catch (InvalidOperationException ex)
         {

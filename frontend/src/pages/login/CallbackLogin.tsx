@@ -10,7 +10,6 @@ export default function Callback() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { mutateAsync, isPending } = useValidateSession();
-  const inFlightRef = useRef(false);
 
   useEffect(() => {
     const linkToken = sp.get("token");
@@ -19,14 +18,10 @@ export default function Callback() {
       return;
     }
 
-    const fuseKey = `callback.validate:${linkToken}`;
-    if (sessionStorage.getItem(fuseKey) === "1" || inFlightRef.current) return;
-    sessionStorage.setItem(fuseKey, "1");
-    inFlightRef.current = true;
-
     (async () => {
       try {
         const jwt = await mutateAsync(linkToken);
+        console.log("Validated session, JWT:", jwt);
 
         const decoded = decodeAndNormalizeJwt(jwt);
         const ok =
@@ -48,8 +43,6 @@ export default function Callback() {
           navigate("/choose-account", { replace: true });
         }
       } catch (err) {
-        sessionStorage.removeItem(fuseKey);
-        inFlightRef.current = false;
         navigate("/login?err=invalid-link", { replace: true });
       }
     })();

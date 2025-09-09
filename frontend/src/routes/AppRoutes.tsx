@@ -17,9 +17,8 @@ export function AppRoutes() {
       <Route path="/" element={<App />}>
         <Route index element={<Navigate to="home" replace />} />
 
-        <Route path="login" element={<Login />}>
-          <Route path="callback" element={<Callback />} />
-        </Route>
+        <Route path="login" element={<Login />} />
+        <Route path="login/callback" element={<Callback />} />
 
         <Route element={<PrivateRoute />}>
           <Route element={<RegisterFormLayout />}>

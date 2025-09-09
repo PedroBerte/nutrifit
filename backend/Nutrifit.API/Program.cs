@@ -6,6 +6,8 @@ using Nutrifit.Services.Services;
 using Nutrifit.Services.Services.Interfaces;
 using StackExchange.Redis;
 using System.Text;
+using AutoMapper;
+using Nutrifit.API.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +29,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddAutoMapper(typeof(EntityToDtoProfile));
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IMailService, MailService>();
 
