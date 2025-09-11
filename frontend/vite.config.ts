@@ -1,8 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
-import path from "path";
 import tailwindcss from "@tailwindcss/vite";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = dirname(__filename);
 
 export default defineConfig({
   plugins: [
@@ -41,24 +45,19 @@ export default defineConfig({
   server: {
     host: true,
     port: 5052,
-    allowedHosts: [
-      'apinutrifit.mujapira.com',
-      'nutrifit.mujapira.com'
-    ],
-    hmr: {
-      host: 'apinutrifit.mujapira.com',
-      clientPort: 443,
-      protocol: 'wss'
-    }
+    allowedHosts: ["apinutrifit.mujapira.com", "nutrifit.mujapira.com"],
+    hmr: { host: "apinutrifit.mujapira.com", clientPort: 443, protocol: "wss" },
   },
+
   preview: {
     host: true,
     port: 5052,
-    allowedHosts: ['apinutrifit.mujapira.com', 'nutrifit.mujapira.com']
-  }
+    allowedHosts: ["apinutrifit.mujapira.com", "nutrifit.mujapira.com"],
+  },
+
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": resolve(__dirname, "./src"),
     },
   },
 });
