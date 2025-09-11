@@ -64,6 +64,35 @@ builder.Services.AddCors(o =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<NutrifitContext>();
+        var retries = 5;
+        while (true)
+        {
+            try
+            {
+                db.Database.Migrate();
+                logger.LogInformation("EF Core migrations aplicadas com sucesso.");
+                break;
+            }
+            catch (Exception ex) when (retries-- > 0)
+            {
+                logger.LogWarning(ex, "Falha ao migrar. Tentando novamente em 3s... (restantes: {retries})", retries);
+                await Task.Delay(3000);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Erro fatal ao aplicar migrations.");
+        throw;
+    }
+}
+
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
