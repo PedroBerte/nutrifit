@@ -8,25 +8,13 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-    env:
-      APP_DIR: /opt/apps/nutrifit
-      ENV_FILE: .env
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Copiar para $APP_DIR
+      - name: Criar .env (raiz do repo)
         run: |
-          mkdir -p "${{ env.APP_DIR }}"
-          shopt -s dotglob
-          rm -rf "${{ env.APP_DIR }}"/*
-          cp -r ./* "${{ env.APP_DIR }}"/
-          shopt -u dotglob
-
-      - name: Criar .env
-        working-directory: ${{ env.APP_DIR }}
-        run: |
-          cat > "${{ env.ENV_FILE }}" <<EOF
+          cat > .env <<EOF
           POSTGRES_USER=${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD=${{ secrets.NUTRIFIT_POSTGRES_PASSWORD }}
           POSTGRES_DB=${{ env.POSTGRES_DB }}
@@ -38,11 +26,7 @@ jobs:
           FRONT_PORT=${{ env.FRONT_PORT }}
           EOF
 
-      - name: Checar Docker Compose
-        run: docker compose version
-
-      - name: Subir containers
-        working-directory: ${{ env.APP_DIR }}
+      - name: Subir stack
         run: |
-          docker compose --env-file "${{ env.ENV_FILE }}" up -d --build
+          docker compose --env-file .env up -d --build
           docker compose ps
