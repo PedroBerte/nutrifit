@@ -5,35 +5,33 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
-env:
-  APP_DIR: /opt/apps/nutrifit
-  ENV_FILE: .env
-
 jobs:
   deploy:
     runs-on: self-hosted
+    env:
+      APP_DIR: /opt/apps/nutrifit
+      ENV_FILE: .env
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Preparar pasta e sincronizar
+      - name: Copiar arquivos pro APP_DIR (sem sudo)
         run: |
-          sudo mkdir -p "$APP_DIR"
-          sudo chown -R "$(whoami)":"$(whoami)" "$APP_DIR"
-          rsync -a --delete --exclude ".git" ./ "$APP_DIR"/
+          mkdir -p "$APP_DIR"
+          shopt -s dotglob
+          rm -rf "$APP_DIR"/*
+          cp -r ./* "$APP_DIR"/
+          shopt -u dotglob
 
       - name: Criar .env
         working-directory: ${{ env.APP_DIR }}
         run: |
           cat > "${ENV_FILE}" <<EOF
-          POSTGRES_USER=postgres
-          POSTGRES_PASSWORD=${{ secrets.NUTRIFIT_POSTGRES_PASSWORD }}
-          POSTGRES_DB=nutrifitdb
-          
-          ConnectionStrings__Default=Host=db;Port=5432;Database=nutrifitdb;Username=postgres;Password=${{ secrets.NUTRIFIT_POSTGRES_PASSWORD }}
-          Redis=redis:6379,ssl=false,abortConnect=false
-          ASPNETCORE_ENVIRONMENT=Docker
+          oipepe
           EOF
+
+      - name: Checar Docker Compose
+        run: docker compose version
 
       - name: Subir containers
         working-directory: ${{ env.APP_DIR }}
