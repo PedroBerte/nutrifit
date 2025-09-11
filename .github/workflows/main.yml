@@ -26,8 +26,16 @@ jobs:
       - name: Criar .env
         working-directory: ${{ env.APP_DIR }}
         run: |
-          cat > "${ENV_FILE}" <<EOF
-          oipepe
+          cat <<EOF > .env
+          POSTGRES_USER=${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB=${{ env.POSTGRES_DB }}
+          POSTGRES_PORT=${{ env.POSTGRES_PORT }}
+          POSTGRES_HOST=${{ env.POSTGRES_HOST }}
+          REDIS_PORT=${{ env.REDIS_PORT }}
+          SMTP_APP_PASSWORD=${{ env.SMTP_APP_PASSWORD }}
+          FRONT_API_URL=${{ env.FRONT_API_URL }}
+          FRONT_PORT=${{ env.FRONT_PORT }}
           EOF
 
       - name: Checar Docker Compose
