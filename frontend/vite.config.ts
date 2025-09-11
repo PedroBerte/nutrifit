@@ -40,9 +40,22 @@ export default defineConfig({
   ],
   server: {
     host: true,
-    port: Number(process.env.PORT) || 5052,
-    strictPort: true,
+    port: 5052,
+    allowedHosts: [
+      'apinutrifit.mujapira.com',
+      'nutrifit.mujapira.com'
+    ],
+    hmr: {
+      host: 'apinutrifit.mujapira.com',
+      clientPort: 443,
+      protocol: 'wss'
+    }
   },
+  preview: {
+    host: true,
+    port: 5052,
+    allowedHosts: ['apinutrifit.mujapira.com', 'nutrifit.mujapira.com']
+  }
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
