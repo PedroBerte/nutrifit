@@ -8,44 +8,41 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    env:
+      APP_DIR: /opt/apps/nutrifit
+      ENV_FILE: .env
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Copiar para $APP_DIR
         run: |
-          mkdir -p "$APP_DIR"
+          mkdir -p "${{ env.APP_DIR }}"
           shopt -s dotglob
-          rm -rf "$APP_DIR"/*
-          cp -r ./* "$APP_DIR"/
+          rm -rf "${{ env.APP_DIR }}"/*
+          cp -r ./* "${{ env.APP_DIR }}"/
           shopt -u dotglob
 
-      - name: Escrever .env
+      - name: Criar .env
         working-directory: ${{ env.APP_DIR }}
         run: |
-          cat > "${ENV_FILE}" <<EOF
+          cat > "${{ env.ENV_FILE }}" <<EOF
           POSTGRES_USER=${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD=${{ secrets.NUTRIFIT_POSTGRES_PASSWORD }}
           POSTGRES_DB=${{ env.POSTGRES_DB }}
-          POSTGRES_HOST=${{ env.POSTGRES_HOST }}
           POSTGRES_PORT=${{ env.POSTGRES_PORT }}
-          
-          # .NET / Redis
-          ConnectionStrings__Default=Host=${{ env.POSTGRES_HOST }};Port=${{ env.POSTGRES_PORT }};Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ secrets.NUTRIFIT_POSTGRES_PASSWORD }}
-          Redis=redis:6379,ssl=false,abortConnect=false
-          ASPNETCORE_ENVIRONMENT=Docker
-          
-          # portas expostas no host
-          API_PORT=${{ env.API_PORT }}
+          POSTGRES_HOST=${{ env.POSTGRES_HOST }}
+          REDIS_PORT=${{ env.REDIS_PORT }}
+          SMTP_APP_PASSWORD=${{ secrets.SMTP_APP_PASSWORD }}
+          FRONT_API_URL=${{ env.FRONT_API_URL }}
           FRONT_PORT=${{ env.FRONT_PORT }}
           EOF
 
-      - name: Validar compose
-        working-directory: ${{ env.APP_DIR }}
-        run: docker compose --env-file "${ENV_FILE}" config
+      - name: Checar Docker Compose
+        run: docker compose version
 
-      - name: Subir stack
+      - name: Subir containers
         working-directory: ${{ env.APP_DIR }}
         run: |
-          docker compose --env-file "${ENV_FILE}" up -d --build
+          docker compose --env-file "${{ env.ENV_FILE }}" up -d --build
           docker compose ps
