@@ -12,7 +12,7 @@ type AuthState = {
     name?: string | null;
     email?: string | null;
     isAdmin?: boolean;
-    roles?: string[];
+    profile?: string | null;
   } | null;
 };
 
@@ -58,7 +58,7 @@ const authSlice = createSlice({
               name: decoded.name,
               email: decoded.email,
               isAdmin: decoded.isAdmin,
-              roles: decoded.roles,
+              profile: decoded.profile,
             }
           : null);
     },
@@ -80,7 +80,7 @@ const authSlice = createSlice({
             name: decoded.name,
             email: decoded.email,
             isAdmin: decoded.isAdmin,
-            roles: decoded.roles,
+            profile: decoded.profile ?? null,
           }
         : null;
     },

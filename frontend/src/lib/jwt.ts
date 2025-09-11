@@ -5,7 +5,7 @@ export type DecodedJwtRaw = {
   id?: string;
   name?: string;
   isAdmin?: boolean | string;
-  roles?: string | string[];
+  profile?: string;
   sub?: string;
   email?: string;
   exp?: number;
@@ -20,7 +20,7 @@ export type DecodedJwt = {
   name: string | null;
   email: string | null;
   isAdmin: boolean;
-  roles: string[];
+  profile: string | null;
   expMs: number | null;
   raw: DecodedJwtRaw;
 };
@@ -29,15 +29,6 @@ export function decodeAndNormalizeJwt(token: string | null): DecodedJwt | null {
   if (!token) return null;
   try {
     const raw = jwtDecode<DecodedJwtRaw>(token);
-
-    const rolesArray = Array.isArray(raw.roles)
-      ? raw.roles
-      : typeof raw.roles === "string" && raw.roles.length > 0
-      ? raw.roles
-          .split(",")
-          .map((r) => r.trim())
-          .filter(Boolean)
-      : [];
 
     const isAdminBool =
       typeof raw.isAdmin === "boolean"
@@ -53,7 +44,7 @@ export function decodeAndNormalizeJwt(token: string | null): DecodedJwt | null {
       name: raw.name ?? null,
       email: raw.email ?? raw.sub ?? null,
       isAdmin: isAdminBool,
-      roles: rolesArray,
+      profile: raw.profile ?? null,
       expMs,
       raw,
     };

@@ -4,12 +4,9 @@ import { PrivateRoute } from "./PrivateRoute";
 import Login from "@/pages/login/Login";
 import Callback from "@/pages/login/CallbackLogin";
 import Home from "@/pages/Home";
-import ChooseAccount from "@/pages/register/ChooseAccount";
-import GenericFirstRegister from "@/pages/register/GenericFirstRegister";
-import ProfessionalRegister from "@/pages/register/AddressRegister";
+import AppLayoutWithNavbar from "./layouts/AppLayoutWithNavbar";
 import RegisterFormLayout from "./layouts/RegisterFormLayout";
-import Quiz from "@/pages/register/Quiz";
-import AddressRegister from "@/pages/register/AddressRegister";
+import FirstAccess from "@/pages/FirstAccess";
 
 export function AppRoutes() {
   return (
@@ -20,19 +17,13 @@ export function AppRoutes() {
         <Route path="login" element={<Login />} />
         <Route path="login/callback" element={<Callback />} />
 
+        <Route element={<RegisterFormLayout />}>
+          <Route path="first-access" element={<FirstAccess />} />
+        </Route>
         <Route element={<PrivateRoute />}>
-          <Route element={<RegisterFormLayout />}>
-            <Route path="choose-account" element={<ChooseAccount />} />
-            <Route path="first-access" element={<GenericFirstRegister />} />
-            <Route
-              path="professional-register"
-              element={<ProfessionalRegister />}
-            />
-            <Route path="address-register" element={<AddressRegister />} />
-            <Route path="quiz" element={<Quiz />} />
+          <Route element={<AppLayoutWithNavbar />}>
+            <Route path="home" element={<Home />} />
           </Route>
-
-          <Route path="home" element={<Home />} />
         </Route>
       </Route>
     </Routes>

@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Nutrifit.Repository;
+using Nutrifit.Services.Mappings;
 using Nutrifit.Services.Services;
 using Nutrifit.Services.Services.Interfaces;
 using StackExchange.Redis;
 using System.Text;
-using AutoMapper;
-using Nutrifit.API.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +18,7 @@ var connString = builder.Configuration.GetConnectionString("Default")
 
 builder.Services.AddDbContext<NutrifitContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Default"),
-        b => b.MigrationsAssembly("Nutrifit.API")));
+        b => b.MigrationsAssembly("Nutrifit.Repository")));
 
 var redisConn = builder.Configuration.GetConnectionString("Redis");
 builder.Services.AddSingleton<IConnectionMultiplexer>(
@@ -28,10 +26,14 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
-builder.Services.AddScoped<IRoleService, RoleService>();
-builder.Services.AddAutoMapper(typeof(EntityToDtoProfile));
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IMailService, MailService>();
+builder.Services.AddScoped<IProfessionalService, ProfessionalService>();
+
+builder.Services.AddAutoMapper(cfg =>
+{
+
+}, typeof(EntityToDtoProfile).Assembly);
 
 builder.Services.AddCors(o =>
 {

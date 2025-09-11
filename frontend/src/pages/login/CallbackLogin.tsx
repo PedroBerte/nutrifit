@@ -2,8 +2,10 @@ import { useValidateSession } from "@/services/api/auth";
 import { useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { signIn, signInFromJwt } from "@/store/authSlice";
+import { BounceLoader } from "react-spinners";
 import { decodeAndNormalizeJwt } from "@/lib/jwt";
+import { signInFromJwt } from "@/store/authSlice";
+import { UserProfiles } from "@/types/user";
 
 export default function Callback() {
   const [sp] = useSearchParams();
@@ -18,39 +20,41 @@ export default function Callback() {
       return;
     }
 
-    (async () => {
-      try {
-        const jwt = await mutateAsync(linkToken);
-        console.log("Validated session, JWT:", jwt);
-
-        const decoded = decodeAndNormalizeJwt(jwt);
-        const ok =
-          !!decoded?.id &&
-          !!decoded?.email &&
-          typeof decoded?.expMs === "number" &&
-          decoded.expMs > Date.now();
-
-        if (!ok) {
-          navigate("/login?err=invalid-link", { replace: true });
-          return;
-        }
-
-        dispatch(signInFromJwt({ accessToken: jwt }));
-
-        if (decoded.roles && decoded.roles.length > 1) {
-          navigate("/home", { replace: true });
-        } else {
-          navigate("/choose-account", { replace: true });
-        }
-      } catch (err) {
-        navigate("/login?err=invalid-link", { replace: true });
-      }
-    })();
+    validateToken(linkToken);
   }, [sp, mutateAsync, dispatch, navigate]);
 
+  async function validateToken(token: string) {
+    try {
+      const jwt = await mutateAsync(token);
+
+      const decoded = decodeAndNormalizeJwt(jwt);
+      const ok =
+        !!decoded?.id &&
+        !!decoded?.email &&
+        typeof decoded?.expMs === "number" &&
+        decoded.expMs > Date.now();
+
+      if (!ok) {
+        navigate("/login?err=invalid-link", { replace: true });
+        return;
+      }
+
+      dispatch(signInFromJwt({ accessToken: jwt }));
+
+      if (decoded.profile) {
+        navigate("/home", { replace: true });
+      } else {
+        navigate("/first-access?token=" + token, { replace: true });
+      }
+    } catch (err) {
+      navigate("/login?err=invalid-link", { replace: true });
+    }
+  }
+
   return (
-    <div className="flex items-center justify-center h-[70vh]">
-      <p className="text-sm">Validando acesso…</p>
+    <div className="flex flex-col gap-5 items-center justify-center flex-1">
+      <p className="text-sm text-neutral-white-02">Validando acesso…</p>
+      <BounceLoader color="#21A15D" />
     </div>
   );
 }

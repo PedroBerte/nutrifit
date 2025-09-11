@@ -46,12 +46,13 @@
   --color-text: var(--text-color);
   --color-neutral-white-01: var(--neutral-white-01);
   --color-neutral-white-02: var(--neutral-white-02);
+  --color-neutral-dark-03: var(--neutral-dark-03);
 }
 
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --foreground: oklch(1 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -88,6 +89,7 @@
   --text-color: rgba(48, 48, 48, 1);
   --neutral-white-01: rgba(249, 249, 249, 1);
   --neutral-white-02: rgba(196, 193, 193, 1);
+  --neutral-dark-03: #1b1b1b;
 }
 
 .dark {
@@ -125,6 +127,7 @@
 
   --neutral-dark-01: rgba(31, 31, 34, 1);
   --neutral-dark-02: rgba(115, 115, 115, 1);
+  --neutral-dark-03: #1b1b1b;
   --text-color: rgba(48, 48, 48, 1);
   --neutral-white-01: rgba(249, 249, 249, 1);
   --neutral-white-02: rgba(196, 193, 193, 1);

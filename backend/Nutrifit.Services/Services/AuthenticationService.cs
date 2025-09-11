@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Nutrifit.Repository;
 using Nutrifit.Services.DTO;
 using Nutrifit.Services.Services.Interfaces;
+using Nutrifit.Services.ViewModel.Request;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -75,18 +76,15 @@ namespace Nutrifit.Services.Services
             var payload = JsonSerializer.Deserialize<MagicLinkPayload>(raw!);
 
             var user = await _context.User
-                .Include(x => x.UserProfiles)
-                .ThenInclude(x => x.Profile)
-                .ThenInclude(x => x.ProfileRoles)
-                .ThenInclude(x => x.Role)
-                .SingleOrDefaultAsync(u => u.Email == payload!.Email);
+                .Include(x => x.Profile)
+                .FirstOrDefaultAsync(u => u.Email == payload!.Email);
 
             var request = new IssueJwtTokenRequest
             {
                 Id = Guid.NewGuid(),
                 Name = "",
                 Email = payload.Email,
-                Roles = [],
+                Profile = Guid.Empty,
                 IsAdmin = user?.IsAdmin ?? false
             };
 
@@ -94,7 +92,7 @@ namespace Nutrifit.Services.Services
             {
                 request.Id = user.Id;
                 request.Name = user.Name;
-                request.Roles = user.UserProfiles.SelectMany(up => up.Profile!.ProfileRoles).Select(pr => pr.Role.Id).Distinct().ToArray();
+                request.Profile = user.ProfileId;
             }
 
             return IssueJwt(request);
@@ -111,7 +109,7 @@ namespace Nutrifit.Services.Services
                 new Claim("id", request.Id.ToString()),
                 new Claim("name", request.Name),
                 new Claim("isAdmin", request.IsAdmin.ToString()),
-                new Claim("roles", string.Join(",", request.Roles)),
+                new Claim("profile", request.Profile == Guid.Empty ? string.Empty : request.Profile.ToString()),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Sub, request.Email),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Email, request.Email),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())

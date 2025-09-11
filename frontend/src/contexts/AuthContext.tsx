@@ -11,7 +11,6 @@ type AuthUser = {
   user: DecodedJwt | null;
   isExpired: boolean;
   secondsLeft: number | null;
-  hasRole: (role: string) => boolean;
   isAdmin: boolean;
   logout: () => void;
 };
@@ -29,6 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [accessToken]
   );
 
+  console.log("DECODED", decoded);
+
   const { isExpired, secondsLeft } = useMemo(() => {
     if (!expiresAt) return { isExpired: true, secondsLeft: null };
     const msLeft = expiresAt - Date.now();
@@ -37,12 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       secondsLeft: Math.max(Math.floor(msLeft / 1000), 0),
     };
   }, [expiresAt]);
-
-  const hasRole = useCallback(
-    (role: string) =>
-      !!decoded?.roles?.some((r) => r.toLowerCase() === role.toLowerCase()),
-    [decoded?.roles]
-  );
 
   const logout = useCallback(() => {
     dispatch(signOut());
@@ -55,11 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: decoded,
       isExpired,
       secondsLeft,
-      hasRole,
       isAdmin: !!decoded?.isAdmin,
       logout,
     }),
-    [accessToken, tokenType, decoded, isExpired, secondsLeft, hasRole, logout]
+    [accessToken, tokenType, decoded, isExpired, secondsLeft, logout]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -4,7 +4,7 @@ import { type RootState } from "@/store";
 import { setTokens, signOut } from "@/store/authSlice";
 
 export const api = axios.create({
-  baseURL: "https://localhost:7073",
+  baseURL: "https://localhost:7073/api",
 });
 
 function isExpiringSoon(expiresAt: number | null) {

@@ -45,19 +45,17 @@ public class UserService : IUserService
         try
         {
             user.Id = Guid.NewGuid();
-            user.CreatedAt = DateTime.UtcNow;
+            user.Status = "A";
             _context.User.Add(user);
 
             if (user.Address != null)
             {
                 user.Address.Id = Guid.NewGuid();
-                user.Address.CreatedAt = DateTime.UtcNow;
                 user.Address.Status = "A";
                 _context.Address.Add(user.Address);
             }
 
             await _context.SaveChangesAsync();
-
             return user;
         }
         catch (Exception ex)

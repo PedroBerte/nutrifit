@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Nutrifit.Repository.Entities;
+using System.Reflection.Emit;
 
 namespace Nutrifit.Repository
 {
@@ -15,9 +16,6 @@ namespace Nutrifit.Repository
         public DbSet<ProfessionalFeedback> ProfessionalFeedback => Set<ProfessionalFeedback>();
         public DbSet<ProfessionalCredential> ProfessionalCredential => Set<ProfessionalCredential>();
         public DbSet<Profile> Profile => Set<Profile>();
-        public DbSet<Role> Role => Set<Role>();
-        public DbSet<UserProfile> UserProfile => Set<UserProfile>();
-        public DbSet<ProfileRole> ProfileRole => Set<ProfileRole>();
 
         protected override void OnModelCreating(ModelBuilder b)
         {
@@ -31,6 +29,10 @@ namespace Nutrifit.Repository
                 e.ToTable("Address");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
             });
 
             b.Entity<User>(e =>
@@ -39,15 +41,19 @@ namespace Nutrifit.Repository
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
 
-                e.HasOne<Address>()
+                e.HasOne(u => u.Profile)
                  .WithMany()
-                 .HasForeignKey("AddressId")
+                 .HasForeignKey(u => u.ProfileId)
                  .OnDelete(DeleteBehavior.Restrict);
 
-                e.HasOne<Profile>()
+                e.HasOne(u => u.Address)   
                  .WithMany()
-                 .HasForeignKey("ProfileId")
+                 .HasForeignKey(u => u.AddressId)
                  .OnDelete(DeleteBehavior.Restrict);
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
             });
 
             b.Entity<CustomerProfessionalBond>(e =>
@@ -56,9 +62,13 @@ namespace Nutrifit.Repository
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
 
-                e.HasOne<User>().WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict);
-                e.HasOne<User>().WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Restrict);
-                e.HasOne<User>().WithMany().HasForeignKey("SenderId").OnDelete(DeleteBehavior.Restrict);
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne<User>(x => x.Customer).WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<User>(x => x.Professional).WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<User>(x => x.Sender).WithMany().HasForeignKey("SenderId").OnDelete(DeleteBehavior.Restrict);
             });
 
             b.Entity<Appointment>(e =>
@@ -67,7 +77,11 @@ namespace Nutrifit.Repository
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
 
-                e.HasOne<CustomerProfessionalBond>()
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne<CustomerProfessionalBond>(x => x.CustomerProfessionalBond)
                  .WithMany()
                  .HasForeignKey("CustomerProfessionalBondId")
                  .OnDelete(DeleteBehavior.Cascade);
@@ -79,8 +93,12 @@ namespace Nutrifit.Repository
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
 
-                e.HasOne<User>().WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Restrict);
-                e.HasOne<User>().WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict);
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne<User>(x => x.Professional).WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<User>(x => x.Customer).WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict);
             });
 
             b.Entity<ProfessionalFeedback>(e =>
@@ -89,8 +107,12 @@ namespace Nutrifit.Repository
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
 
-                e.HasOne<User>().WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Restrict);
-                e.HasOne<User>().WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict);
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne<User>(x => x.Professional).WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<User>(x => x.Customer).WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict);
             });
 
             b.Entity<ProfessionalCredential>(e =>
@@ -99,7 +121,11 @@ namespace Nutrifit.Repository
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
 
-                e.HasOne<User>().WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Cascade);
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne<User>(x => x.Professional).WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Cascade);
             });
 
             b.Entity<Profile>(e =>
@@ -107,32 +133,13 @@ namespace Nutrifit.Repository
                 e.ToTable("Profile");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
             });
 
-            b.Entity<Role>(e =>
-            {
-                e.ToTable("Role");
-                e.HasKey(x => x.Id);
-                e.Property(x => x.Id).ValueGeneratedOnAdd();
-            });
-
-            b.Entity<UserProfile>(e =>
-            {
-                e.ToTable("UserProfile");
-                e.HasKey(x => new { x.UserId, x.ProfileId });
-
-                e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
-                e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade);
-            });
-
-            b.Entity<ProfileRole>(e =>
-            {
-                e.ToTable("ProfileRole");
-                e.HasKey(x => new { x.RoleId, x.ProfileId });
-
-                e.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Cascade);
-                e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade);
-            });
+            DatabaseSeeder.Seed(b);
         }
     }
 }

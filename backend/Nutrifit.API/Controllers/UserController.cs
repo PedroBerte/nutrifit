@@ -64,7 +64,7 @@ public class UserController : ControllerBase
         try
         {
             var user = _mapper.Map<User>(userDto);
-            user.Password = ""; // Defina a senha conforme sua lógica
+            user.Password = "";
             var created = await _service.AddAsync(user);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, _mapper.Map<UserDto>(created));
         }

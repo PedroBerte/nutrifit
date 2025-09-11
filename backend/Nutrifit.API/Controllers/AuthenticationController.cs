@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Nutrifit.Services.DTO.Request;
 using Nutrifit.Services.Services.Interfaces;
+using Nutrifit.Services.ViewModel.Request;
 
 namespace Nutrifit.API.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthenticationService _authService;
