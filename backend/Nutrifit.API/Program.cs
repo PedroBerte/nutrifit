@@ -38,7 +38,7 @@ builder.Services.AddAutoMapper(cfg =>
 builder.Services.AddCors(o =>
 {
     o.AddPolicy("front", p => p
-        .WithOrigins("http://localhost:5173", "https://localhost:5173")
+        .WithOrigins("http://localhost:5173", "https://localhost:5173", "http://localhost:5052", "https://localhost:5052", "https://nutrifit.mujapira.com")
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials()
@@ -71,7 +71,7 @@ app.UseSwagger();
     app.UseSwaggerUI();
 //}
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors("front"); 
 app.UseAuthentication();
