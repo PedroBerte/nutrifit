@@ -64,13 +64,15 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      args:
+      VITE_API_URL: ${FRONT_API_URL}
     container_name: nutrifit_front
     depends_on:
       - api
     environment:
       VITE_API_URL: ${FRONT_API_URL}
     ports:
-      - "5052:5052"
+      - "5052:80"
     restart: unless-stopped
     networks: [nutrifit_net]
 
