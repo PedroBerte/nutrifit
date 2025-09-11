@@ -28,7 +28,7 @@ export default function ProfissionalForm() {
             <FormLabel>Tipo de Identificação</FormLabel>
             <FormControl>
               <Select {...field}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>

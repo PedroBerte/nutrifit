@@ -1,10 +1,3 @@
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@radix-ui/react-select";
 import React from "react";
 import {
   FormField,
@@ -15,6 +8,13 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { useRegisterForm } from "@/contexts/forms/RegisterFormContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 export default function AddressForm() {
   const { form } = useRegisterForm();
@@ -119,7 +119,7 @@ export default function AddressForm() {
             <FormLabel>Tipo de Endereço</FormLabel>
             <FormControl>
               <Select {...field}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione o tipo de endereço" />
                 </SelectTrigger>
                 <SelectContent>
