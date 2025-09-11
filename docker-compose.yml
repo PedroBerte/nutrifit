@@ -65,7 +65,7 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-      VITE_API_URL: ${FRONT_API_URL}
+        VITE_API_URL: ${FRONT_API_URL}
     container_name: nutrifit_front
     depends_on:
       - api
