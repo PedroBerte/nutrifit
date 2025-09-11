@@ -1,31 +1,35 @@
-# ---------- Dev image para Vite ----------
-FROM node:20-alpine
-
-# Evita issues de libs nativas em algumas deps
-RUN apk add --no-cache libc6-compat
-
+# ---------- Build (Vite) ----------
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copia apenas os manifestos para cache mais eficiente
+# Instala deps baseado no lockfile
 COPY frontend/package.json frontend/pnpm-lock.yaml* frontend/yarn.lock* frontend/package-lock.json* ./
+RUN corepack enable && \
+    if [ -f pnpm-lock.yaml ]; then corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile; \
+    elif [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
+    elif [ -f package-lock.json ]; then npm ci; \
+    else npm i; fi
 
-# Instala dependências
-RUN npm install; 
-
-
-# Copia o restante do código do front
+# Código do app
 COPY frontend/ .
 
-# Vite precisa escutar fora do localhost no container
-EXPOSE 5052
+# Vite lê VITE_* em tempo de build (passaremos por build-arg)
+ARG https://apinutrifit.mujapira.com
+ENV VITE_API_URL=https://apinutrifit.mujapira.com
 
-# Ambiente: o compose já injeta VITE_API_URL via 'environment'
-# Vite injeta import.meta.env.* a partir das variáveis de ambiente VITE_*
-ENV HOST=0.0.0.0
+# Build
+RUN if [ -f pnpm-lock.yaml ]; then pnpm build; \
+    elif [ -f yarn.lock ]; then yarn build; \
+    else npm run build; fi
 
-# Sobe o dev server com hot-reload
-CMD sh -lc ' \
-    if [ -f pnpm-lock.yaml ]; then pnpm dev --host 0.0.0.0; \
-    elif [ -f yarn.lock ]; then yarn dev --host 0.0.0.0; \
-    else npm run dev -- --host 0.0.0.0; \
-    fi'
+# ---------- Runtime (Nginx servindo estático) ----------
+FROM nginx:alpine
+# Config SPA (fallback)
+RUN rm -f /etc/nginx/conf.d/default.conf
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Arquivos gerados por Vite
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
