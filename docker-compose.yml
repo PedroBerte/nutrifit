@@ -3,25 +3,28 @@ services:
     image: postgres:16
     container_name: nutrifit_pg
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: nutrifitdb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # Se quiser acesso externo ao banco, mapeie assim (será definido no .env):
     ports:
-      - "5432:5432"
+      - "${PG_PORT:-5433}:5432"
+    # Se NÃO precisar acesso externo, pode remover o bloco 'ports' e deixar só:
+    # expose: ["5432"]
     volumes:
       - pgdata_nutrifit:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d nutrifitdb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 15
+    networks: [nutrifit_net]
 
   redis:
     image: redis:7
     container_name: nutrifit_redis
-    ports:
-      - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
+    expose: ["6379"]
     volumes:
       - redisdata_nutrifit:/data
     healthcheck:
@@ -29,25 +32,53 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks: [nutrifit_net]
 
-  # api:
-  #   build:
-  #     context: .                                 
-  #     dockerfile: backend/Nutrifit.API/Dockerfile
-  #   container_name: nutrifit_api
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   environment:
-  #     ConnectionStrings__Default: "Host=db;Port=5432;Database=nutrifitdb;Username=postgres;Password=postgres"
-  #     Redis: "redis:6379,ssl=false,abortConnect=false"
-  #     ASPNETCORE_ENVIRONMENT: "Docker"
-  #   ports:
-  #     - "8080:8080"
-  #   restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: backend/Nutrifit.API/Dockerfile
+    container_name: nutrifit_api
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Use os NOMES DOS SERVIÇOS da rede Docker (db/redis), não localhost
+      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Redis: redis:6379,ssl=false,abortConnect=false
+
+      # deixe Development enquanto valida Swagger
+      ASPNETCORE_ENVIRONMENT: Development
+      Smtp__AppPassword: ${SMTP_APP_PASSWORD}
+
+      # (opcional) forçar Kestrel a escutar na 8080 explícito
+      ASPNETCORE_URLS: http://+:5051
+    ports:
+      - "5051:5051"   # host 6000 -> container 8080 (AGORA bate certo)
+    restart: unless-stopped
+    networks: [nutrifit_net]
+
+  front:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: nutrifit_front
+    depends_on:
+      - api
+    environment:
+      VITE_API_URL: ${FRONT_API_URL}
+    ports:
+      - "5052:5052"
+    restart: unless-stopped
+    networks: [nutrifit_net]
 
 volumes:
   pgdata_nutrifit:
   redisdata_nutrifit:
+
+networks:
+  nutrifit_net:
+    name: nutrifit_net
+    driver: bridge

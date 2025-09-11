@@ -38,6 +38,11 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  server: {
+    host: true,
+    port: Number(process.env.PORT) || 5052,
+    strictPort: true,
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

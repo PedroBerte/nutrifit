@@ -4,7 +4,7 @@ import { type RootState } from "@/store";
 import { setTokens, signOut } from "@/store/authSlice";
 
 export const api = axios.create({
-  baseURL: "https://localhost:7073/api",
+    baseURL: import.meta.env.VITE_API_URL || "https://apinutrifit.mujapira.com/api",
 });
 
 function isExpiringSoon(expiresAt: number | null) {
