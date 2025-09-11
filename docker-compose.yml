@@ -1,84 +1,51 @@
-services:
-  db:
-    image: postgres:16
-    container_name: nutrifit_pg
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    # Se quiser acesso externo ao banco, mapeie assim (será definido no .env):
-    ports:
-      - "${PG_PORT:-5433}:5432"
-    # Se NÃO precisar acesso externo, pode remover o bloco 'ports' e deixar só:
-    # expose: ["5432"]
-    volumes:
-      - pgdata_nutrifit:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 15
-    networks: [nutrifit_net]
+name: Deploy Nutrifit (Self-Hosted)
 
-  redis:
-    image: redis:7
-    container_name: nutrifit_redis
-    command: ["redis-server", "--appendonly", "yes"]
-    expose: ["6379"]
-    volumes:
-      - redisdata_nutrifit:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks: [nutrifit_net]
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
 
-  api:
-    build:
-      context: .
-      dockerfile: backend/Nutrifit.API/Dockerfile
-    container_name: nutrifit_api
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      # Use os NOMES DOS SERVIÇOS da rede Docker (db/redis), não localhost
-      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      ConnectionStrings__Redis: redis:6379,ssl=false,abortConnect=false
+jobs:
+  deploy:
+    runs-on: self-hosted
+    env:
+      APP_DIR: /opt/apps/nutrifit
+      ENV_FILE: .env
 
-      # deixe Development enquanto valida Swagger
-      ASPNETCORE_ENVIRONMENT: Development
-      Smtp__AppPassword: ${SMTP_APP_PASSWORD}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # (opcional) forçar Kestrel a escutar na 8080 explícito
-      ASPNETCORE_URLS: http://+:5051
-    ports:
-      - "5051:5051"   # host 6000 -> container 8080 (AGORA bate certo)
-    restart: unless-stopped
-    networks: [nutrifit_net]
+      - name: Copiar arquivos pro APP_DIR (sem sudo)
+        run: |
+          mkdir -p "$APP_DIR"
+          shopt -s dotglob
+          rm -rf "$APP_DIR"/*
+          cp -r ./* "$APP_DIR"/
+          shopt -u dotglob
 
-  front:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    container_name: nutrifit_front
-    depends_on:
-      - api
-    environment:
-      VITE_API_URL: ${FRONT_API_URL}
-    ports:
-      - "5052:5052"
-    restart: unless-stopped
-    networks: [nutrifit_net]
+      - name: Criar .env
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          cat > "${ENV_FILE}" <<EOF
+          POSTGRES_USER=${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.NUTRIFIT_POSTGRES_PASSWORD }}
+          POSTGRES_DB=${{ env.POSTGRES_DB }}
+          POSTGRES_PORT=${{ env.POSTGRES_PORT }}
+          POSTGRES_HOST=${{ env.POSTGRES_HOST }}
+          REDIS_PORT=${{ env.REDIS_PORT }}
+          SMTP_APP_PASSWORD=${{ secrets.SMTP_APP_PASSWORD }}
+          FRONT_API_URL=${{ env.FRONT_API_URL }}
+          FRONT_PORT=${{ env.FRONT_PORT }}
+          EOF
+          echo "Arquivo .env gerado:"
+          sed -n '1,50p' "${ENV_FILE}" | sed 's/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=***|/; s/SMTP_APP_PASSWORD=.*/SMTP_APP_PASSWORD=***|/'
 
-volumes:
-  pgdata_nutrifit:
-  redisdata_nutrifit:
+      - name: Checar Docker Compose
+        run: docker compose version
 
-networks:
-  nutrifit_net:
-    name: nutrifit_net
-    driver: bridge
+      - name: Subir containers
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          docker compose --env-file "${ENV_FILE}" up -d --build
+          docker compose ps
