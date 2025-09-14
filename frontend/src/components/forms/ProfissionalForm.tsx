@@ -19,7 +19,7 @@ import {
 export default function ProfissionalForm() {
   const { form } = useRegisterForm();
   return (
-    <>
+    <div className="flex flex-col w-full gap-4">
       <FormField
         name="idType"
         control={form.control}
@@ -69,6 +69,6 @@ export default function ProfissionalForm() {
           </FormItem>
         )}
       />
-    </>
+    </div>
   );
 }

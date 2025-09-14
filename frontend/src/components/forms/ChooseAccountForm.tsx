@@ -26,6 +26,7 @@ export default function ChooseAccountForm() {
         <Button
           className="w-20 h-20"
           onClick={() => handleSelectAccountType("nutritionist")}
+          type="button"
         >
           <div className="w-20 h-20 flex flex-col items-center justify-center gap-1">
             <Apple className="!w-7 !h-7" />
@@ -34,6 +35,7 @@ export default function ChooseAccountForm() {
         </Button>
         <Button
           className="w-20 h-20"
+          type="button"
           onClick={() => handleSelectAccountType("student")}
         >
           <div className="w-20 h-20 flex flex-col items-center justify-center gap-1">
@@ -43,6 +45,7 @@ export default function ChooseAccountForm() {
         </Button>
         <Button
           className="w-20 h-20"
+          type="button"
           onClick={() => handleSelectAccountType("personal")}
         >
           <div className="w-20 h-20 flex flex-col items-center justify-center gap-1">

@@ -9,6 +9,9 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { useRegisterForm } from "@/contexts/forms/RegisterFormContext";
+import InputMask from "@mona-health/react-input-mask";
+import { MaskedInput } from "../MaskedInput";
+import { formatPhoneBR } from "@/lib/mask";
 
 export default function GenericPersonForm() {
   const { form } = useRegisterForm();
@@ -49,7 +52,12 @@ export default function GenericPersonForm() {
           <FormItem>
             <FormLabel>Celular</FormLabel>
             <FormControl>
-              <Input placeholder="(99) 99999-9999" {...field} />
+              <MaskedInput
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                placeholder="(11) 91234-5678"
+                formatter={formatPhoneBR}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

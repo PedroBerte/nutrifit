@@ -3,12 +3,11 @@ import ChooseAccountForm from "@/components/forms/ChooseAccountForm";
 import GenericPersonForm from "@/components/forms/GenericPersonForm";
 import ProfissionalForm from "@/components/forms/ProfissionalForm";
 import QuizForm from "@/components/forms/QuizForm";
+import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useRegisterForm } from "@/contexts/forms/RegisterFormContext";
-import type { RootState } from "@/store";
-import { useEffect } from "react";
-import { useSelector } from "react-redux";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function FirstAccess() {
   const { step, setStep, form, accountType, handleSubmitAll } =
@@ -39,7 +38,7 @@ export default function FirstAccess() {
     switch (step) {
       case "generic":
         return accountType === "student" ? (
-          <div className="flex flex-1 gap-2 justify-between">
+          <div className="flex w-full gap-2 justify-between">
             <Button
               variant="dark"
               onClick={() => setStep("choose")}
@@ -57,7 +56,7 @@ export default function FirstAccess() {
             </Button>
           </div>
         ) : (
-          <div className="flex flex-1 gap-2 justify-between">
+          <div className="flex w-full gap-2 justify-between">
             <Button
               variant="dark"
               onClick={() => setStep("choose")}
@@ -77,7 +76,7 @@ export default function FirstAccess() {
         );
       case "quiz":
         return (
-          <div className="flex flex-1 gap-2 justify-between">
+          <div className="flex w-full gap-2 justify-between">
             <Button
               variant="dark"
               onClick={() => setStep("generic")}
@@ -97,7 +96,7 @@ export default function FirstAccess() {
         );
       case "address":
         return (
-          <div className="flex flex-1 gap-2 justify-between">
+          <div className="flex w-full  gap-2 justify-between">
             <Button
               variant="dark"
               onClick={() => setStep("generic")}
@@ -117,7 +116,7 @@ export default function FirstAccess() {
         );
       case "professional":
         return (
-          <div className="flex flex-1 gap-2 justify-between">
+          <div className="flex w-full gap-2 justify-between">
             <Button
               variant="dark"
               onClick={() => setStep("address")}
@@ -138,12 +137,37 @@ export default function FirstAccess() {
     }
   }
 
+  function renderTitle() {
+    switch (step) {
+      case "generic":
+        return <p className="text-xl font-bold">Sobre você</p>;
+      case "address":
+        return <p className="text-xl font-bold">Seu Endereço</p>;
+      case "professional":
+        return <p className="text-xl font-bold">Dados Profissionais</p>;
+      case "quiz":
+        return <Navbar isMenuButtonVisible={false} />;
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 justify-center">
+    <div className="flex flex-col flex-1">
       <Form {...form}>
-        <form onSubmit={handleSubmitAll} className="flex flex-col gap-6">
-          {renderForm()}
-          {renderButtons()}
+        <form onSubmit={handleSubmitAll} className="flex flex-1">
+          <AnimatePresence mode="wait">
+            <motion.div
+              className="flex flex-1 justify-between flex-col gap-6"
+              key={step}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderTitle()}
+              {renderForm()}
+              {renderButtons()}
+            </motion.div>
+          </AnimatePresence>
         </form>
       </Form>
     </div>

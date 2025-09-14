@@ -6,9 +6,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { UserProfiles, type AddressType, type UserType } from "@/types/user";
 import { useAuth } from "../AuthContext";
 import { useCreateUser } from "@/services/api/user";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { signInFromJwt } from "@/store/authSlice";
-import type { RootState } from "@/store";
 import { useValidateSession } from "@/services/api/auth";
 import { decodeAndNormalizeJwt } from "@/lib/jwt";
 import type { ProfessionalCredentialType } from "@/types/professional";
@@ -17,7 +16,6 @@ import { useCreateProfessionalCredentials } from "@/services/api/professional";
 export type AccountType = "student" | "nutritionist" | "personal";
 
 const formSchema = z.object({
-  accountType: z.enum(["student", "nutritionist", "personal"]),
   image: z.string().url().optional().or(z.literal("")),
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   phone: z.string().min(8, "Celular deve ter pelo menos 8 dígitos"),
@@ -26,18 +24,18 @@ const formSchema = z.object({
   nutritionistServiceModality: z
     .enum(["in_person", "online", "both"])
     .optional(),
-  zip: z.string().min(8, "CEP inválido").optional(),
-  street: z.string().min(2, "Rua obrigatória").optional(),
-  number: z.string().min(1, "Número obrigatório").optional(),
-  complement: z.string().optional(),
-  district: z.string().min(2, "Bairro obrigatório").optional(),
-  city: z.string().min(2, "Cidade obrigatória").optional(),
-  state: z.string().min(2, "UF obrigatória").optional(),
-  country: z.string().min(2, "País obrigatório").optional(),
-  addressType: z.enum(["residential", "commercial"]).optional(),
-  idType: z.enum(["CRN", "CREF", "OUTRO"]).optional(),
-  credential: z.string().min(3, "Credencial obrigatória").optional(),
-  biography: z.string().max(500, "Máximo 500 caracteres").optional(),
+  zip: z.string().min(8, "CEP inválido"),
+  street: z.string().min(2, "Rua obrigatória"),
+  number: z.string().min(1, "Número obrigatório"),
+  complement: z.string(),
+  district: z.string().min(2, "Bairro obrigatório"),
+  city: z.string().min(2, "Cidade obrigatória"),
+  state: z.string().min(2, "UF obrigatória"),
+  country: z.string().min(2, "País obrigatório"),
+  addressType: z.enum(["residential", "commercial"]),
+  idType: z.enum(["CRN", "CREF", "OUTRO"]),
+  credential: z.string().min(3, "Credencial obrigatória"),
+  biography: z.string().max(500, "Máximo 500 caracteres"),
   goal: z.string().optional(),
 });
 
@@ -77,16 +75,29 @@ export function RegisterFormProvider({
   const defaultValues = useMemo<RegisterFormValues>(() => {
     if (accountType === "student") {
       return {
-        accountType: "student",
         image: "",
         name: "",
         phone: "",
         goal: "health",
+        zip: "",
+        street: "",
+        number: "",
+        complement: "",
+        district: "",
+        city: "",
+        state: "",
+        country: "Brasil",
+        addressType: "residential",
+        idType: "CRN",
+        credential: "",
+        biography: "",
+        search: undefined,
+        personalServiceModality: undefined,
+        nutritionistServiceModality: undefined,
       };
     }
     if (accountType === "nutritionist") {
       return {
-        accountType: "nutritionist",
         image: "",
         name: "",
         phone: "",
@@ -96,16 +107,20 @@ export function RegisterFormProvider({
         complement: "",
         district: "",
         city: "",
+        state: "",
         country: "Brasil",
         addressType: "residential",
-        state: "",
         idType: "CRN",
         credential: "",
         biography: "",
+        goal: "",
+        search: undefined,
+        personalServiceModality: undefined,
+        nutritionistServiceModality: undefined,
       };
     }
+    // personal
     return {
-      accountType: "personal",
       image: "",
       name: "",
       phone: "",
@@ -121,6 +136,10 @@ export function RegisterFormProvider({
       idType: "CRN",
       credential: "",
       biography: "",
+      goal: "",
+      search: undefined,
+      personalServiceModality: undefined,
+      nutritionistServiceModality: undefined,
     };
   }, [accountType]);
 
@@ -174,6 +193,7 @@ export function RegisterFormProvider({
         "idType",
         "credential",
       ]);
+      console.log("ok", ok, form.getValues());
       if (!ok) return;
 
       const payload = form.getValues();
@@ -185,14 +205,14 @@ export function RegisterFormProvider({
         city: payload.city || "",
         state: payload.state || "",
         zipCode: payload.zip || "",
-        country: payload.country || "",
+        country: payload.country || "Brasil",
         addressType: payload.addressType === "residential" ? 1 : 2,
       };
 
       var newUser: UserType = {
         id: null,
         profileId:
-          payload.accountType === "nutritionist"
+          accountType === "nutritionist"
             ? UserProfiles.NUTRITIONIST
             : UserProfiles.PERSONAL,
         name: payload.name,
