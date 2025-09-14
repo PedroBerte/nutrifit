@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   FormField,
   FormItem,
@@ -8,6 +8,7 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { useRegisterForm } from "@/contexts/forms/RegisterFormContext";
+import { useViaCep } from "@/services/viacep";
 import {
   Select,
   SelectContent,
@@ -15,11 +16,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { MaskedInput } from "../MaskedInput";
+import { formatCEP } from "@/lib/mask";
+import { ComboBox } from "../ComboBox";
+import { brazilianStates } from "@/lib/states";
 
 export default function AddressForm() {
   const { form } = useRegisterForm();
+  const cep = form.watch("zip") ?? "";
+  const { data, isFetching, isError } = useViaCep(
+    cep,
+    !!cep && cep.replace(/\D/g, "").length === 8
+  );
+
+  useEffect(() => {
+    if (data) {
+      form.setValue("street", data.logradouro || "");
+      form.setValue("district", data.bairro || "");
+      form.setValue("city", data.localidade || "");
+      form.setValue("state", data.uf || "");
+    }
+  }, [data, form]);
+
   return (
-    <>
+    <div className="flex flex-col w-full gap-4">
       <FormField
         name="zip"
         control={form.control}
@@ -27,8 +47,19 @@ export default function AddressForm() {
           <FormItem>
             <FormLabel>CEP</FormLabel>
             <FormControl>
-              <Input placeholder="00000-000" {...field} />
+              <MaskedInput
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                placeholder="00000-000"
+                formatter={formatCEP}
+              />
             </FormControl>
+            {isFetching && (
+              <span className="text-xs text-muted">Buscando endereço...</span>
+            )}
+            {isError && (
+              <span className="text-xs text-red-500">CEP não encontrado</span>
+            )}
             <FormMessage />
           </FormItem>
         )}
@@ -92,7 +123,12 @@ export default function AddressForm() {
           <FormItem>
             <FormLabel>Estado</FormLabel>
             <FormControl>
-              <Input placeholder="SP" {...field} />
+              <ComboBox
+                options={brazilianStates}
+                placeholder="Selecione o estado"
+                {...field}
+                value={field.value ?? ""}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -105,7 +141,7 @@ export default function AddressForm() {
           <FormItem>
             <FormLabel>País</FormLabel>
             <FormControl>
-              <Input placeholder="Brasil" {...field} />
+              <Input disabled placeholder="Brasil" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -132,6 +168,6 @@ export default function AddressForm() {
           </FormItem>
         )}
       />
-    </>
+    </div>
   );
 }

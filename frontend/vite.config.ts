@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname  = dirname(__filename);
+const __dirname = dirname(__filename);
 
 export default defineConfig({
   plugins: [
@@ -42,18 +42,18 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
-  server: {
-    host: true,
-    port: 5052,
-    allowedHosts: ["apinutrifit.mujapira.com", "nutrifit.mujapira.com"],
-    hmr: { host: "apinutrifit.mujapira.com", clientPort: 443, protocol: "wss" },
-  },
+  // server: {
+  //   host: true,
+  //   port: 5052,
+  //   allowedHosts: ["apinutrifit.mujapira.com", "nutrifit.mujapira.com"],
+  //   hmr: { host: "apinutrifit.mujapira.com", clientPort: 443, protocol: "wss" },
+  // },
 
-  preview: {
-    host: true,
-    port: 5052,
-    allowedHosts: ["apinutrifit.mujapira.com", "nutrifit.mujapira.com"],
-  },
+  // preview: {
+  //   host: true,
+  //   port: 5052,
+  //   allowedHosts: ["apinutrifit.mujapira.com", "nutrifit.mujapira.com"],
+  // },
 
   resolve: {
     alias: {
