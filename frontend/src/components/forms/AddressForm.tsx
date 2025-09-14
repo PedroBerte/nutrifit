@@ -18,8 +18,8 @@ import {
 } from "../ui/select";
 import { MaskedInput } from "../MaskedInput";
 import { formatCEP } from "@/lib/mask";
-import { ComboBox } from "../ComboBox";
 import { brazilianStates } from "@/lib/states";
+import { Combobox } from "@/components/ComboBox";
 
 export default function AddressForm() {
   const { form } = useRegisterForm();
@@ -123,7 +123,7 @@ export default function AddressForm() {
           <FormItem>
             <FormLabel>Estado</FormLabel>
             <FormControl>
-              <ComboBox
+              <Combobox
                 options={brazilianStates}
                 placeholder="Selecione o estado"
                 {...field}

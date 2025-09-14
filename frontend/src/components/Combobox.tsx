@@ -34,7 +34,7 @@ type ComboBoxProps = {
   width?: string;
 };
 
-export function ComboBox({
+export function Combobox({
   options,
   value,
   onChange,
