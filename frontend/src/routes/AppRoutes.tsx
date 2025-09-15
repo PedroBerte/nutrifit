@@ -7,6 +7,7 @@ import Home from "@/pages/Home";
 import AppLayoutWithNavbar from "./layouts/AppLayoutWithNavbar";
 import RegisterFormLayout from "./layouts/RegisterFormLayout";
 import FirstAccess from "@/pages/FirstAccess";
+import AppLayoutWithBottomBar from "./layouts/AppLayoutWithBottomBar";
 
 export function AppRoutes() {
   return (
@@ -22,7 +23,9 @@ export function AppRoutes() {
         </Route>
         <Route element={<PrivateRoute />}>
           <Route element={<AppLayoutWithNavbar />}>
-            <Route path="home" element={<Home />} />
+            <Route element={<AppLayoutWithBottomBar />}>
+              <Route path="home" element={<Home />} />
+            </Route>
           </Route>
         </Route>
       </Route>

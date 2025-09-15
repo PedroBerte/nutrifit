@@ -1,4 +1,3 @@
-// src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState } from "@/store";
@@ -27,8 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => decodeAndNormalizeJwt(accessToken),
     [accessToken]
   );
-
-  console.log("DECODED", decoded);
 
   const { isExpired, secondsLeft } = useMemo(() => {
     if (!expiresAt) return { isExpired: true, secondsLeft: null };

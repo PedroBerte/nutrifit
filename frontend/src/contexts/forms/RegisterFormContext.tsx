@@ -41,7 +41,12 @@ const formSchema = z.object({
 
 export type RegisterFormValues = z.infer<typeof formSchema>;
 
-type RegisterStep = "choose" | "generic" | "address" | "professional" | "quiz";
+export type RegisterStep =
+  | "choose"
+  | "generic"
+  | "address"
+  | "professional"
+  | "quiz";
 
 type Ctx = {
   form: UseFormReturn<RegisterFormValues>;
@@ -50,6 +55,7 @@ type Ctx = {
   setAccountType: (t: AccountType) => void;
   handleSubmitAll: () => Promise<void>;
   setStep: (s: RegisterStep) => void;
+  handleValidateStep: () => Promise<boolean>;
 };
 
 const RegisterFormContext = createContext<Ctx | undefined>(undefined);
@@ -73,57 +79,11 @@ export function RegisterFormProvider({
   const createProfessionalCredentials = useCreateProfessionalCredentials();
 
   const defaultValues = useMemo<RegisterFormValues>(() => {
-    if (accountType === "student") {
-      return {
-        image: "",
-        name: "",
-        phone: "",
-        goal: "health",
-        zip: "",
-        street: "",
-        number: "",
-        complement: "",
-        district: "",
-        city: "",
-        state: "",
-        country: "Brasil",
-        addressType: "residential",
-        idType: "CRN",
-        credential: "",
-        biography: "",
-        search: undefined,
-        personalServiceModality: undefined,
-        nutritionistServiceModality: undefined,
-      };
-    }
-    if (accountType === "nutritionist") {
-      return {
-        image: "",
-        name: "",
-        phone: "",
-        zip: "",
-        street: "",
-        number: "",
-        complement: "",
-        district: "",
-        city: "",
-        state: "",
-        country: "Brasil",
-        addressType: "residential",
-        idType: "CRN",
-        credential: "",
-        biography: "",
-        goal: "",
-        search: undefined,
-        personalServiceModality: undefined,
-        nutritionistServiceModality: undefined,
-      };
-    }
-    // personal
     return {
       image: "",
       name: "",
       phone: "",
+      goal: "health",
       zip: "",
       street: "",
       number: "",
@@ -136,12 +96,11 @@ export function RegisterFormProvider({
       idType: "CRN",
       credential: "",
       biography: "",
-      goal: "",
       search: undefined,
       personalServiceModality: undefined,
       nutritionistServiceModality: undefined,
     };
-  }, [accountType]);
+  }, []);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(formSchema),
@@ -152,6 +111,32 @@ export function RegisterFormProvider({
 
   const setAccountType = (t: AccountType) => {
     setAccountTypeState(t);
+  };
+
+  const handleValidateStep = async () => {
+    switch (step) {
+      case "generic":
+        const ok = await form.trigger(["image", "name", "phone"]);
+        if (!ok) return false;
+        return true;
+      case "address":
+        const ok2 = await form.trigger([
+          "zip",
+          "street",
+          "number",
+          "district",
+          "city",
+          "state",
+        ]);
+        if (!ok2) return false;
+        return true;
+      case "professional":
+        const ok3 = await form.trigger(["idType", "credential", "biography"]);
+        if (!ok3) return false;
+        return true;
+      default:
+        return true;
+    }
   };
 
   const handleSubmitAll = async () => {
@@ -168,6 +153,7 @@ export function RegisterFormProvider({
         addressId: null,
         profileId: UserProfiles.STUDENT,
         name: payload.name,
+
         email: user?.email || "",
         address: null,
         profile: null,
@@ -193,7 +179,6 @@ export function RegisterFormProvider({
         "idType",
         "credential",
       ]);
-      console.log("ok", ok, form.getValues());
       if (!ok) return;
 
       const payload = form.getValues();
@@ -294,6 +279,7 @@ export function RegisterFormProvider({
     setAccountType,
     handleSubmitAll,
     setStep,
+    handleValidateStep,
   };
 
   return (

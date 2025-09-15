@@ -6,12 +6,21 @@ import QuizForm from "@/components/forms/QuizForm";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { useRegisterForm } from "@/contexts/forms/RegisterFormContext";
+import {
+  useRegisterForm,
+  type RegisterStep,
+} from "@/contexts/forms/RegisterFormContext";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function FirstAccess() {
-  const { step, setStep, form, accountType, handleSubmitAll } =
-    useRegisterForm();
+  const {
+    step,
+    setStep,
+    form,
+    accountType,
+    handleSubmitAll,
+    handleValidateStep,
+  } = useRegisterForm();
 
   function renderForm() {
     switch (step) {
@@ -50,7 +59,7 @@ export default function FirstAccess() {
             <Button
               type="button"
               className="flex flex-1"
-              onClick={() => setStep("quiz")}
+              onClick={async () => await handleNextStep("quiz")}
             >
               Próximo
             </Button>
@@ -68,7 +77,7 @@ export default function FirstAccess() {
             <Button
               type="button"
               className="flex flex-1"
-              onClick={() => setStep("address")}
+              onClick={async () => await handleNextStep("address")}
             >
               Próximo
             </Button>
@@ -107,7 +116,7 @@ export default function FirstAccess() {
             </Button>
             <Button
               className="flex flex-1"
-              onClick={() => setStep("professional")}
+              onClick={async () => await handleNextStep("professional")}
               type="button"
             >
               Próximo
@@ -148,6 +157,10 @@ export default function FirstAccess() {
       case "quiz":
         return <Navbar isMenuButtonVisible={false} />;
     }
+  }
+
+  async function handleNextStep(nextStep: RegisterStep) {
+    if (await handleValidateStep()) setStep(nextStep);
   }
 
   return (
