@@ -20,6 +20,9 @@ export interface UserType {
   updatedAt?: string | null;
   status?: string | null;
   isAdmin?: boolean | null;
+  dateOfBirth?: string | null;
+  sex?: "male" | "female" | "other" | null;
+  phoneNumber?: string | null;
   address?: AddressType | null;
   profile?: ProfileType | null;
   professionalCredential?: ProfessionalCredentialType | null;

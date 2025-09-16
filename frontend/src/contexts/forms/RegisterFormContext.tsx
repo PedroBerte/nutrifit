@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import { useForm, type UseFormReturn } from "react-hook-form";
-import { z } from "zod";
+import { useForm, type UseFormReturn, type Resolver } from "react-hook-form";
+import { date, z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { UserProfiles, type AddressType, type UserType } from "@/types/user";
 import { useAuth } from "../AuthContext";
 import { useCreateUser } from "@/services/api/user";
 import { useDispatch } from "react-redux";
-import { signInFromJwt } from "@/store/authSlice";
+import { signInFromJwt, signOut } from "@/store/authSlice";
 import { useValidateSession } from "@/services/api/auth";
 import { decodeAndNormalizeJwt } from "@/lib/jwt";
 import type { ProfessionalCredentialType } from "@/types/professional";
@@ -18,6 +18,8 @@ const formSchema = z.object({
   image: z.string().url().optional().or(z.literal("")),
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   phone: z.string().min(8, "Celular deve ter pelo menos 8 dígitos"),
+  sex: z.enum(["male", "female", "other"]),
+  dateOfBirth: z.coerce.date("Data de nascimento obrigatória"),
   search: z.enum(["nutritionist", "personal", "both"]).optional(),
   personalServiceModality: z.enum(["in_person", "online", "both"]).optional(),
   nutritionistServiceModality: z
@@ -81,6 +83,8 @@ export function RegisterFormProvider({
       image: "",
       name: "",
       phone: "",
+      dateOfBirth: new Date(),
+      sex: "male",
       goal: "health",
       zip: "",
       street: "",
@@ -101,7 +105,7 @@ export function RegisterFormProvider({
   }, []);
 
   const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as Resolver<RegisterFormValues>,
     defaultValues,
     mode: "onTouched",
     reValidateMode: "onChange",
@@ -146,6 +150,8 @@ export function RegisterFormProvider({
           "image",
           "name",
           "phone",
+          "dateOfBirth",
+          "sex",
           "zip",
           "street",
           "number",
@@ -162,8 +168,12 @@ export function RegisterFormProvider({
           addressId: null,
           profileId: UserProfiles.STUDENT,
           name: payload.name,
-
           email: user?.email || "",
+          dateOfBirth: payload.dateOfBirth
+            ? payload.dateOfBirth.toISOString()
+            : null,
+          sex: payload.sex || null,
+          phoneNumber: payload.phone || null,
           address: {
             id: null,
             addressLine: payload.street || "",
@@ -188,6 +198,8 @@ export function RegisterFormProvider({
           "image",
           "name",
           "phone",
+          "dateOfBirth",
+          "sex",
           "zip",
           "street",
           "number",
@@ -209,6 +221,11 @@ export function RegisterFormProvider({
               : UserProfiles.PERSONAL,
           name: payload.name,
           email: user?.email || "",
+          dateOfBirth: payload.dateOfBirth
+            ? payload.dateOfBirth.toISOString()
+            : null,
+          sex: payload.sex || null,
+          phoneNumber: payload.phone || null,
           address: {
             id: null,
             addressLine: payload.street || "",
@@ -234,6 +251,7 @@ export function RegisterFormProvider({
       navigate("/home", { replace: true });
     } catch (error) {
       console.error("Failed to submit form:", error);
+      signOut();
       navigate("/login", { replace: true });
     }
   };
@@ -275,7 +293,7 @@ export function RegisterFormProvider({
     } catch (error) {
       console.error("Failed to create user:", error);
       navigate("/login", { replace: true });
-      return;
+      throw error;
     }
   }
 
