@@ -9,7 +9,7 @@ export default function Home() {
   const { data, isLoading, error } = useGetAllProfessionals();
 
   return (
-    <div className="px-2 py-4 flex flex-col gap-4">
+    <div className="flex flex-col gap-4 mt-4">
       <Input
         placeholder="Pesquisar"
         className="border-none bg-neutral-dark-03"

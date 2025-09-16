@@ -19,7 +19,7 @@ import {
 import { MaskedInput } from "../MaskedInput";
 import { formatCEP } from "@/lib/mask";
 import { brazilianStates } from "@/lib/states";
-import { Combobox } from "@/components/ComboBox";
+import { Combobox } from "@/components/Combobox";
 
 export default function AddressForm() {
   const { form } = useRegisterForm();
@@ -35,6 +35,7 @@ export default function AddressForm() {
       form.setValue("district", data.bairro || "");
       form.setValue("city", data.localidade || "");
       form.setValue("state", data.uf || "");
+      form.trigger(["street", "district", "city", "state"]);
     }
   }, [data, form]);
 

@@ -14,16 +14,16 @@ export default function ProfessionalCard({
   description,
 }: ProfessionalCardProps) {
   return (
-    <div className="bg-neutral-dark-03 p-3 rounded-xl">
+    <div className="bg-neutral-dark-03 p-4 rounded-xl">
       <div className="flex gap-3">
         <img src={GenericPersonSvg} alt="" />
-        <div>
+        <div className="overflow-hidden text-ellipsis">
           <p className="text-sm font-semibold">{subtitle}</p>
           <div className="flex gap-1">
             <img src={Verified} alt="" />
             <p className="text-lg font-semibold">{name}</p>
           </div>
-          <p className="text-xs text-gray-500 overflow-hidden line-clamp-3">
+          <p className="text-xs text-gray-500 line-clamp-3 text-ellipsis max-w-[250px]">
             {description}
           </p>
         </div>
