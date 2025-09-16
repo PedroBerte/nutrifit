@@ -12,6 +12,9 @@ public class UserDto
     public DateTime? UpdatedAt { get; set; }
     public string? Status { get; set; } = null!;
     public bool? IsAdmin { get; set; }
+    public DateTime DateOfBirth { get; set; }
+    public string Sex { get; set; } = null!;
+    public string PhoneNumber { get; set; }
     public AddressDto? Address { get; set; }
     public ProfileDto? Profile { get; set; } = null!;    
     public ProfessionalCredentialDto? ProfessionalCredential { get; set; }

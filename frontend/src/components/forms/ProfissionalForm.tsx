@@ -27,7 +27,7 @@ export default function ProfissionalForm() {
           <FormItem>
             <FormLabel>Tipo de Identificação</FormLabel>
             <FormControl>
-              <Select {...field}>
+              <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
