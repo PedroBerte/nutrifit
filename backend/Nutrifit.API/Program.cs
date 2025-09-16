@@ -1,7 +1,5 @@
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Nutrifit.Repository;
-using Nutrifit.Services.Mappings;
 using Nutrifit.Services.Services;
 using Nutrifit.Services.Services.Interfaces;
 using StackExchange.Redis;
@@ -28,12 +26,6 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IMailService, MailService>();
-builder.Services.AddScoped<IProfessionalService, ProfessionalService>();
-
-builder.Services.AddAutoMapper(cfg =>
-{
-
-}, typeof(EntityToDtoProfile).Assembly);
 
 builder.Services.AddCors(o =>
 {

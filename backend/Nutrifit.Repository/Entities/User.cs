@@ -18,4 +18,7 @@ public class User
 
     public Profile Profile { get; set; } = null!;
     public Address? Address { get; set; }
+    public ICollection<CustomerProfessionalBond> CustomerProfessionalBonds { get; set; } = new List<CustomerProfessionalBond>();
+    public ProfessionalCredential? ProfessionalCredential { get; set; }
+    public ICollection<CustomerFeedback> CustomerFeedback { get; set; }  = new List<CustomerFeedback>();
 }

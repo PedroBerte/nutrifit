@@ -42,18 +42,35 @@ namespace Nutrifit.Repository
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
 
                 e.HasOne(u => u.Profile)
-                 .WithMany()
-                 .HasForeignKey(u => u.ProfileId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                    .WithMany()
+                    .HasForeignKey(u => u.ProfileId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 e.HasOne(u => u.Address)   
-                 .WithMany()
-                 .HasForeignKey(u => u.AddressId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                    .WithMany()
+                    .HasForeignKey(u => u.AddressId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 e.Property(x => x.CreatedAt)
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasIndex(u => u.Email).IsUnique();
+
+                e.HasMany(u => u.CustomerProfessionalBonds)
+                    .WithOne(bond => bond.Customer)
+                    .HasForeignKey(bond => bond.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasMany(u => u.CustomerFeedback)
+                    .WithOne(feedback => feedback.Customer)
+                    .HasForeignKey(feedback => feedback.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(u => u.ProfessionalCredential)
+                    .WithOne(credential => credential.Professional)
+                    .HasForeignKey<ProfessionalCredential>(credential => credential.ProfessionalId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             b.Entity<CustomerProfessionalBond>(e =>
@@ -125,7 +142,12 @@ namespace Nutrifit.Repository
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
 
-                e.HasOne<User>(x => x.Professional).WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(pc => pc.Professional)
+                    .WithOne(u => u.ProfessionalCredential)
+                    .HasForeignKey<ProfessionalCredential>(pc => pc.ProfessionalId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasIndex(pc => pc.ProfessionalId).IsUnique();
             });
 
             b.Entity<Profile>(e =>

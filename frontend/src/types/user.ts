@@ -1,3 +1,4 @@
+import type { ProfessionalCredentialType } from "./professional";
 import type { ProfileType } from "./profile";
 
 export const UserProfiles = {
@@ -21,6 +22,7 @@ export interface UserType {
   isAdmin?: boolean | null;
   address?: AddressType | null;
   profile?: ProfileType | null;
+  professionalCredential?: ProfessionalCredentialType | null;
 }
 
 export interface AddressType {

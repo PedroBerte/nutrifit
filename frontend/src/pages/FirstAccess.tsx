@@ -28,43 +28,21 @@ export default function FirstAccess() {
         return <ChooseAccountForm />;
       case "generic":
         return <GenericPersonForm />;
+      case "address":
+        return <AddressForm />;
+      case "quiz":
+        return accountType === "student" ? <QuizForm /> : null;
+      case "professional":
+        return <ProfissionalForm />;
       default:
-        switch (accountType) {
-          case "student":
-            return <QuizForm />;
-          default:
-            switch (step) {
-              case "address":
-                return <AddressForm />;
-              case "professional":
-                return <ProfissionalForm />;
-            }
-        }
+        return null;
     }
   }
 
   function renderButtons() {
     switch (step) {
       case "generic":
-        return accountType === "student" ? (
-          <div className="flex w-full gap-2 justify-between">
-            <Button
-              variant="dark"
-              onClick={() => setStep("choose")}
-              className="flex flex-1"
-              type="button"
-            >
-              Voltar
-            </Button>
-            <Button
-              type="button"
-              className="flex flex-1"
-              onClick={async () => await handleNextStep("quiz")}
-            >
-              Próximo
-            </Button>
-          </div>
-        ) : (
+        return (
           <div className="flex w-full gap-2 justify-between">
             <Button
               variant="dark"
@@ -88,7 +66,7 @@ export default function FirstAccess() {
           <div className="flex w-full gap-2 justify-between">
             <Button
               variant="dark"
-              onClick={() => setStep("generic")}
+              onClick={() => setStep("address")}
               className="flex flex-1"
               type="button"
             >
@@ -104,25 +82,47 @@ export default function FirstAccess() {
           </div>
         );
       case "address":
-        return (
-          <div className="flex w-full  gap-2 justify-between">
-            <Button
-              variant="dark"
-              onClick={() => setStep("generic")}
-              className="flex flex-1"
-              type="button"
-            >
-              Voltar
-            </Button>
-            <Button
-              className="flex flex-1"
-              onClick={async () => await handleNextStep("professional")}
-              type="button"
-            >
-              Próximo
-            </Button>
-          </div>
-        );
+        if (accountType === "student") {
+          return (
+            <div className="flex w-full  gap-2 justify-between">
+              <Button
+                variant="dark"
+                onClick={() => setStep("generic")}
+                className="flex flex-1"
+                type="button"
+              >
+                Voltar
+              </Button>
+              <Button
+                className="flex flex-1"
+                onClick={async () => await handleNextStep("quiz")}
+                type="button"
+              >
+                Próximo
+              </Button>
+            </div>
+          );
+        } else {
+          return (
+            <div className="flex w-full  gap-2 justify-between">
+              <Button
+                variant="dark"
+                onClick={() => setStep("generic")}
+                className="flex flex-1"
+                type="button"
+              >
+                Voltar
+              </Button>
+              <Button
+                className="flex flex-1"
+                onClick={async () => await handleNextStep("professional")}
+                type="button"
+              >
+                Próximo
+              </Button>
+            </div>
+          );
+        }
       case "professional":
         return (
           <div className="flex w-full gap-2 justify-between">
@@ -143,6 +143,8 @@ export default function FirstAccess() {
             </Button>
           </div>
         );
+      default:
+        return null;
     }
   }
 

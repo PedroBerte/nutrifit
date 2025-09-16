@@ -2,7 +2,7 @@ import type { UserType } from "./user";
 
 export interface ProfessionalCredentialType {
   id: string | null;
-  professionalId: string;
+  professionalId: string | null;
   status: string | null;
   type: string;
   credentialId: string;
