@@ -1,47 +1,54 @@
-import { Apple, CircleUser, Dumbbell } from "lucide-react";
-import React from "react";
-import { NavLink } from "react-router-dom";
+import { Apple, CircleUser, Home } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useBottomBarVisibility } from "@/hooks/useBottomBarVisibility";
 
-/*
-  BottomBar fixa na parte inferior da viewport.
-  - Usa position: fixed para ignorar o fluxo do scroll do conteúdo.
-  - Área clicável com NavLink para permitir active styles no futuro.
-  - Largura responsiva: max-w-md para não ficar gigante em telas maiores.
-  - Safe area paddings para iOS (env(safe-area-inset-bottom)).
-*/
 export default function BottomBar() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { showBottomBar } = useBottomBarVisibility();
+
+  if (!showBottomBar) return null;
+
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 flex justify-center pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
+      className="fixed inset-x-0 bottom-0 z-50 flex justify-center pb-[calc(env(safe-area-inset-bottom)+1rem)]"
       aria-label="Navegação principal"
     >
-      <div className="flex w-full max-w-md mx-auto items-center justify-around bg-neutral-dark-02/90 backdrop-blur rounded-2xl px-4 py-2 shadow-lg">
-        <NavLink
-          to="/home"
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${
-              isActive ? "text-primary" : "text-neutral-white-01"
-            }`
-          }
-        >
-          <Dumbbell size={28} />
-          <span className="text-[10px] font-medium">Treino</span>
-        </NavLink>
+      <div className="flex w-2/4 max-w-md mx-auto items-center justify-between bg-neutral-dark-02/90 backdrop-blur rounded-4xl px-4 py-2 shadow-lg">
         <button
-          type="button"
-          className="flex flex-col items-center gap-1 p-2 rounded-xl text-neutral-white-01 opacity-60 cursor-not-allowed"
-          aria-disabled
+          onClick={() => navigate("/workout")}
+          className={`flex flex-col items-center justify-center p-3 rounded-full transition-all ${
+            pathname === "/workout"
+              ? "bg-secondary text-primary"
+              : "text-neutral-light-01"
+          }`}
+          aria-label="Página inicial"
         >
-          <Apple size={28} />
-          <span className="text-[10px] font-medium">Dieta</span>
+          <Home size={32} />
         </button>
+
         <button
-          type="button"
-          className="flex flex-col items-center gap-1 p-2 rounded-xl text-neutral-white-01 opacity-60 cursor-not-allowed"
-          aria-disabled
+          onClick={() => navigate("/nutrition")}
+          className={`flex flex-col items-center justify-center p-3 rounded-full transition-all ${
+            pathname.startsWith("/nutrition")
+              ? "bg-secondary text-primary"
+              : "text-neutral-light-01"
+          }`}
+          aria-label="Nutrição"
         >
-          <CircleUser size={28} />
-          <span className="text-[10px] font-medium">Perfil</span>
+          <Apple size={32} />
+        </button>
+
+        <button
+          onClick={() => navigate("/profile")}
+          className={`flex flex-col items-center justify-center p-3 rounded-full transition-all ${
+            pathname.startsWith("/profile")
+              ? "bg-secondary text-primary"
+              : "text-neutral-light-01"
+          }`}
+          aria-label="Perfil"
+        >
+          <CircleUser size={32} />
         </button>
       </div>
     </nav>

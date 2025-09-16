@@ -4,7 +4,7 @@ import { PrivateRoute } from "./PrivateRoute";
 import Login from "@/pages/login/Login";
 import Callback from "@/pages/login/CallbackLogin";
 import Home from "@/pages/Home";
-import AppLayoutWithNavbar from "./layouts/AppLayoutWithNavbar";
+import AppDefaultLayout from "./layouts/AppDefaultLayout";
 import RegisterFormLayout from "./layouts/RegisterFormLayout";
 import FirstAccess from "@/pages/FirstAccess";
 import AppLayoutWithBottomBar from "./layouts/AppLayoutWithBottomBar";
@@ -22,10 +22,8 @@ export function AppRoutes() {
           <Route path="first-access" element={<FirstAccess />} />
         </Route>
         <Route element={<PrivateRoute />}>
-          <Route element={<AppLayoutWithNavbar />}>
-            <Route element={<AppLayoutWithBottomBar />}>
-              <Route path="home" element={<Home />} />
-            </Route>
+          <Route element={<AppDefaultLayout />}>
+            <Route path="home" element={<Home />} />
           </Route>
         </Route>
       </Route>
