@@ -11,7 +11,6 @@ import { signInFromJwt } from "@/store/authSlice";
 import { useValidateSession } from "@/services/api/auth";
 import { decodeAndNormalizeJwt } from "@/lib/jwt";
 import type { ProfessionalCredentialType } from "@/types/professional";
-import { useCreateProfessionalCredentials } from "@/services/api/professional";
 
 export type AccountType = "student" | "nutritionist" | "personal";
 
@@ -76,7 +75,6 @@ export function RegisterFormProvider({
   const { user } = useAuth();
   const createUser = useCreateUser();
   const validationSession = useValidateSession();
-  const createProfessionalCredentials = useCreateProfessionalCredentials();
 
   const defaultValues = useMemo<RegisterFormValues>(() => {
     return {
@@ -140,90 +138,107 @@ export function RegisterFormProvider({
   };
 
   const handleSubmitAll = async () => {
-    if (!user || !user.email) navigate("/login", { replace: true });
+    try {
+      if (!user || !user.email) navigate("/login", { replace: true });
 
-    if (accountType === "student") {
-      const ok = await form.trigger(["image", "name", "phone"]);
-      if (!ok) return;
+      if (accountType === "student") {
+        const ok = await form.trigger([
+          "image",
+          "name",
+          "phone",
+          "zip",
+          "street",
+          "number",
+          "district",
+          "city",
+          "state",
+        ]);
+        if (!ok) return;
 
-      const payload = form.getValues();
+        const payload = form.getValues();
 
-      var newUser: UserType = {
-        id: null,
-        addressId: null,
-        profileId: UserProfiles.STUDENT,
-        name: payload.name,
+        var newUser: UserType = {
+          id: null,
+          addressId: null,
+          profileId: UserProfiles.STUDENT,
+          name: payload.name,
 
-        email: user?.email || "",
-        address: null,
-        profile: null,
-      };
+          email: user?.email || "",
+          address: {
+            id: null,
+            addressLine: payload.street || "",
+            number: payload.number || "",
+            city: payload.city || "",
+            state: payload.state || "",
+            zipCode: payload.zip || "",
+            country: payload.country || "Brasil",
+            addressType: payload.addressType === "residential" ? 1 : 2,
+          },
+          profile: null,
+        };
 
-      await handleCreateEntity(newUser);
+        await handleCreateEntity(newUser);
 
+        navigate("/home", { replace: true });
+        return;
+      }
+
+      if (accountType === "nutritionist" || accountType === "personal") {
+        const ok = await form.trigger([
+          "image",
+          "name",
+          "phone",
+          "zip",
+          "street",
+          "number",
+          "district",
+          "city",
+          "state",
+          "idType",
+          "credential",
+        ]);
+        if (!ok) return;
+
+        const payload = form.getValues();
+
+        var newUser: UserType = {
+          id: null,
+          profileId:
+            accountType === "nutritionist"
+              ? UserProfiles.NUTRITIONIST
+              : UserProfiles.PERSONAL,
+          name: payload.name,
+          email: user?.email || "",
+          address: {
+            id: null,
+            addressLine: payload.street || "",
+            number: payload.number || "",
+            city: payload.city || "",
+            state: payload.state || "",
+            zipCode: payload.zip || "",
+            country: payload.country || "Brasil",
+            addressType: payload.addressType === "residential" ? 1 : 2,
+          },
+          professionalCredential: {
+            id: null,
+            professionalId: null,
+            status: "P",
+            type: payload.idType || "CRN",
+            credentialId: payload.credential || "",
+            biography: payload.biography || null,
+          },
+        };
+
+        await handleCreateEntity(newUser);
+      }
       navigate("/home", { replace: true });
-      return;
+    } catch (error) {
+      console.error("Failed to submit form:", error);
+      navigate("/login", { replace: true });
     }
-
-    if (accountType === "nutritionist" || accountType === "personal") {
-      const ok = await form.trigger([
-        "image",
-        "name",
-        "phone",
-        "zip",
-        "street",
-        "number",
-        "district",
-        "city",
-        "state",
-        "idType",
-        "credential",
-      ]);
-      if (!ok) return;
-
-      const payload = form.getValues();
-
-      var newAddress: AddressType = {
-        id: null,
-        addressLine: payload.street || "",
-        number: payload.number || "",
-        city: payload.city || "",
-        state: payload.state || "",
-        zipCode: payload.zip || "",
-        country: payload.country || "Brasil",
-        addressType: payload.addressType === "residential" ? 1 : 2,
-      };
-
-      var newUser: UserType = {
-        id: null,
-        profileId:
-          accountType === "nutritionist"
-            ? UserProfiles.NUTRITIONIST
-            : UserProfiles.PERSONAL,
-        name: payload.name,
-        email: user?.email || "",
-        address: newAddress,
-      };
-
-      var newUserCredentials: ProfessionalCredentialType = {
-        id: null,
-        professionalId: "",
-        status: "P",
-        type: payload.idType || "CRN",
-        credentialId: payload.credential || "",
-        biography: payload.biography || null,
-      };
-
-      await handleCreateEntity(newUser, newUserCredentials, accountType);
-    }
-    navigate("/home", { replace: true });
   };
 
-  async function handleCreateEntity(
-    user: UserType,
-    professionalCredentials?: ProfessionalCredentialType,
-    accountType?: AccountType
-  ) {
+  async function handleCreateEntity(user: UserType) {
     try {
       const linkToken = sp.get("token");
       if (!linkToken) {
@@ -232,22 +247,14 @@ export function RegisterFormProvider({
         return;
       }
 
+      console.log("Creating user with data:", user);
+
       var newUser = await createUser.mutateAsync(user);
 
       if (!newUser || !newUser.id) {
         console.error("User creation failed");
         navigate("/login", { replace: true });
         return;
-      }
-
-      if (accountType === "nutritionist" || accountType === "personal") {
-        if (professionalCredentials) {
-          professionalCredentials.professionalId = newUser.id;
-
-          await createProfessionalCredentials.mutateAsync(
-            professionalCredentials
-          );
-        }
       }
 
       const jwt = await validationSession.mutateAsync(linkToken);

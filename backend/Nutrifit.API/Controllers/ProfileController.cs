@@ -1,9 +1,8 @@
 using Nutrifit.Services.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Repository.Entities;
-using AutoMapper;
-using ProfileEntity = Nutrifit.Repository.Entities.Profile;
 using Nutrifit.Services.DTO;
+using Mapster;
 
 namespace Nutrifit.API.Controllers;
 
@@ -12,11 +11,10 @@ namespace Nutrifit.API.Controllers;
 public class ProfileController : ControllerBase
 {
     private readonly IProfileService _service;
-    private readonly IMapper _mapper;
-    public ProfileController(IProfileService service, IMapper mapper)
+
+    public ProfileController(IProfileService service)
     {
         _service = service;
-        _mapper = mapper;
     }
 
     [HttpGet]
@@ -27,7 +25,8 @@ public class ProfileController : ControllerBase
             var profiles = await _service.GetAllAsync();
             if (profiles.Count == 0)
                 return NoContent();
-            return Ok(_mapper.Map<List<ProfileDto>>(profiles));
+
+            return Ok(profiles.Adapt<List<ProfileDto>>());
         }
         catch (Exception ex)
         {
@@ -41,7 +40,10 @@ public class ProfileController : ControllerBase
         try
         {
             var profile = await _service.GetByIdAsync(id);
-            return Ok(_mapper.Map<ProfileDto>(profile));
+            if (profile == null)
+                return NotFound();
+
+            return Ok(profile.Adapt<ProfileDto>());
         }
         catch (InvalidOperationException ex)
         {
@@ -58,11 +60,12 @@ public class ProfileController : ControllerBase
     {
         if (profileDto == null)
             return BadRequest("Perfil inválido.");
+
         try
         {
-            var profile = _mapper.Map<ProfileEntity>(profileDto);
+            var profile = profileDto.Adapt<Profile>();
             var created = await _service.AddAsync(profile);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, _mapper.Map<ProfileDto>(created));
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created.Adapt<ProfileDto>());
         }
         catch (Exception ex)
         {
@@ -75,11 +78,12 @@ public class ProfileController : ControllerBase
     {
         if (id != profileDto.Id)
             return BadRequest("Id do perfil não corresponde ao parâmetro.");
+
         try
         {
-            var profile = _mapper.Map<ProfileEntity>(profileDto);
+            var profile = profileDto.Adapt<Profile>();
             var updated = await _service.UpdateAsync(profile);
-            return Ok(_mapper.Map<ProfileDto>(updated));
+            return Ok(updated.Adapt<ProfileDto>());
         }
         catch (InvalidOperationException ex)
         {

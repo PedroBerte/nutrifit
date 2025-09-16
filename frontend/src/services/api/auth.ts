@@ -31,6 +31,7 @@ export function useValidateSession() {
     },
     onError: (e) => {
       console.error("Erro ao validar sessão", e);
+      throw e;
     },
   });
 }

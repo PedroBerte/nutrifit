@@ -14,6 +14,7 @@ public class UserDto
     public bool? IsAdmin { get; set; }
     public AddressDto? Address { get; set; }
     public ProfileDto? Profile { get; set; } = null!;    
+    public ProfessionalCredentialDto? ProfessionalCredential { get; set; }
 }
 
 public class AddressDto

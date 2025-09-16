@@ -1,12 +1,12 @@
 import ProfessionalCard from "@/components/ProfessionalCard";
 import { Input } from "@/components/ui/input";
-import { useGetAllProfessionals } from "@/services/api/professional";
+import { useGetAllUsers } from "@/services/api/user";
 import type { RootState } from "@/store";
 import { useSelector } from "react-redux";
 
 export default function Home() {
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
-  const { data, isLoading, error } = useGetAllProfessionals();
+  const { data, isLoading, error } = useGetAllUsers(false, false, true);
 
   return (
     <div className="flex flex-col gap-4 mt-4">
@@ -19,10 +19,12 @@ export default function Home() {
 
       {data?.map((professional) => (
         <ProfessionalCard
-          key={professional.user?.id}
+          key={professional?.id}
           subtitle="Personal Trainer"
-          name={professional.user?.name}
-          description={professional.credentials?.biography || "Sem descrição"}
+          name={professional?.name}
+          description={
+            professional?.professionalCredential?.biography || "Sem descrição"
+          }
         />
       ))}
     </div>

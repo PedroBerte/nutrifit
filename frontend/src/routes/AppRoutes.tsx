@@ -8,6 +8,7 @@ import AppDefaultLayout from "./layouts/AppDefaultLayout";
 import RegisterFormLayout from "./layouts/RegisterFormLayout";
 import FirstAccess from "@/pages/FirstAccess";
 import AppLayoutWithBottomBar from "./layouts/AppLayoutWithBottomBar";
+import Profile from "@/pages/Profile";
 
 export function AppRoutes() {
   return (
@@ -24,6 +25,7 @@ export function AppRoutes() {
         <Route element={<PrivateRoute />}>
           <Route element={<AppDefaultLayout />}>
             <Route path="home" element={<Home />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Route>
       </Route>

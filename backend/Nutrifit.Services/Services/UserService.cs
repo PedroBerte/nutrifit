@@ -17,7 +17,7 @@ public class UserService : IUserService
     {
         try
         {
-            return await _context.User.Include(x => x.Address).ToListAsync();
+            return await _context.User.Include(x => x.Address).Include(x => x.ProfessionalCredential).Include(x => x.Profile).ToListAsync();
         }
         catch (Exception ex)
         {
@@ -29,7 +29,7 @@ public class UserService : IUserService
     {
         try
         {
-            var user = await _context.User.Include(x => x.Address).FirstOrDefaultAsync(x => x.Id == id);
+            var user = await _context.User.Include(x => x.Address).Include(x => x.ProfessionalCredential).Include(x => x.Profile).FirstOrDefaultAsync(x => x.Id == id);
             if (user is null)
                 throw new InvalidOperationException("Usuário não encontrado.");
             return user;
