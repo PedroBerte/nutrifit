@@ -17,18 +17,16 @@ export function useCreateUser() {
   });
 }
 
-export function useGetUserById() {
-  return useMutation({
-    mutationKey: ["getUserById"],
-    retry: 0,
-    mutationFn: async (id: string) => {
+export function useGetUserById(id: string | null | undefined) {
+  return useQuery({
+    queryKey: ["getUserById", id],
+    queryFn: async () => {
+      if (!id) throw new Error("ID do usuário é obrigatório");
       const request = await api.get<UserType>(`/user/${id}`);
       return request.data;
     },
-    onError: (e) => {
-      console.error("Erro ao buscar usuário", e);
-      throw e;
-    },
+    enabled: !!id,
+    retry: 1,
   });
 }
 
