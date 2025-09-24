@@ -9,6 +9,7 @@ import RegisterFormLayout from "./layouts/RegisterFormLayout";
 import FirstAccess from "@/pages/FirstAccess";
 import AppLayoutWithBottomBar from "./layouts/AppLayoutWithBottomBar";
 import Profile from "@/pages/Profile";
+import Professional from "@/pages/Professional";
 
 export function AppRoutes() {
   return (
@@ -26,6 +27,7 @@ export function AppRoutes() {
           <Route element={<AppDefaultLayout />}>
             <Route path="home" element={<Home />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="professional/:id" element={<Professional />} />
           </Route>
         </Route>
       </Route>

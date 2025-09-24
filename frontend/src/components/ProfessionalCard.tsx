@@ -1,20 +1,28 @@
 import React from "react";
 import GenericPersonSvg from "@/assets/generic-person.svg";
 import Verified from "@/assets/verified.svg";
+import { useNavigate } from "react-router-dom";
 
 type ProfessionalCardProps = {
   subtitle: string;
-  name?: string;
-  description?: string;
+  name: string;
+  description: string;
+  id: string;
 };
 
 export default function ProfessionalCard({
   subtitle,
   name,
   description,
+  id,
 }: ProfessionalCardProps) {
+  const navigate = useNavigate();
+
   return (
-    <div className="bg-neutral-dark-03 p-4 rounded-xl">
+    <div
+      className="bg-neutral-dark-03 p-4 rounded-xl"
+      onClick={() => navigate(`/professional/${id}`)}
+    >
       <div className="flex gap-3">
         <img src={GenericPersonSvg} alt="" />
         <div className="overflow-hidden text-ellipsis">

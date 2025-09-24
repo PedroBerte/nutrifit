@@ -9,7 +9,7 @@ export default function Home() {
   const { data, isLoading, error } = useGetAllUsers(false, false, true);
 
   return (
-    <div className="flex flex-col gap-4 mt-4">
+    <div className="flex flex-1 flex-col gap-4 mt-4">
       <Input
         placeholder="Pesquisar"
         className="border-none bg-neutral-dark-03"
@@ -17,16 +17,22 @@ export default function Home() {
 
       {isLoading && <p>Carregando profissionais...</p>}
 
-      {data?.map((professional) => (
-        <ProfessionalCard
-          key={professional?.id}
-          subtitle="Personal Trainer"
-          name={professional?.name}
-          description={
-            professional?.professionalCredential?.biography || "Sem descrição"
-          }
-        />
-      ))}
+      {data?.map((professional) => {
+        if (professional.id) {
+          return (
+            <ProfessionalCard
+              id={professional.id}
+              key={professional.id}
+              subtitle="Personal Trainer"
+              name={professional.name}
+              description={
+                professional.professionalCredential?.biography ||
+                "Sem descrição"
+              }
+            />
+          );
+        }
+      })}
     </div>
   );
 }
