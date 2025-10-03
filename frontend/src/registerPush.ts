@@ -18,22 +18,24 @@ export async function ensurePushSubscription(
   if (!("serviceWorker" in navigator)) throw new Error("SW não suportado.");
   if (!("PushManager" in window)) throw new Error("Push não suportado.");
 
-  const reg = await navigator.serviceWorker.register("/sw.js"); // coloque seu SW em /public/sw.js
+  const reg = await navigator.serviceWorker.register("/sw.js");
   await navigator.serviceWorker.ready;
 
   const perm = await Notification.requestPermission();
   if (perm !== "granted") throw new Error("Permissão de notificação negada.");
 
   const existing = await reg.pushManager.getSubscription();
-  if (existing) return existing; // já inscrito
+  console.log("Existing push subscription:", existing);
+  if (existing) return existing;
 
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
   });
 
-  // Envie pro backend (proteja com seu JWT)
-  await fetch(`${apiBaseUrl}/api/push/subscribe`, {
+  console.log("Push subscription obtained:", sub);
+
+  await fetch(`${apiBaseUrl}/push/subscribe`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

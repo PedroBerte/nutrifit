@@ -1,5 +1,6 @@
 self.addEventListener("push", (event) => {
   let data = {};
+  console.log("Push recebido:", event);
   try {
     if (event.data) data = event.data.json();
   } catch {

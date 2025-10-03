@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Nutrifit.Repository;
 using Nutrifit.Services.Services;
 using Nutrifit.Services.Services.Interfaces;
@@ -11,7 +12,32 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "NutriFit API", Version = "v1" });
+
+    var securityScheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "Insira o token JWT no formato: Bearer {seu_token}",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = "Bearer"
+        }
+    };
+    c.AddSecurityDefinition("Bearer", securityScheme);
+
+    var securityRequirement = new OpenApiSecurityRequirement
+    {
+        { securityScheme, Array.Empty<string>() }
+    };
+    c.AddSecurityRequirement(securityRequirement);
+});
 
 var connString = builder.Configuration.GetConnectionString("Default")
     ?? builder.Configuration["ConnectionStrings:Default"];
@@ -29,6 +55,7 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IBondService, BondService>();
+builder.Services.AddScoped<IPushService, PushService>();
 
 builder.Services.AddCors(o =>
 {
@@ -95,7 +122,12 @@ using (var scope = app.Services.CreateScope())
 //if (app.Environment.IsDevelopment())
 //{
 app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "NutriFit API v1");
+    // Mantém o token salvo no Authorize após recarregar a página
+    c.EnablePersistAuthorization();
+});
 //}
 
 //app.UseHttpsRedirection();

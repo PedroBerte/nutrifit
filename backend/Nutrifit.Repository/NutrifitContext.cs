@@ -17,6 +17,7 @@ namespace Nutrifit.Repository
         public DbSet<ProfessionalFeedbackEntity> ProfessionalFeedbacks => Set<ProfessionalFeedbackEntity>();
         public DbSet<ProfessionalCredentialEntity> ProfessionalCredentials => Set<ProfessionalCredentialEntity>();
         public DbSet<ProfileEntity> Profiles => Set<ProfileEntity>();
+        public DbSet<PushSubscriptionEntity> PushSubscriptions { get; set; } = null!;
 
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
         {
@@ -45,6 +46,49 @@ namespace Nutrifit.Repository
                 e.Property(x => x.CreatedAt)
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
+            });
+
+            b.Entity<PushSubscriptionEntity>(e =>
+            {
+                e.ToTable("push_subscriptions");
+
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.HasOne<UserEntity>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.Property(x => x.Endpoint)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                e.Property(x => x.P256dh)
+                    .IsRequired()
+                    .HasMaxLength(255);
+
+                e.Property(x => x.Auth)
+                    .IsRequired()
+                    .HasMaxLength(255);
+
+                e.Property(x => x.UserAgent)
+                    .HasMaxLength(512);
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp with time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.Property(x => x.ExpirationTime)
+                    .HasColumnType("timestamp with time zone");
+
+                e.Property(x => x.IsActive)
+                    .HasDefaultValue(true);
+
+                e.HasIndex(x => x.UserId);
+                e.HasIndex(x => new { x.UserId, x.IsActive });
+
+                e.HasIndex(x => x.Endpoint).IsUnique();
             });
 
             b.Entity<UserEntity>(e =>
