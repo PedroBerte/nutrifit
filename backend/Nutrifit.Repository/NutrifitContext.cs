@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Nutrifit.Repository.Entities;
+using Nutrifit.Repository.Utils;
 using System.Reflection.Emit;
 
 namespace Nutrifit.Repository
@@ -16,6 +17,17 @@ namespace Nutrifit.Repository
         public DbSet<ProfessionalFeedback> ProfessionalFeedback => Set<ProfessionalFeedback>();
         public DbSet<ProfessionalCredential> ProfessionalCredential => Set<ProfessionalCredential>();
         public DbSet<Profile> Profile => Set<Profile>();
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder builder)
+        {
+            builder.Properties<DateTime>()
+                .HaveColumnType("timestamp without time zone")
+                .HaveConversion<UnspecifiedDateTimeConverter>();
+
+            builder.Properties<DateTime?>()
+                .HaveColumnType("timestamp without time zone")
+                .HaveConversion<NullableUnspecifiedDateTimeConverter>();
+        }
 
         protected override void OnModelCreating(ModelBuilder b)
         {

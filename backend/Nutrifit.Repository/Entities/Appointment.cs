@@ -13,6 +13,5 @@ public class Appointment
     public DateTime? UpdatedAt { get; set; }
     public string Status { get; set; }
 
-    // Nav
     public CustomerProfessionalBond CustomerProfessionalBond { get; set; } = null!;
 }

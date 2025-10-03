@@ -110,7 +110,7 @@ namespace Nutrifit.Services.Services
                 new Claim("name", request.Name),
                 new Claim("isAdmin", request.IsAdmin.ToString()),
                 new Claim("profile", request.Profile == Guid.Empty ? string.Empty : request.Profile.ToString()),
-                new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Sub, request.Email),
+                new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Sub, request.Id.ToString()),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Email, request.Email),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };

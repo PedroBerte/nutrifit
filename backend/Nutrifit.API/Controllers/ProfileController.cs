@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Repository.Entities;
 using Nutrifit.Services.DTO;
 using Mapster;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Nutrifit.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ProfileController : ControllerBase
 {
     private readonly IProfileService _service;

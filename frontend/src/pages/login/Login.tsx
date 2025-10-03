@@ -34,7 +34,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex w-full h-full items-center justify-center flex-col">
+    <div className="flex flex-1 items-center justify-center flex-col">
       <Form {...loginForm}>
         <form
           onSubmit={loginForm.handleSubmit(onSubmit)}

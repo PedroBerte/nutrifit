@@ -16,11 +16,15 @@ import {
   Edit,
   VenusAndMars,
 } from "lucide-react";
+import type { CustomerProfessionalBondType } from "@/types/professional";
+import { useCreateBond } from "@/services/api/bond";
 
 export default function Professional() {
   const { user, logout } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const { mutate: createProposal } = useCreateBond();
 
   if (!id) navigate("/home");
 
@@ -98,6 +102,24 @@ export default function Professional() {
       default:
         return "Não informado";
     }
+  };
+
+  const sendProposal = async (professionalId: string) => {
+    var newProposal: CustomerProfessionalBondType = {
+      id: null,
+      customerId: user?.id || "",
+      professionalId: professionalId,
+      senderId: user?.id || "",
+      createdAt: null,
+      updatedAt: null,
+      status: "P",
+      customer: null,
+      professional: null,
+      sender: null,
+      appointments: null,
+    };
+
+    await createProposal(newProposal);
   };
 
   return (
@@ -245,7 +267,7 @@ export default function Professional() {
           Conta criada em {formatDate(userData.createdAt)}
         </div>
 
-        <Button onClick={logout}>Enviar proposta ao profissional</Button>
+        <Button onClick={() => id && sendProposal(id)}>Enviar proposta ao profissional</Button>
       </div>
     </div>
   );
