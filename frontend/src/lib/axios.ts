@@ -67,7 +67,9 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
+    console.log("Response error interceptor triggered:", error);
     if (error.response?.status === 401) {
+      console.log("Received 401 response, signing out.", error);
       store.dispatch(signOut());
     }
     return Promise.reject(error);

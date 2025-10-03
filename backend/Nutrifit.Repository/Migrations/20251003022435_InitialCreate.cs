@@ -17,7 +17,7 @@ namespace Nutrifit.Repository.Migrations
                 .Annotation("Npgsql:PostgresExtension:uuid-ossp", ",,");
 
             migrationBuilder.CreateTable(
-                name: "Address",
+                name: "Addresses",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -29,31 +29,31 @@ namespace Nutrifit.Repository.Migrations
                     Country = table.Column<string>(type: "text", nullable: false),
                     AddressType = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Address", x => x.Id);
+                    table.PrimaryKey("PK_Addresses", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Profile",
+                name: "Profiles",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Profile", x => x.Id);
+                    table.PrimaryKey("PK_Profiles", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "User",
+                name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -63,30 +63,33 @@ namespace Nutrifit.Repository.Migrations
                     Email = table.Column<string>(type: "text", nullable: false),
                     ImageUrl = table.Column<string>(type: "text", nullable: true),
                     Password = table.Column<string>(type: "text", nullable: false),
+                    Sex = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    IsAdmin = table.Column<bool>(type: "boolean", nullable: false)
+                    IsAdmin = table.Column<bool>(type: "boolean", nullable: false),
+                    DateOfBirth = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_User", x => x.Id);
+                    table.PrimaryKey("PK_Users", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_User_Address_AddressId",
+                        name: "FK_Users_Addresses_AddressId",
                         column: x => x.AddressId,
-                        principalTable: "Address",
+                        principalTable: "Addresses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_User_Profile_ProfileId",
+                        name: "FK_Users_Profiles_ProfileId",
                         column: x => x.ProfileId,
-                        principalTable: "Profile",
+                        principalTable: "Profiles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "CustomerFeedback",
+                name: "CustomerFeedbacks",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -94,129 +97,101 @@ namespace Nutrifit.Repository.Migrations
                     CustomerId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
                     Testimony = table.Column<string>(type: "text", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Rate = table.Column<int>(type: "integer", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    ProfessionalId1 = table.Column<Guid>(type: "uuid", nullable: false),
-                    CustomerId1 = table.Column<Guid>(type: "uuid", nullable: false)
+                    UserEntityId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CustomerFeedback", x => x.Id);
+                    table.PrimaryKey("PK_CustomerFeedbacks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CustomerFeedback_User_CustomerId",
+                        name: "FK_CustomerFeedbacks_Users_CustomerId",
                         column: x => x.CustomerId,
-                        principalTable: "User",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_CustomerFeedback_User_CustomerId1",
-                        column: x => x.CustomerId1,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CustomerFeedback_User_ProfessionalId",
+                        name: "FK_CustomerFeedbacks_Users_ProfessionalId",
                         column: x => x.ProfessionalId,
-                        principalTable: "User",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_CustomerFeedback_User_ProfessionalId1",
-                        column: x => x.ProfessionalId1,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "CustomerProfessionalBond",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CustomerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProfessionalId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SenderId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: false),
-                    CustomerId1 = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProfessionalId1 = table.Column<Guid>(type: "uuid", nullable: false),
-                    SenderId1 = table.Column<Guid>(type: "uuid", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CustomerProfessionalBond", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_CustomerProfessionalBond_User_CustomerId",
-                        column: x => x.CustomerId,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_CustomerProfessionalBond_User_CustomerId1",
-                        column: x => x.CustomerId1,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CustomerProfessionalBond_User_ProfessionalId",
-                        column: x => x.ProfessionalId,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_CustomerProfessionalBond_User_ProfessionalId1",
-                        column: x => x.ProfessionalId1,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CustomerProfessionalBond_User_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_CustomerProfessionalBond_User_SenderId1",
-                        column: x => x.SenderId1,
-                        principalTable: "User",
+                        name: "FK_CustomerFeedbacks_Users_UserEntityId",
+                        column: x => x.UserEntityId,
+                        principalTable: "Users",
                         principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProfessionalCredential",
+                name: "CustomerProfessionalBonds",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CustomerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProfessionalId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SenderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    UserEntityId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CustomerProfessionalBonds", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CustomerProfessionalBonds_Users_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_CustomerProfessionalBonds_Users_ProfessionalId",
+                        column: x => x.ProfessionalId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_CustomerProfessionalBonds_Users_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_CustomerProfessionalBonds_Users_UserEntityId",
+                        column: x => x.UserEntityId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProfessionalCredentials",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ProfessionalId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
                     CredentialId = table.Column<string>(type: "text", nullable: true),
-                    ProfessionalId1 = table.Column<Guid>(type: "uuid", nullable: false)
+                    Biography = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProfessionalCredential", x => x.Id);
+                    table.PrimaryKey("PK_ProfessionalCredentials", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ProfessionalCredential_User_ProfessionalId",
+                        name: "FK_ProfessionalCredentials_Users_ProfessionalId",
                         column: x => x.ProfessionalId,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProfessionalCredential_User_ProfessionalId1",
-                        column: x => x.ProfessionalId1,
-                        principalTable: "User",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProfessionalFeedback",
+                name: "ProfessionalFeedbacks",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -224,75 +199,60 @@ namespace Nutrifit.Repository.Migrations
                     CustomerId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
                     Testimony = table.Column<string>(type: "text", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Rate = table.Column<int>(type: "integer", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
-                    ProfessionalId1 = table.Column<Guid>(type: "uuid", nullable: false),
-                    CustomerId1 = table.Column<Guid>(type: "uuid", nullable: false)
+                    Status = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProfessionalFeedback", x => x.Id);
+                    table.PrimaryKey("PK_ProfessionalFeedbacks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ProfessionalFeedback_User_CustomerId",
+                        name: "FK_ProfessionalFeedbacks_Users_CustomerId",
                         column: x => x.CustomerId,
-                        principalTable: "User",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ProfessionalFeedback_User_CustomerId1",
-                        column: x => x.CustomerId1,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProfessionalFeedback_User_ProfessionalId",
+                        name: "FK_ProfessionalFeedbacks_Users_ProfessionalId",
                         column: x => x.ProfessionalId,
-                        principalTable: "User",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ProfessionalFeedback_User_ProfessionalId1",
-                        column: x => x.ProfessionalId1,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Appointment",
+                name: "Appointments",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     CustomerProfessionalBondId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    CustomerProfessionalBondId1 = table.Column<Guid>(type: "uuid", nullable: false)
+                    CustomerProfessionalBondEntityId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Appointment", x => x.Id);
+                    table.PrimaryKey("PK_Appointments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Appointment_CustomerProfessionalBond_CustomerProfessionalBo~",
+                        name: "FK_Appointments_CustomerProfessionalBonds_CustomerProfessional~",
+                        column: x => x.CustomerProfessionalBondEntityId,
+                        principalTable: "CustomerProfessionalBonds",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Appointments_CustomerProfessionalBonds_CustomerProfessiona~1",
                         column: x => x.CustomerProfessionalBondId,
-                        principalTable: "CustomerProfessionalBond",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Appointment_CustomerProfessionalBond_CustomerProfessionalB~1",
-                        column: x => x.CustomerProfessionalBondId1,
-                        principalTable: "CustomerProfessionalBond",
+                        principalTable: "CustomerProfessionalBonds",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
-                table: "Profile",
+                table: "Profiles",
                 columns: new[] { "Id", "Name", "Status", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -302,103 +262,80 @@ namespace Nutrifit.Repository.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Appointment_CustomerProfessionalBondId",
-                table: "Appointment",
+                name: "IX_Appointments_CustomerProfessionalBondEntityId",
+                table: "Appointments",
+                column: "CustomerProfessionalBondEntityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Appointments_CustomerProfessionalBondId",
+                table: "Appointments",
                 column: "CustomerProfessionalBondId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Appointment_CustomerProfessionalBondId1",
-                table: "Appointment",
-                column: "CustomerProfessionalBondId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CustomerFeedback_CustomerId",
-                table: "CustomerFeedback",
+                name: "IX_CustomerFeedbacks_CustomerId",
+                table: "CustomerFeedbacks",
                 column: "CustomerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CustomerFeedback_CustomerId1",
-                table: "CustomerFeedback",
-                column: "CustomerId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CustomerFeedback_ProfessionalId",
-                table: "CustomerFeedback",
+                name: "IX_CustomerFeedbacks_ProfessionalId",
+                table: "CustomerFeedbacks",
                 column: "ProfessionalId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CustomerFeedback_ProfessionalId1",
-                table: "CustomerFeedback",
-                column: "ProfessionalId1");
+                name: "IX_CustomerFeedbacks_UserEntityId",
+                table: "CustomerFeedbacks",
+                column: "UserEntityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CustomerProfessionalBond_CustomerId",
-                table: "CustomerProfessionalBond",
+                name: "IX_CustomerProfessionalBonds_CustomerId",
+                table: "CustomerProfessionalBonds",
                 column: "CustomerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CustomerProfessionalBond_CustomerId1",
-                table: "CustomerProfessionalBond",
-                column: "CustomerId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CustomerProfessionalBond_ProfessionalId",
-                table: "CustomerProfessionalBond",
+                name: "IX_CustomerProfessionalBonds_ProfessionalId",
+                table: "CustomerProfessionalBonds",
                 column: "ProfessionalId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CustomerProfessionalBond_ProfessionalId1",
-                table: "CustomerProfessionalBond",
-                column: "ProfessionalId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CustomerProfessionalBond_SenderId",
-                table: "CustomerProfessionalBond",
+                name: "IX_CustomerProfessionalBonds_SenderId",
+                table: "CustomerProfessionalBonds",
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CustomerProfessionalBond_SenderId1",
-                table: "CustomerProfessionalBond",
-                column: "SenderId1");
+                name: "IX_CustomerProfessionalBonds_UserEntityId",
+                table: "CustomerProfessionalBonds",
+                column: "UserEntityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProfessionalCredential_ProfessionalId",
-                table: "ProfessionalCredential",
-                column: "ProfessionalId");
+                name: "IX_ProfessionalCredentials_ProfessionalId",
+                table: "ProfessionalCredentials",
+                column: "ProfessionalId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProfessionalCredential_ProfessionalId1",
-                table: "ProfessionalCredential",
-                column: "ProfessionalId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProfessionalFeedback_CustomerId",
-                table: "ProfessionalFeedback",
+                name: "IX_ProfessionalFeedbacks_CustomerId",
+                table: "ProfessionalFeedbacks",
                 column: "CustomerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProfessionalFeedback_CustomerId1",
-                table: "ProfessionalFeedback",
-                column: "CustomerId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProfessionalFeedback_ProfessionalId",
-                table: "ProfessionalFeedback",
+                name: "IX_ProfessionalFeedbacks_ProfessionalId",
+                table: "ProfessionalFeedbacks",
                 column: "ProfessionalId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProfessionalFeedback_ProfessionalId1",
-                table: "ProfessionalFeedback",
-                column: "ProfessionalId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_User_AddressId",
-                table: "User",
+                name: "IX_Users_AddressId",
+                table: "Users",
                 column: "AddressId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_ProfileId",
-                table: "User",
+                name: "IX_Users_Email",
+                table: "Users",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_ProfileId",
+                table: "Users",
                 column: "ProfileId");
         }
 
@@ -406,28 +343,28 @@ namespace Nutrifit.Repository.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Appointment");
+                name: "Appointments");
 
             migrationBuilder.DropTable(
-                name: "CustomerFeedback");
+                name: "CustomerFeedbacks");
 
             migrationBuilder.DropTable(
-                name: "ProfessionalCredential");
+                name: "ProfessionalCredentials");
 
             migrationBuilder.DropTable(
-                name: "ProfessionalFeedback");
+                name: "ProfessionalFeedbacks");
 
             migrationBuilder.DropTable(
-                name: "CustomerProfessionalBond");
+                name: "CustomerProfessionalBonds");
 
             migrationBuilder.DropTable(
-                name: "User");
+                name: "Users");
 
             migrationBuilder.DropTable(
-                name: "Address");
+                name: "Addresses");
 
             migrationBuilder.DropTable(
-                name: "Profile");
+                name: "Profiles");
         }
     }
 }

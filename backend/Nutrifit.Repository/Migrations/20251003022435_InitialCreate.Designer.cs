@@ -12,7 +12,7 @@ using Nutrifit.Repository;
 namespace Nutrifit.Repository.Migrations
 {
     [DbContext(typeof(NutrifitContext))]
-    [Migration("20250910031900_InitialCreate")]
+    [Migration("20251003022435_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -26,7 +26,7 @@ namespace Nutrifit.Repository.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "uuid-ossp");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.Address", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.AddressEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -63,17 +63,17 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("ZipCode")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Address", (string)null);
+                    b.ToTable("Addresses", (string)null);
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.Appointment", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.AppointmentEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -84,14 +84,14 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("timezone('utc', now())");
 
+                    b.Property<Guid?>("CustomerProfessionalBondEntityId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CustomerProfessionalBondId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CustomerProfessionalBondId1")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Location")
                         .HasColumnType("text");
@@ -104,18 +104,18 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerProfessionalBondEntityId");
+
                     b.HasIndex("CustomerProfessionalBondId");
 
-                    b.HasIndex("CustomerProfessionalBondId1");
-
-                    b.ToTable("Appointment", (string)null);
+                    b.ToTable("Appointments", (string)null);
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerFeedback", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerFeedbackEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -129,13 +129,7 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CustomerId1")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("ProfessionalId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProfessionalId1")
                         .HasColumnType("uuid");
 
                     b.Property<int>("Rate")
@@ -152,22 +146,23 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("UserEntityId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("CustomerId1");
-
                     b.HasIndex("ProfessionalId");
 
-                    b.HasIndex("ProfessionalId1");
+                    b.HasIndex("UserEntityId");
 
-                    b.ToTable("CustomerFeedback", (string)null);
+                    b.ToTable("CustomerFeedbacks", (string)null);
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerProfessionalBond", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -181,19 +176,10 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CustomerId1")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("ProfessionalId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ProfessionalId1")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("SenderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("SenderId1")
+                    b.Property<Guid>("SenderId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Status")
@@ -201,30 +187,32 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("UserEntityId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("CustomerId1");
-
                     b.HasIndex("ProfessionalId");
-
-                    b.HasIndex("ProfessionalId1");
 
                     b.HasIndex("SenderId");
 
-                    b.HasIndex("SenderId1");
+                    b.HasIndex("UserEntityId");
 
-                    b.ToTable("CustomerProfessionalBond", (string)null);
+                    b.ToTable("CustomerProfessionalBonds", (string)null);
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalCredential", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalCredentialEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Biography")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -237,9 +225,6 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<Guid>("ProfessionalId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ProfessionalId1")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -249,18 +234,17 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProfessionalId");
+                    b.HasIndex("ProfessionalId")
+                        .IsUnique();
 
-                    b.HasIndex("ProfessionalId1");
-
-                    b.ToTable("ProfessionalCredential", (string)null);
+                    b.ToTable("ProfessionalCredentials", (string)null);
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalFeedback", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalFeedbackEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -274,13 +258,7 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CustomerId1")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("ProfessionalId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProfessionalId1")
                         .HasColumnType("uuid");
 
                     b.Property<int>("Rate")
@@ -297,22 +275,18 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("CustomerId1");
-
                     b.HasIndex("ProfessionalId");
 
-                    b.HasIndex("ProfessionalId1");
-
-                    b.ToTable("ProfessionalFeedback", (string)null);
+                    b.ToTable("ProfessionalFeedbacks", (string)null);
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.Profile", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfileEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -332,11 +306,11 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Profile", (string)null);
+                    b.ToTable("Profiles", (string)null);
 
                     b.HasData(
                         new
@@ -362,7 +336,7 @@ namespace Nutrifit.Repository.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.User", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -375,6 +349,9 @@ namespace Nutrifit.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -394,108 +371,98 @@ namespace Nutrifit.Repository.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Guid>("ProfileId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Sex")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AddressId");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.HasIndex("ProfileId");
 
-                    b.ToTable("User", (string)null);
+                    b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.Appointment", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.AppointmentEntity", b =>
                 {
-                    b.HasOne("Nutrifit.Repository.Entities.CustomerProfessionalBond", null)
+                    b.HasOne("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", null)
+                        .WithMany("Appointments")
+                        .HasForeignKey("CustomerProfessionalBondEntityId");
+
+                    b.HasOne("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", "CustomerProfessionalBond")
                         .WithMany()
                         .HasForeignKey("CustomerProfessionalBondId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nutrifit.Repository.Entities.CustomerProfessionalBond", "CustomerProfessionalBond")
-                        .WithMany("Appointments")
-                        .HasForeignKey("CustomerProfessionalBondId1")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_Appointment_CustomerProfessionalBond_CustomerProfessionalB~1");
+                        .HasConstraintName("FK_Appointments_CustomerProfessionalBonds_CustomerProfessiona~1");
 
                     b.Navigation("CustomerProfessionalBond");
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerFeedback", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerFeedbackEntity", b =>
                 {
-                    b.HasOne("Nutrifit.Repository.Entities.User", null)
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Nutrifit.Repository.Entities.User", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nutrifit.Repository.Entities.User", null)
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Professional")
                         .WithMany()
                         .HasForeignKey("ProfessionalId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Nutrifit.Repository.Entities.User", "Professional")
-                        .WithMany()
-                        .HasForeignKey("ProfessionalId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", null)
+                        .WithMany("CustomerFeedbacks")
+                        .HasForeignKey("UserEntityId");
 
                     b.Navigation("Customer");
 
                     b.Navigation("Professional");
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerProfessionalBond", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", b =>
                 {
-                    b.HasOne("Nutrifit.Repository.Entities.User", null)
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Nutrifit.Repository.Entities.User", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nutrifit.Repository.Entities.User", null)
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Professional")
                         .WithMany()
                         .HasForeignKey("ProfessionalId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Nutrifit.Repository.Entities.User", "Professional")
-                        .WithMany()
-                        .HasForeignKey("ProfessionalId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nutrifit.Repository.Entities.User", null)
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.HasOne("Nutrifit.Repository.Entities.User", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId1");
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", null)
+                        .WithMany("CustomerProfessionalBonds")
+                        .HasForeignKey("UserEntityId");
 
                     b.Navigation("Customer");
 
@@ -504,47 +471,29 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalCredential", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalCredentialEntity", b =>
                 {
-                    b.HasOne("Nutrifit.Repository.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("ProfessionalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nutrifit.Repository.Entities.User", "Professional")
-                        .WithMany()
-                        .HasForeignKey("ProfessionalId1")
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Professional")
+                        .WithOne("ProfessionalCredential")
+                        .HasForeignKey("Nutrifit.Repository.Entities.ProfessionalCredentialEntity", "ProfessionalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Professional");
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalFeedback", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalFeedbackEntity", b =>
                 {
-                    b.HasOne("Nutrifit.Repository.Entities.User", null)
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Nutrifit.Repository.Entities.User", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nutrifit.Repository.Entities.User", null)
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Professional")
                         .WithMany()
                         .HasForeignKey("ProfessionalId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Nutrifit.Repository.Entities.User", "Professional")
-                        .WithMany()
-                        .HasForeignKey("ProfessionalId1")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Customer");
@@ -552,14 +501,14 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("Professional");
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.User", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.UserEntity", b =>
                 {
-                    b.HasOne("Nutrifit.Repository.Entities.Address", "Address")
+                    b.HasOne("Nutrifit.Repository.Entities.AddressEntity", "Address")
                         .WithMany()
                         .HasForeignKey("AddressId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Nutrifit.Repository.Entities.Profile", "Profile")
+                    b.HasOne("Nutrifit.Repository.Entities.ProfileEntity", "Profile")
                         .WithMany()
                         .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -570,9 +519,18 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("Profile");
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerProfessionalBond", b =>
+            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", b =>
                 {
                     b.Navigation("Appointments");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.UserEntity", b =>
+                {
+                    b.Navigation("CustomerFeedbacks");
+
+                    b.Navigation("CustomerProfessionalBonds");
+
+                    b.Navigation("ProfessionalCredential");
                 });
 #pragma warning restore 612, 618
         }

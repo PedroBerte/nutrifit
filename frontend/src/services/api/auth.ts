@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { ensurePushSubscription } from "@/registerPush";
 import { useMutation } from "@tanstack/react-query";
 
 export function useSendAccessEmail() {
@@ -27,6 +28,18 @@ export function useValidateSession() {
         `/authentication/validateSession?token=${encodeURIComponent(token)}`
       );
       console.log("Session validated, received JWT:", request.data);
+
+      const apiBaseUrl = import.meta.env.VITE_API_URL;
+      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+      console.log("API Base URL:", apiBaseUrl);
+      console.log("VAPID Public Key:", vapidPublicKey);
+
+      try {
+        await ensurePushSubscription(apiBaseUrl, vapidPublicKey, request.data);
+      } catch (e) {
+        console.error("Falha ao inscrever push:", e);
+      }
+
       return request.data;
     },
     onError: (e) => {

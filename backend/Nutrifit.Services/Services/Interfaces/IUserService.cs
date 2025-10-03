@@ -4,9 +4,9 @@ namespace Nutrifit.Services.Services.Interfaces;
 
 public interface IUserService
 {
-    Task<List<User>> GetAllAsync();
-    Task<User> GetByIdAsync(Guid id);
-    Task<User> AddAsync(User user);
-    Task<User> UpdateAsync(User user);
+    Task<List<UserEntity>> GetAllAsync();
+    Task<UserEntity> GetByIdAsync(Guid id);
+    Task<UserEntity> AddAsync(UserEntity user);
+    Task<UserEntity> UpdateAsync(UserEntity user);
     Task DeleteAsync(Guid id);
 }

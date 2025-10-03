@@ -1,6 +1,6 @@
 namespace Nutrifit.Repository.Entities;
 
-public class Appointment
+public class AppointmentEntity
 {
     public Guid Id { get; set; }
     public Guid CustomerProfessionalBondId { get; set; }
@@ -13,6 +13,5 @@ public class Appointment
     public DateTime? UpdatedAt { get; set; }
     public string Status { get; set; }
 
-    // Nav
-    public CustomerProfessionalBond CustomerProfessionalBond { get; set; } = null!;
+    public CustomerProfessionalBondEntity CustomerProfessionalBond { get; set; } = null!;
 }

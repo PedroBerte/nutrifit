@@ -1,6 +1,6 @@
 namespace Nutrifit.Repository.Entities;
 
-public class User
+public class UserEntity
 {
     public Guid Id { get; set; }
 
@@ -19,9 +19,9 @@ public class User
     public DateTime DateOfBirth { get; set; }
     public string PhoneNumber { get; set; }
 
-    public Profile Profile { get; set; } = null!;
-    public Address? Address { get; set; }
-    public ICollection<CustomerProfessionalBond> CustomerProfessionalBonds { get; set; } = new List<CustomerProfessionalBond>();
-    public ProfessionalCredential? ProfessionalCredential { get; set; }
-    public ICollection<CustomerFeedback> CustomerFeedback { get; set; }  = new List<CustomerFeedback>();
+    public ProfileEntity Profile { get; set; } = null!;
+    public AddressEntity? Address { get; set; }
+    public ICollection<CustomerProfessionalBondEntity> CustomerProfessionalBonds { get; set; } = new List<CustomerProfessionalBondEntity>();
+    public ProfessionalCredentialEntity? ProfessionalCredential { get; set; }
+    public ICollection<CustomerFeedbackEntity> CustomerFeedbacks { get; set; }  = new List<CustomerFeedbackEntity>();
 }

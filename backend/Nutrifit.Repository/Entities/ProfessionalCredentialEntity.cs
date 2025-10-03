@@ -1,6 +1,6 @@
 namespace Nutrifit.Repository.Entities;
 
-public class ProfessionalCredential
+public class ProfessionalCredentialEntity
 {
     public Guid Id { get; set; }
     public Guid ProfessionalId { get; set; }
@@ -10,5 +10,5 @@ public class ProfessionalCredential
     public string Type { get; set; }
     public string? CredentialId { get; set; }
     public string? Biography { get; set; }
-    public User Professional { get; set; } = null!;
+    public UserEntity Professional { get; set; } = null!;
 }

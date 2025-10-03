@@ -75,7 +75,7 @@ namespace Nutrifit.Services.Services
 
             var payload = JsonSerializer.Deserialize<MagicLinkPayload>(raw!);
 
-            var user = await _context.User
+            var user = await _context.Users
                 .Include(x => x.Profile)
                 .FirstOrDefaultAsync(u => u.Email == payload!.Email);
 
@@ -110,7 +110,7 @@ namespace Nutrifit.Services.Services
                 new Claim("name", request.Name),
                 new Claim("isAdmin", request.IsAdmin.ToString()),
                 new Claim("profile", request.Profile == Guid.Empty ? string.Empty : request.Profile.ToString()),
-                new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Sub, request.Email),
+                new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Sub, request.Id.ToString()),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Email, request.Email),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };

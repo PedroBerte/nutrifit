@@ -1,6 +1,6 @@
 namespace Nutrifit.Repository.Entities;
 
-public class Address
+public class AddressEntity
 {
     public Guid Id { get; set; }
     public string AddressLine { get; set; } = null!;

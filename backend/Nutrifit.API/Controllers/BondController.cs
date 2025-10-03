@@ -1,37 +1,37 @@
-using Nutrifit.Services.Services.Interfaces;
+using Mapster;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Repository.Entities;
 using Nutrifit.Services.DTO;
-using Mapster;
-using Microsoft.AspNetCore.Authorization;
+using Nutrifit.Services.Services.Interfaces;
 
 namespace Nutrifit.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UserController : ControllerBase
+public class BondController : ControllerBase
 {
-    private readonly IUserService _service;
+    private readonly IBondService _service;
 
-    public UserController(IUserService service)
+    public BondController(IBondService service)
     {
         _service = service;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<UserDto>>> GetAll()
+    public async Task<ActionResult<List<BondDto>>> GetAll()
     {
         try
         {
-            var users = await _service.GetAllAsync();
-            if (users == null)
-                return StatusCode(500, "Erro ao buscar usuários.");
+            var bonds = await _service.GetAllAsync();
+            if (bonds == null)
+                return StatusCode(500, "Erro ao buscar vínculos cliente-profissional.");
 
-            if (users.Count == 0)
+            if (bonds.Count == 0)
                 return NoContent();
 
-            return Ok(users.Adapt<List<UserDto>>());
+            return Ok(bonds.Adapt<List<BondDto>>());
         }
         catch (Exception ex)
         {
@@ -40,16 +40,16 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserDto>> GetById(Guid id)
+    public async Task<ActionResult<BondDto>> GetById(Guid id)
     {
         try
         {
-            var user = await _service.GetByIdAsync(id);
+            var bond = await _service.GetByIdAsync(id);
 
-            if (user == null)
+            if (bond == null)
                 return NotFound();
 
-            return Ok(user.Adapt<UserDto>());
+            return Ok(bond.Adapt<BondDto>());
         }
         catch (InvalidOperationException ex)
         {
@@ -62,18 +62,16 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<UserDto>> Create([FromBody] UserDto userDto)
+    public async Task<ActionResult<BondDto>> Create([FromBody] BondDto bondDto)
     {
-        if (userDto == null)
-            return BadRequest("Usuário inválido.");
+        if (bondDto == null)
+            return BadRequest("Vínculo cliente-profissional inválido.");
 
         try
         {
-            var user = userDto.Adapt<UserEntity>();
-            user.Password = "";
-
-            var created = await _service.AddAsync(user);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created.Adapt<UserDto>());
+            var bond = bondDto.Adapt<CustomerProfessionalBondEntity>();
+            var created = await _service.AddAsync(bond);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created.Adapt<BondDto>());
         }
         catch (Exception ex)
         {
@@ -82,18 +80,16 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<UserDto>> Update(Guid id, [FromBody] UserDto userDto)
+    public async Task<ActionResult<BondDto>> Update(Guid id, [FromBody] BondDto bondDto)
     {
-        if (userDto == null || id != userDto.Id)
-            return BadRequest("Id do usuário não corresponde ao parâmetro.");
+        if (bondDto == null || id != bondDto.Id)
+            return BadRequest("Id do vínculo cliente-profissional não corresponde ao parâmetro.");
 
         try
         {
-            var user = userDto.Adapt<UserEntity>();
-            user.Password = "";
-
-            var updated = await _service.UpdateAsync(user);
-            return Ok(updated.Adapt<UserDto>());
+            var bond = bondDto.Adapt<CustomerProfessionalBondEntity>();
+            var updated = await _service.UpdateAsync(bond);
+            return Ok(updated.Adapt<BondDto>());
         }
         catch (InvalidOperationException ex)
         {
