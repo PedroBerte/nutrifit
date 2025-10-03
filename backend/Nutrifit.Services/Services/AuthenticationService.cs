@@ -75,7 +75,7 @@ namespace Nutrifit.Services.Services
 
             var payload = JsonSerializer.Deserialize<MagicLinkPayload>(raw!);
 
-            var user = await _context.User
+            var user = await _context.Users
                 .Include(x => x.Profile)
                 .FirstOrDefaultAsync(u => u.Email == payload!.Email);
 

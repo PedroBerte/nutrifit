@@ -65,7 +65,7 @@ public class ProfileController : ControllerBase
 
         try
         {
-            var profile = profileDto.Adapt<Profile>();
+            var profile = profileDto.Adapt<ProfileEntity>();
             var created = await _service.AddAsync(profile);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created.Adapt<ProfileDto>());
         }
@@ -83,7 +83,7 @@ public class ProfileController : ControllerBase
 
         try
         {
-            var profile = profileDto.Adapt<Profile>();
+            var profile = profileDto.Adapt<ProfileEntity>();
             var updated = await _service.UpdateAsync(profile);
             return Ok(updated.Adapt<ProfileDto>());
         }

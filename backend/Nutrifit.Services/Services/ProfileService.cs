@@ -13,11 +13,11 @@ public class ProfileService : IProfileService
         _context = context;
     }
 
-    public async Task<List<Profile>> GetAllAsync()
+    public async Task<List<ProfileEntity>> GetAllAsync()
     {
         try
         {
-            return await _context.Profile.ToListAsync();
+            return await _context.Profiles.ToListAsync();
         }
         catch (Exception ex)
         {
@@ -25,11 +25,11 @@ public class ProfileService : IProfileService
         }
     }
 
-    public async Task<Profile> GetByIdAsync(Guid id)
+    public async Task<ProfileEntity> GetByIdAsync(Guid id)
     {
         try
         {
-            var profile = await _context.Profile.FindAsync(id);
+            var profile = await _context.Profiles.FindAsync(id);
             if (profile == null)
                 throw new InvalidOperationException("Perfil não encontrado.");
             return profile;
@@ -40,13 +40,13 @@ public class ProfileService : IProfileService
         }
     }
 
-    public async Task<Profile> AddAsync(Profile profile)
+    public async Task<ProfileEntity> AddAsync(ProfileEntity profile)
     {
         try
         {
             profile.Id = Guid.NewGuid();
             profile.CreatedAt = DateTime.UtcNow;
-            _context.Profile.Add(profile);
+            _context.Profiles.Add(profile);
             await _context.SaveChangesAsync();
             return profile;
         }
@@ -56,11 +56,11 @@ public class ProfileService : IProfileService
         }
     }
 
-    public async Task<Profile> UpdateAsync(Profile profile)
+    public async Task<ProfileEntity> UpdateAsync(ProfileEntity profile)
     {
         try
         {
-            var existing = await _context.Profile.FindAsync(profile.Id);
+            var existing = await _context.Profiles.FindAsync(profile.Id);
             if (existing == null)
                 throw new InvalidOperationException("Perfil não encontrado para atualização.");
             _context.Entry(existing).CurrentValues.SetValues(profile);
@@ -78,10 +78,10 @@ public class ProfileService : IProfileService
     {
         try
         {
-            var profile = await _context.Profile.FindAsync(id);
+            var profile = await _context.Profiles.FindAsync(id);
             if (profile == null)
                 throw new InvalidOperationException("Perfil não encontrado para exclusão.");
-            _context.Profile.Remove(profile);
+            _context.Profiles.Remove(profile);
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)

@@ -4,9 +4,9 @@ namespace Nutrifit.Services.Services.Interfaces;
 
 public interface IBondService
 {
-    Task<List<CustomerProfessionalBond>> GetAllAsync();
-    Task<CustomerProfessionalBond> GetByIdAsync(Guid id);
-    Task<CustomerProfessionalBond> AddAsync(CustomerProfessionalBond bond);
-    Task<CustomerProfessionalBond> UpdateAsync(CustomerProfessionalBond bond);
+    Task<List<CustomerProfessionalBondEntity>> GetAllAsync();
+    Task<CustomerProfessionalBondEntity> GetByIdAsync(Guid id);
+    Task<CustomerProfessionalBondEntity> AddAsync(CustomerProfessionalBondEntity bond);
+    Task<CustomerProfessionalBondEntity> UpdateAsync(CustomerProfessionalBondEntity bond);
     Task DeleteAsync(Guid id);
 }

@@ -1,6 +1,6 @@
 namespace Nutrifit.Repository.Entities;
 
-public class CustomerProfessionalBond
+public class CustomerProfessionalBondEntity
 {
     public Guid Id { get; set; }
     public Guid CustomerId { get; set; }
@@ -11,8 +11,8 @@ public class CustomerProfessionalBond
     public DateTime? UpdatedAt { get; set; }
     public string Status { get; set; }
 
-    public User Customer { get; set; } = null!;
-    public User Professional { get; set; } = null!;
-    public User Sender { get; set; } = null!;
-    public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public UserEntity Customer { get; set; } = null!;
+    public UserEntity Professional { get; set; } = null!;
+    public UserEntity Sender { get; set; } = null!;
+    public ICollection<AppointmentEntity> Appointments { get; set; } = new List<AppointmentEntity>();
 }

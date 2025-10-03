@@ -16,20 +16,20 @@ namespace Nutrifit.Repository
             var personalProfileId = Guid.Parse("ad07405b-cdf2-4780-8a0e-69323be32a6c");
             var nutritionistProfileId = Guid.Parse("eff474b5-ce49-42d5-84da-d9c904b721a1");
 
-            modelBuilder.Entity<Profile>().HasData(
-                new Profile
+            modelBuilder.Entity<ProfileEntity>().HasData(
+                new ProfileEntity
                 {
                     Id = studentProfileId,
                     Name = "Estudante",
                     Status = "A"
                 },
-                new Profile
+                new ProfileEntity
                 {
                     Id = personalProfileId,
                     Name = "Personal",
                     Status = "A"
                 },
-                new Profile
+                new ProfileEntity
                 {
                     Id = nutritionistProfileId,
                     Name = "Nutricionista",

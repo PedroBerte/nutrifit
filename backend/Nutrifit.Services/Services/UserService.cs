@@ -13,11 +13,11 @@ public class UserService : IUserService
         _context = context;
     }
 
-    public async Task<List<User>> GetAllAsync()
+    public async Task<List<UserEntity>> GetAllAsync()
     {
         try
         {
-            return await _context.User
+            return await _context.Users
                 .Include(x => x.Address)
                 .Include(x => x.ProfessionalCredential)
                 .Include(x => x.Profile)
@@ -31,11 +31,11 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<User> GetByIdAsync(Guid id)
+    public async Task<UserEntity> GetByIdAsync(Guid id)
     {
         try
         {
-            var user = await _context.User
+            var user = await _context.Users
                 .Include(x => x.Address)
                 .Include(x => x.ProfessionalCredential)
                 .Include(x => x.Profile)
@@ -52,19 +52,19 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<User> AddAsync(User user)
+    public async Task<UserEntity> AddAsync(UserEntity user)
     {
         try
         {
             user.Id = Guid.NewGuid();
             user.Status = "A";
-            _context.User.Add(user);
+            _context.Users.Add(user);
 
             if (user.Address != null)
             {
                 user.Address.Id = Guid.NewGuid();
                 user.Address.Status = "A";
-                _context.Address.Add(user.Address);
+                _context.Addresses.Add(user.Address);
             }
 
             await _context.SaveChangesAsync();
@@ -76,11 +76,11 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<User> UpdateAsync(User user)
+    public async Task<UserEntity> UpdateAsync(UserEntity user)
     {
         try
         {
-            var existing = await _context.User.FindAsync(user.Id);
+            var existing = await _context.Users.FindAsync(user.Id);
             if (existing == null)
                 throw new InvalidOperationException("Usuário não encontrado para atualização.");
             _context.Entry(existing).CurrentValues.SetValues(user);
@@ -98,10 +98,10 @@ public class UserService : IUserService
     {
         try
         {
-            var user = await _context.User.FindAsync(id);
+            var user = await _context.Users.FindAsync(id);
             if (user == null)
                 throw new InvalidOperationException("Usuário não encontrado para exclusão.");
-            _context.User.Remove(user);
+            _context.Users.Remove(user);
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)

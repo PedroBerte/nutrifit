@@ -1,6 +1,6 @@
 ﻿namespace Nutrifit.Repository.Entities
 {
-    public class PushSubscription
+    public class PushSubscriptionEntity
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }

@@ -69,7 +69,7 @@ public class BondController : ControllerBase
 
         try
         {
-            var bond = bondDto.Adapt<CustomerProfessionalBond>();
+            var bond = bondDto.Adapt<CustomerProfessionalBondEntity>();
             var created = await _service.AddAsync(bond);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created.Adapt<BondDto>());
         }
@@ -87,7 +87,7 @@ public class BondController : ControllerBase
 
         try
         {
-            var bond = bondDto.Adapt<CustomerProfessionalBond>();
+            var bond = bondDto.Adapt<CustomerProfessionalBondEntity>();
             var updated = await _service.UpdateAsync(bond);
             return Ok(updated.Adapt<BondDto>());
         }

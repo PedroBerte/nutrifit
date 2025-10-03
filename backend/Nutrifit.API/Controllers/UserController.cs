@@ -69,7 +69,7 @@ public class UserController : ControllerBase
 
         try
         {
-            var user = userDto.Adapt<User>();
+            var user = userDto.Adapt<UserEntity>();
             user.Password = "";
 
             var created = await _service.AddAsync(user);
@@ -89,7 +89,7 @@ public class UserController : ControllerBase
 
         try
         {
-            var user = userDto.Adapt<User>();
+            var user = userDto.Adapt<UserEntity>();
             user.Password = "";
 
             var updated = await _service.UpdateAsync(user);

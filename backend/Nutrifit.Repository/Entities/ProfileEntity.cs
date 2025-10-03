@@ -1,6 +1,6 @@
 namespace Nutrifit.Repository.Entities;
 
-public class Profile
+public class ProfileEntity
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = null!;

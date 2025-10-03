@@ -14,11 +14,11 @@ public class BondService : IBondService
         _context = context;
     }
 
-    public async Task<List<CustomerProfessionalBond>> GetAllAsync()
+    public async Task<List<CustomerProfessionalBondEntity>> GetAllAsync()
     {
         try
         {
-            return await _context.CustomerProfessionalBond
+            return await _context.CustomerProfessionalBonds
                 .Include(x => x.Customer)
                     .ThenInclude(c => c.Profile)
                 .Include(x => x.Professional)
@@ -34,11 +34,11 @@ public class BondService : IBondService
         }
     }
 
-    public async Task<CustomerProfessionalBond> GetByIdAsync(Guid id)
+    public async Task<CustomerProfessionalBondEntity> GetByIdAsync(Guid id)
     {
         try
         {
-            var bond = await _context.CustomerProfessionalBond
+            var bond = await _context.CustomerProfessionalBonds
                 .Include(x => x.Customer)
                     .ThenInclude(c => c.Profile)
                 .Include(x => x.Professional)
@@ -59,7 +59,7 @@ public class BondService : IBondService
         }
     }
 
-    public async Task<CustomerProfessionalBond> AddAsync(CustomerProfessionalBond bond)
+    public async Task<CustomerProfessionalBondEntity> AddAsync(CustomerProfessionalBondEntity bond)
     {
         try
         {
@@ -67,7 +67,7 @@ public class BondService : IBondService
             bond.CreatedAt = DateTime.UtcNow;
             bond.Status = "A";
             
-            _context.CustomerProfessionalBond.Add(bond);
+            _context.CustomerProfessionalBonds.Add(bond);
             await _context.SaveChangesAsync();
             
             return bond;
@@ -78,11 +78,11 @@ public class BondService : IBondService
         }
     }
 
-    public async Task<CustomerProfessionalBond> UpdateAsync(CustomerProfessionalBond bond)
+    public async Task<CustomerProfessionalBondEntity> UpdateAsync(CustomerProfessionalBondEntity bond)
     {
         try
         {
-            var existing = await _context.CustomerProfessionalBond.FindAsync(bond.Id);
+            var existing = await _context.CustomerProfessionalBonds.FindAsync(bond.Id);
             if (existing == null)
                 throw new InvalidOperationException("Vínculo cliente-profissional não encontrado para atualização.");
                 
@@ -102,11 +102,11 @@ public class BondService : IBondService
     {
         try
         {
-            var bond = await _context.CustomerProfessionalBond.FindAsync(id);
+            var bond = await _context.CustomerProfessionalBonds.FindAsync(id);
             if (bond == null)
                 throw new InvalidOperationException("Vínculo cliente-profissional não encontrado para exclusão.");
                 
-            _context.CustomerProfessionalBond.Remove(bond);
+            _context.CustomerProfessionalBonds.Remove(bond);
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)
