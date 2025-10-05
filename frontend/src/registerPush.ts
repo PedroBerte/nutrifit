@@ -1,13 +1,20 @@
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+function u8ToB64Url(u8: Uint8Array) {
+  const b64 = btoa(String.fromCharCode(...u8));
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
+function subToDto(sub: PushSubscription) {
+  const p256dh = sub.getKey ? sub.getKey("p256dh") : null;
+  const auth = sub.getKey ? sub.getKey("auth") : null;
+
+  return {
+    endpoint: sub.endpoint,
+    expirationTime: (sub as any).expirationTime ?? null,
+    keys: {
+      p256dh: p256dh ? u8ToB64Url(new Uint8Array(p256dh)) : undefined,
+      auth: auth ? u8ToB64Url(new Uint8Array(auth)) : undefined,
+    },
+  };
 }
 
 export async function ensurePushSubscription(
@@ -18,31 +25,44 @@ export async function ensurePushSubscription(
   if (!("serviceWorker" in navigator)) throw new Error("SW não suportado.");
   if (!("PushManager" in window)) throw new Error("Push não suportado.");
 
-  const reg = await navigator.serviceWorker.register("/sw.js");
+  const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
   await navigator.serviceWorker.ready;
 
   const perm = await Notification.requestPermission();
   if (perm !== "granted") throw new Error("Permissão de notificação negada.");
 
-  const existing = await reg.pushManager.getSubscription();
-  console.log("Existing push subscription:", existing);
-  if (existing) return existing;
+  let sub = await reg.pushManager.getSubscription();
 
-  const sub = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-  });
+  if (!sub) {
+    const appServerKey = (function urlBase64ToUint8Array(base64String: string) {
+      const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding)
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+      const rawData = atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i)
+        outputArray[i] = rawData.charCodeAt(i);
+      return outputArray;
+    })(vapidPublicKey);
 
-  console.log("Push subscription obtained:", sub);
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: appServerKey,
+    });
+  }
 
-  await fetch(`${apiBaseUrl}/push/subscribe`, {
+  const res = await fetch(`${apiBaseUrl}/push/Subscribe`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${authToken}`,
     },
-    body: JSON.stringify(sub),
+    body: JSON.stringify(subToDto(sub)),
   });
+
+  console.log("[PUSH] subscribe status:", res.status);
+  if (!res.ok) console.error("[PUSH] subscribe body:", await res.text());
 
   return sub;
 }

@@ -70,24 +70,32 @@ namespace Nutrifit.Services.Services
 
             var json = JsonSerializer.Serialize(payload);
 
+            Console.WriteLine($"Enviando push para {subs.Count} subscriptions (user {userId})");
+
             foreach (var s in subs)
             {
                 var pushSub = new PushSubscription(s.Endpoint, s.P256dh, s.Auth);
                 try
                 {
                     await _client.SendNotificationAsync(pushSub, json, _vapid);
+                    Console.WriteLine($"Push enviado para endpoint: {s.Endpoint}");
                 }
-                catch (WebPushException ex) when (
-                    ex.StatusCode == HttpStatusCode.Gone ||
-                    ex.StatusCode == HttpStatusCode.NotFound)
+                catch (WebPushException ex) when (ex.StatusCode == HttpStatusCode.Gone || ex.StatusCode == HttpStatusCode.NotFound)
                 {
+                    Console.WriteLine($"Subscription inválida (desativando). Status={ex.StatusCode} Ex={ex}");
                     s.IsActive = false;
+                }
+                catch (WebPushException ex)
+                {
+                    Console.WriteLine($"Falha WebPush. Status={ex.StatusCode} Ex={ex} Endpoint={s.Endpoint}");
                 }
                 catch
                 {
+                    Console.WriteLine($"Falha desconhecida ao enviar push para {s.Endpoint}");
                 }
             }
             await _context.SaveChangesAsync();
         }
+
     }
 }

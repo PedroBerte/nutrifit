@@ -1,24 +1,31 @@
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+  console.log("[SW] install");
+});
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+  console.log("[SW] activate");
+});
+
 self.addEventListener("push", (event) => {
-  let data = {};
-  console.log("Push recebido:", event);
+  let txt = "";
   try {
-    if (event.data) data = event.data.json();
+    txt = event?.data?.text?.() ?? "";
+  } catch {}
+  console.log("[SW] push recebido:", txt);
+
+  let data = {};
+  try {
+    data = txt ? JSON.parse(txt) : {};
   } catch {
-    /* payload pode ser string */
+    data = { title: "Push", body: txt };
   }
 
-  const title = data.title || "Nova notificação";
+  const title = data.title || "Ping";
   const options = {
-    body: data.body || "",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/badge.png",
-    data: {
-      url: data.url || "/", // para abrir ao clicar
-      userId: data.userId || null, // opcional: tracking
-    },
-    actions: data.actions || [], // [{action:'open', title:'Abrir'}]
+    body: data.body || "(sem body)",
+    data: { url: data.url || "/" },
   };
-
   event.waitUntil(self.registration.showNotification(title, options));
 });
 

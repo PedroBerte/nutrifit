@@ -27,12 +27,9 @@ export function useValidateSession() {
       const request = await api.post<string>(
         `/authentication/validateSession?token=${encodeURIComponent(token)}`
       );
-      console.log("Session validated, received JWT:", request.data);
 
       const apiBaseUrl = import.meta.env.VITE_API_URL;
       const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-      console.log("API Base URL:", apiBaseUrl);
-      console.log("VAPID Public Key:", vapidPublicKey);
 
       try {
         await ensurePushSubscription(apiBaseUrl, vapidPublicKey, request.data);
