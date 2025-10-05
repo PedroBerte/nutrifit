@@ -53,6 +53,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       Smtp__AppPassword: ${SMTP_APP_PASSWORD}
 
+      Vapid__PublicKey: ${VAPID_PUBLIC_KEY}
+      Vapid__PrivateKey: ${VAPID_PRIVATE_KEY}
+
       # (opcional) forçar Kestrel a escutar na 8080 explícito
       ASPNETCORE_URLS: http://+:5051
     ports:
@@ -71,6 +74,7 @@ services:
       - api
     environment:
       VITE_API_URL: ${FRONT_API_URL}
+      VITE_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     ports:
       - "5052:80"
     restart: unless-stopped
