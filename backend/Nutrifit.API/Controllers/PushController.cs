@@ -17,7 +17,7 @@ public class PushController : ControllerBase
         _pushService = push;
     }
 
-    [HttpPost("subscribe")]
+    [HttpPost("Subscribe")]
     [Authorize]
     public async Task<IActionResult> Subscribe([FromBody] PushSubscriptionDto dto)
     { 
@@ -25,7 +25,7 @@ public class PushController : ControllerBase
         return Ok();
     }
 
-    [HttpPost("unsubscribe")]
+    [HttpPost("Unsubscribe")]
     [Authorize]
     public async Task<IActionResult> Unsubscribe([FromBody] string endpoint)
     { 
@@ -33,9 +33,9 @@ public class PushController : ControllerBase
         return Ok();
     }
 
-    [HttpPost("notify-user/{userId:guid}")]
-    [Authorize()]
-    public async Task<IActionResult> NotifyUser(Guid userId, [FromServices] [FromBody] NotificationRequest req)
+    [HttpPost("NotifyUser/{userId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> NotifyUser(Guid userId, [FromBody] NotificationRequest req)
     {
         var payload = new
         {
@@ -48,20 +48,4 @@ public class PushController : ControllerBase
         await _pushService.SendToUserAsync(userId, payload);
         return Ok(new { ok = true });
     }
-
-    [HttpPost("push/test-me")]
-    [Authorize()]
-    public async Task<IActionResult> TestMe()
-    {
-        var userId = Guid.Parse(User.FindFirst("id")!.Value);
-        await _pushService.SendToUserAsync(userId, new
-        {
-            title = "Teste 🔔",
-            body = "Notificação de teste enviada pela API",
-            url = "/",
-            actions = new[] { new { action = "open", title = "Abrir" } }
-        });
-        return Ok(new { ok = true });
-    }
-
 }

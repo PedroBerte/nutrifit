@@ -13,8 +13,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      devOptions: { enabled: true },
+      devOptions: { enabled: false },
       includeAssets: ["favicon.svg"],
+      srcDir: ".",
+      filename: "sw.js",
       manifest: {
         name: "Nutrifit",
         short_name: "Nutrifit",
