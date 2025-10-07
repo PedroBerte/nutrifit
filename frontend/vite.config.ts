@@ -12,12 +12,15 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "manual", // Mudamos para manual pois já registramos no registerPush.ts
       devOptions: { enabled: false },
-      includeAssets: ["favicon.svg"],
-      srcDir: ".",
+      includeAssets: ["favicon.svg", "vite.svg"],
       strategies: "injectManifest",
-      filename: "sw.js",
+      injectManifest: {
+        swSrc: "public/sw.js",
+        swDest: "sw.js",
+        globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+      },
       manifest: {
         name: "Nutrifit",
         short_name: "Nutrifit",
@@ -28,19 +31,15 @@ export default defineConfig({
         start_url: "/",
         scope: "/",
         icons: [
-          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" },
+          { src: "vite.svg", sizes: "192x192", type: "image/svg+xml" },
+          { src: "vite.svg", sizes: "512x512", type: "image/svg+xml" },
           {
-            src: "pwa-maskable-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
+            src: "vite.svg",
+            sizes: "512x512", 
+            type: "image/svg+xml",
             purpose: "maskable",
           },
         ],
-      },
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
-        navigateFallback: "/index.html",
       },
     }),
     tailwindcss(),

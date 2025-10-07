@@ -1,7 +1,15 @@
+// Importar as funcionalidades do Workbox injetadas pelo VitePWA
+import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
+
+// Precarregar e rotear todos os assets
+precacheAndRoute(self.__WB_MANIFEST);
+cleanupOutdatedCaches();
+
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   console.log("[SW] install");
 });
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
   console.log("[SW] activate");
@@ -25,6 +33,8 @@ self.addEventListener("push", (event) => {
   const options = {
     body: data.body || "(sem body)",
     data: { url: data.url || "/" },
+    icon: "/vite.svg",
+    badge: "/vite.svg",
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
