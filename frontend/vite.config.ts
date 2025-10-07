@@ -16,6 +16,7 @@ export default defineConfig({
       devOptions: { enabled: false },
       includeAssets: ["favicon.svg"],
       srcDir: ".",
+      strategies: "injectManifest",
       filename: "sw.js",
       manifest: {
         name: "Nutrifit",
