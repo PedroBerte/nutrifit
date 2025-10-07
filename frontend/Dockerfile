@@ -15,6 +15,9 @@ COPY frontend/ .
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
+ARG VITE_VAPID_PUBLIC_KEY
+ENV VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY
+
 # se o seu package.json roda `tsc -b && vite build` e isso travar,
 # temporariamente troque p/ só `vite build` no package.json
 RUN if [ -f pnpm-lock.yaml ]; then pnpm build; \
