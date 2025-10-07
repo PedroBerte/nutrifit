@@ -45,6 +45,7 @@ export async function ensurePushSubscription(
   if (perm !== "granted") throw new Error("Permissão de notificação negada.");
 
   const desired = b64UrlNormalize(vapidPublicKey);
+  console.log("[PUSH] desired VAPID key:", desired);
   let sub = await reg.pushManager.getSubscription();
 
   if (sub) {
