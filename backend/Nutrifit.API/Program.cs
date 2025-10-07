@@ -2,13 +2,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using Nutrifit.Repository;
 using Nutrifit.Services.Services;
 using Nutrifit.Services.Services.Interfaces;
+using Serilog;
 using StackExchange.Redis;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -46,6 +50,12 @@ builder.Services.AddDbContext<NutrifitContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Default"),
         b => b.MigrationsAssembly("Nutrifit.Repository")));
 
+builder.Services.AddSingleton(sp =>
+{
+    var cs = builder.Configuration.GetConnectionString("Default")!;
+    return new NpgsqlDataSourceBuilder(cs).Build();
+});
+
 var redisConn = builder.Configuration.GetConnectionString("Redis");
 builder.Services.AddSingleton<IConnectionMultiplexer>(
     ConnectionMultiplexer.Connect(redisConn));
@@ -56,6 +66,7 @@ builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IBondService, BondService>();
 builder.Services.AddScoped<IPushService, PushService>();
+builder.Services.AddScoped<ILogService, LogService>();
 
 builder.Services.AddCors(o =>
 {
@@ -118,6 +129,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseSerilogRequestLogging();
+
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
@@ -125,7 +138,6 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "NutriFit API v1");
-    // Mantém o token salvo no Authorize após recarregar a página
     c.EnablePersistAuthorization();
 });
 //}
