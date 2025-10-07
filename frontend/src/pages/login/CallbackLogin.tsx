@@ -13,15 +13,19 @@ export default function Callback() {
   const dispatch = useDispatch();
   const { mutateAsync, isPending } = useValidateSession();
 
+  const ran = useRef(false);
+
   useEffect(() => {
-    const linkToken = sp.get("token");
-    if (!linkToken) {
+    if (ran.current) return;
+    ran.current = true;
+
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (!token) {
       navigate("/login?err=missing-token", { replace: true });
       return;
     }
-
-    validateToken(linkToken);
-  }, [sp, mutateAsync, dispatch, navigate]);
+    validateToken(token);
+  }, []);
 
   async function validateToken(token: string) {
     try {

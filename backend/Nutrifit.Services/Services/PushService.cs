@@ -28,30 +28,38 @@ namespace Nutrifit.Services.Services
 
         public async Task Subscribe(PushSubscriptionDto dto, Guid userId, string userAgent)
         {
-            var existing = await _context.PushSubscriptions
-                .FirstOrDefaultAsync(s => s.UserId == userId && s.Endpoint == dto.endpoint);
+            try
+            {
+                var existing = await _context.PushSubscriptions
+                    .FirstOrDefaultAsync(s => s.UserId == userId && s.Endpoint == dto.endpoint);
 
-            if (existing == null)
-            {
-                _context.PushSubscriptions.Add(new PushSubscriptionEntity
+                if (existing == null)
                 {
-                    UserId = userId,
-                    Endpoint = dto.endpoint,
-                    P256dh = dto.keys.p256dh,
-                    Auth = dto.keys.auth,
-                    ExpirationTime = dto.expirationTime,
-                    UserAgent = userAgent,
-                    IsActive = true
-                });
+                    _context.PushSubscriptions.Add(new PushSubscriptionEntity
+                    {
+                        UserId = userId,
+                        Endpoint = dto.endpoint,
+                        P256dh = dto.keys.p256dh,
+                        Auth = dto.keys.auth,
+                        ExpirationTime = dto.expirationTime,
+                        UserAgent = userAgent,
+                        IsActive = true
+                    });
+                }
+                else
+                {
+                    existing.P256dh = dto.keys.p256dh;
+                    existing.Auth = dto.keys.auth;
+                    existing.ExpirationTime = dto.expirationTime;
+                    existing.IsActive = true;
+                }
+                await _context.SaveChangesAsync();
             }
-            else
+            catch (Exception e)
             {
-                existing.P256dh = dto.keys.p256dh;
-                existing.Auth = dto.keys.auth;
-                existing.ExpirationTime = dto.expirationTime;
-                existing.IsActive = true;
+
+                throw;
             }
-            await _context.SaveChangesAsync();
         }
 
         public async Task Unsubscribe(string endpoint, Guid userId)

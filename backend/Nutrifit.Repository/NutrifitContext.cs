@@ -87,8 +87,6 @@ namespace Nutrifit.Repository
 
                 e.HasIndex(x => x.UserId);
                 e.HasIndex(x => new { x.UserId, x.IsActive });
-
-                e.HasIndex(x => x.Endpoint).IsUnique();
             });
 
             b.Entity<UserEntity>(e =>
