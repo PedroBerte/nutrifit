@@ -71,6 +71,7 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         VITE_API_URL: ${FRONT_API_URL}
+        VITE_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     container_name: nutrifit_front
     depends_on:
       - api
