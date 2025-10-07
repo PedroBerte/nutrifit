@@ -24,6 +24,8 @@ jobs:
           SMTP_APP_PASSWORD=${{ secrets.SMTP_APP_PASSWORD }}
           FRONT_API_URL=${{ secrets.FRONT_API_URL }}
           FRONT_PORT=${{ secrets.FRONT_PORT }}
+          VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
           EOF
 
       - name: Subir stack
