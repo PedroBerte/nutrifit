@@ -56,6 +56,8 @@ services:
       Vapid__PublicKey: ${VAPID_PUBLIC_KEY}
       Vapid__PrivateKey: ${VAPID_PRIVATE_KEY}
 
+      Serilog__WriteTo__0__Args__connectionString: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+
       # (opcional) forçar Kestrel a escutar na 8080 explícito
       ASPNETCORE_URLS: http://+:5051
     ports:
