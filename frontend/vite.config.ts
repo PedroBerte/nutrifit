@@ -15,7 +15,6 @@ export default defineConfig({
       registerType: "autoUpdate",
       devOptions: { enabled: false },
       includeAssets: ["favicon.svg", "vite.svg"],
-      strategies: "injectManifest",
       injectRegister: false, // Desabilita o registro automático
       injectManifest: {
         swSrc: "public/sw.js",
