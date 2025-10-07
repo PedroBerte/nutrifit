@@ -32,6 +32,7 @@ export function useValidateSession() {
       const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
       try {
+        console.log("[PUSH] desired VAPID key:", vapidPublicKey);
         await ensurePushSubscription(apiBaseUrl, vapidPublicKey, request.data);
       } catch (e) {
         console.error("Falha ao inscrever push:", e);
