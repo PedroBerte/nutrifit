@@ -8,10 +8,12 @@ namespace Nutrifit.Services.Services;
 public class BondService : IBondService
 {
     private readonly NutrifitContext _context;
+    private readonly IPushService _pushService;
     
-    public BondService(NutrifitContext context)
+    public BondService(NutrifitContext context, IPushService pushService)
     {
         _context = context;
+        _pushService = pushService;
     }
 
     public async Task<List<CustomerProfessionalBondEntity>> GetAllAsync()
@@ -69,6 +71,14 @@ public class BondService : IBondService
             
             _context.CustomerProfessionalBonds.Add(bond);
             await _context.SaveChangesAsync();
+
+            var pushMessage = new
+            {
+                title = "Nova solicitação!",
+                body = $"Você tem uma nova proposta!"
+            };
+
+            await _pushService.SendToUserAsync(bond.ProfessionalId, pushMessage);
             
             return bond;
         }

@@ -3,10 +3,23 @@ function u8ToB64Url(u8: Uint8Array) {
   return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function subToDto(sub: PushSubscription) {
-  const p256dh = sub.getKey ? sub.getKey("p256dh") : null;
-  const auth = sub.getKey ? sub.getKey("auth") : null;
+function b64UrlNormalize(s: string) {
+  return s.trim().replace(/=+$/, "");
+}
 
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i)
+    outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+function subToDto(sub: PushSubscription) {
+  const p256dh = sub.getKey?.("p256dh");
+  const auth = sub.getKey?.("auth");
   return {
     endpoint: sub.endpoint,
     expirationTime: (sub as any).expirationTime ?? null,
@@ -25,30 +38,37 @@ export async function ensurePushSubscription(
   if (!("serviceWorker" in navigator)) throw new Error("SW não suportado.");
   if (!("PushManager" in window)) throw new Error("Push não suportado.");
 
-  const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-  await navigator.serviceWorker.ready;
+  await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  const reg = await navigator.serviceWorker.ready;
 
   const perm = await Notification.requestPermission();
   if (perm !== "granted") throw new Error("Permissão de notificação negada.");
 
+  const desired = b64UrlNormalize(vapidPublicKey);
   let sub = await reg.pushManager.getSubscription();
 
-  if (!sub) {
-    const appServerKey = (function urlBase64ToUint8Array(base64String: string) {
-      const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-      const base64 = (base64String + padding)
-        .replace(/-/g, "+")
-        .replace(/_/g, "/");
-      const rawData = atob(base64);
-      const outputArray = new Uint8Array(rawData.length);
-      for (let i = 0; i < rawData.length; ++i)
-        outputArray[i] = rawData.charCodeAt(i);
-      return outputArray;
-    })(vapidPublicKey);
+  if (sub) {
+    const ask = (sub as any).options?.applicationServerKey as
+      | ArrayBuffer
+      | undefined;
+    if (ask instanceof ArrayBuffer) {
+      const usedKeyU8 = new Uint8Array(ask);
+      const usedKey = u8ToB64Url(usedKeyU8);
+      if (b64UrlNormalize(usedKey) !== desired) {
+        await sub.unsubscribe();
+        sub = null;
+      }
+    } else {
+      await sub?.unsubscribe();
+      sub = null;
+    }
+  }
 
+  if (!sub) {
+    const applicationServerKey = urlBase64ToUint8Array(desired);
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: appServerKey,
+      applicationServerKey,
     });
   }
 
