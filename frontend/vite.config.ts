@@ -12,10 +12,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "manual", // Mudamos para manual pois já registramos no registerPush.ts
+      registerType: "autoUpdate",
       devOptions: { enabled: false },
       includeAssets: ["favicon.svg", "vite.svg"],
       strategies: "injectManifest",
+      injectRegister: false, // Desabilita o registro automático
       injectManifest: {
         swSrc: "public/sw.js",
         swDest: "sw.js",
