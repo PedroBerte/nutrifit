@@ -22,8 +22,8 @@ export interface CustomerProfessionalBondType {
   createdAt: string | null;
   updatedAt: string | null;
   status: string | null;
-  customer: UserType | null;
-  professional: UserType | null;
+  customer: UserType;
+  professional: UserType;
   sender: UserType | null;
   appointments: AppointmentType[] | null;
 }

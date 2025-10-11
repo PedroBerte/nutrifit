@@ -40,6 +40,8 @@ public class UserService : IUserService
                 .Include(x => x.ProfessionalCredential)
                 .Include(x => x.Profile)
                 .Include(x => x.CustomerProfessionalBonds)
+                .ThenInclude(x => x.Professional)
+                .Include(x => x.CustomerProfessionalBonds)
                 .ThenInclude(x => x.Appointments)
                 .FirstOrDefaultAsync(x => x.Id == id);
             if (user is null)

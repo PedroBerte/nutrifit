@@ -1,4 +1,7 @@
-import type { ProfessionalCredentialType } from "./professional";
+import type {
+  CustomerProfessionalBondType,
+  ProfessionalCredentialType,
+} from "./professional";
 import type { ProfileType } from "./profile";
 
 export const UserProfiles = {
@@ -26,6 +29,7 @@ export interface UserType {
   address?: AddressType | null;
   profile?: ProfileType | null;
   professionalCredential?: ProfessionalCredentialType | null;
+  customerProfessionalBonds?: CustomerProfessionalBondType[] | null;
 }
 
 export interface AddressType {
