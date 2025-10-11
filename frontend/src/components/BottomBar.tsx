@@ -1,4 +1,4 @@
-import { Apple, CircleUser, Home } from "lucide-react";
+import { Apple, CircleUser, Dumbbell, Home } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useBottomBarVisibility } from "@/hooks/useBottomBarVisibility";
 
@@ -24,7 +24,7 @@ export default function BottomBar() {
           }`}
           aria-label="Página inicial"
         >
-          <Home size={32} />
+          <Dumbbell size={32} />
         </button>
 
         <button

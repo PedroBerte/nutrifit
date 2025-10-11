@@ -10,6 +10,7 @@ import FirstAccess from "@/pages/FirstAccess";
 import AppLayoutWithBottomBar from "./layouts/AppLayoutWithBottomBar";
 import Profile from "@/pages/Profile";
 import Professional from "@/pages/Professional";
+import Workout from "@/pages/Workout";
 
 export function AppRoutes() {
   return (
@@ -26,6 +27,7 @@ export function AppRoutes() {
         <Route element={<PrivateRoute />}>
           <Route element={<AppDefaultLayout />}>
             <Route path="home" element={<Home />} />
+            <Route path="workout" element={<Workout />} />
             <Route path="profile" element={<Profile />} />
             <Route path="professional/:id" element={<Professional />} />
           </Route>
