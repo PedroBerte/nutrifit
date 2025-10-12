@@ -1,5 +1,5 @@
 // Importar as funcionalidades do Workbox injetadas pelo VitePWA
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
+import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
 
 // Precarregar e rotear todos os assets
 precacheAndRoute(self.__WB_MANIFEST);

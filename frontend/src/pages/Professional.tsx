@@ -267,7 +267,9 @@ export default function Professional() {
           Conta criada em {formatDate(userData.createdAt)}
         </div>
 
-        <Button onClick={() => id && sendProposal(id)}>Enviar proposta ao profissional</Button>
+        <Button onClick={() => id && sendProposal(id)}>
+          Enviar proposta ao profissional
+        </Button>
       </div>
     </div>
   );

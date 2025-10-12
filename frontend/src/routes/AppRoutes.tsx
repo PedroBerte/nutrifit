@@ -3,7 +3,7 @@ import App from "@/App";
 import { PrivateRoute } from "./PrivateRoute";
 import Login from "@/pages/login/Login";
 import Callback from "@/pages/login/CallbackLogin";
-import Home from "@/pages/Home";
+import Home from "@/pages/StudentHome";
 import AppDefaultLayout from "./layouts/AppDefaultLayout";
 import RegisterFormLayout from "./layouts/RegisterFormLayout";
 import FirstAccess from "@/pages/FirstAccess";

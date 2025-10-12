@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById } from "@/services/api/user";
 import { UserProfiles } from "@/types/user";
-import { Info } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -12,15 +11,13 @@ export default function Workout() {
   const { user, logout } = useAuth();
   const { data: userData, isLoading, error } = useGetUserById(user?.id);
 
-  console.log("User Data:", userData);
-
   function getBondStatus() {
     if (userData?.customerProfessionalBonds?.length === 0) {
       return (
         <InformationCard
           title="Nenhum personal encontrado!"
           description="Encontre um personal para você!"
-          onClick={() => navigate("home")}
+          onClick={() => navigate("/home", { replace: true })}
         />
       );
     }
@@ -29,6 +26,7 @@ export default function Workout() {
       userData?.customerProfessionalBonds &&
       userData.customerProfessionalBonds.find(
         (x) =>
+          x.professional &&
           x.professional.profile === (UserProfiles.PERSONAL as any) &&
           x.status === "P"
       )
