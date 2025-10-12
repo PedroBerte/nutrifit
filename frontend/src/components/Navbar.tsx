@@ -1,23 +1,47 @@
-import { Menu } from "lucide-react";
+import { ChevronLeft, Menu } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { SidebarTrigger, useSidebar } from "./ui/sidebar";
 
 type NavbarProps = {
-  onMenuClick?: () => void;
   isMenuButtonVisible?: boolean;
 };
 
-export default function Navbar({
-  onMenuClick,
-  isMenuButtonVisible = true,
-}: NavbarProps) {
+export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isOnHome = location.pathname.includes("/home");
+
+  const { toggleSidebar } = useSidebar();
+
+  const onMenuClick = () => {
+    console.log("Menu button clicked");
+    toggleSidebar();
+  };
+
   return (
     <div className="flex items-center justify-between">
-      <div className="flex">
-        <p className="text-3xl text-neutral-white-01 font-bold">Nutri</p>
-        <p className="text-3xl text-primary font-bold">Fit</p>
+      <div className="flex items-center">
+        {!isOnHome && (
+          <button
+            onClick={() => navigate("/home")}
+            aria-label="Voltar para home"
+            className="mr-1 p-1 rounded hover:bg-white/10"
+          >
+            <ChevronLeft size={32} color="white" />
+          </button>
+        )}
+
+        <div className="flex">
+          <p className="text-3xl text-neutral-white-01 font-bold">Nutri</p>
+          <p className="text-3xl text-primary font-bold">Fit</p>
+        </div>
       </div>
 
       {isMenuButtonVisible && (
-        <Menu onClick={onMenuClick} size={28} color="white" />
+        <div>
+          <Menu onClick={onMenuClick} size={28} color="white" />
+        </div>
       )}
     </div>
   );
