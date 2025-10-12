@@ -3,14 +3,14 @@ import App from "@/App";
 import { PrivateRoute } from "./PrivateRoute";
 import Login from "@/pages/login/Login";
 import Callback from "@/pages/login/CallbackLogin";
-import Home from "@/pages/StudentHome";
+import Home from "@/pages/Home";
 import AppDefaultLayout from "./layouts/AppDefaultLayout";
 import RegisterFormLayout from "./layouts/RegisterFormLayout";
 import FirstAccess from "@/pages/FirstAccess";
-import AppLayoutWithBottomBar from "./layouts/AppLayoutWithBottomBar";
 import Profile from "@/pages/Profile";
 import Professional from "@/pages/Professional";
 import Workout from "@/pages/Workout";
+import Students from "@/pages/Students";
 
 export function AppRoutes() {
   return (
@@ -30,6 +30,7 @@ export function AppRoutes() {
             <Route path="workout" element={<Workout />} />
             <Route path="profile" element={<Profile />} />
             <Route path="professional/:id" element={<Professional />} />
+            <Route path="students" element={<Students />} />
           </Route>
         </Route>
       </Route>

@@ -15,7 +15,6 @@ export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
   const { toggleSidebar } = useSidebar();
 
   const onMenuClick = () => {
-    console.log("Menu button clicked");
     toggleSidebar();
   };
 
@@ -26,7 +25,7 @@ export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
           <button
             onClick={() => navigate("/home")}
             aria-label="Voltar para home"
-            className="mr-1 p-1 rounded hover:bg-white/10"
+            className="mr-1 rounded hover:bg-white/10"
           >
             <ChevronLeft size={32} color="white" />
           </button>
