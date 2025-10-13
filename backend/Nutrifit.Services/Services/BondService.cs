@@ -67,7 +67,7 @@ public class BondService : IBondService
         {
             bond.Id = Guid.NewGuid();
             bond.CreatedAt = DateTime.UtcNow;
-            bond.Status = "A";
+            bond.Status = "P";
             
             _context.CustomerProfessionalBonds.Add(bond);
             await _context.SaveChangesAsync();

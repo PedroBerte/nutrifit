@@ -27,7 +27,7 @@ export default function Workout() {
       userData.customerProfessionalBonds.find(
         (x) =>
           x.professional &&
-          x.professional.profile === (UserProfiles.PERSONAL as any) &&
+          x.professional.profile == (UserProfiles.PERSONAL as any) &&
           x.status === "P"
       )
     ) {

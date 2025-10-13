@@ -35,7 +35,9 @@ export default function PersonalHome() {
           title="Vínculos"
           icon={<Check size={22} />}
           description="Seus vínculos"
-          onClick={() => {}}
+          onClick={() => {
+            navigate("/bond");
+          }}
         />
       </div>
       <section className="space-y-2">

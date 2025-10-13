@@ -28,9 +28,9 @@ export default function BottomBar() {
         </button>
 
         <button
-          onClick={() => navigate("/nutrition")}
+          onClick={() => navigate("/diet")}
           className={`flex flex-col items-center justify-center p-3 rounded-full transition-all ${
-            pathname.startsWith("/nutrition")
+            pathname.startsWith("/diet")
               ? "bg-secondary text-primary"
               : "text-neutral-light-01"
           }`}

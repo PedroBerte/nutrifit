@@ -1,7 +1,6 @@
 import { ChevronLeft, Menu } from "lucide-react";
-import { ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { SidebarTrigger, useSidebar } from "./ui/sidebar";
+import { useSidebar } from "./ui/sidebar";
 
 type NavbarProps = {
   isMenuButtonVisible?: boolean;
