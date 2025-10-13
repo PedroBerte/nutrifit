@@ -15,17 +15,17 @@ export interface ProfessionalType {
 }
 
 export interface CustomerProfessionalBondType {
-  id: string;
-  customerId: string;
-  professionalId: string;
-  senderId: string;
-  createdAt?: string;
-  updatedAt?: string;
+  id: string | null;
+  customerId: string | null;
+  professionalId: string | null;
+  senderId: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
   status: string;
-  customer: UserType;
-  professional: UserType;
-  sender: UserType;
-  appointments: AppointmentType[];
+  customer: UserType | null;
+  professional: UserType | null;
+  sender: UserType | null;
+  appointments: AppointmentType[] | null;
 }
 
 export interface AppointmentType {
