@@ -1,0 +1,74 @@
+---
+config:
+  theme: redux
+  fontSize: 24
+---
+sequenceDiagram
+    participant U as Usuário
+    participant F as Frontend
+    participant API as Backend API
+    participant AS as AuthenticationService
+    participant R as Redis
+    participant MS as MailService
+    participant SP as Servidor SMTP
+    participant DB as Database
+    Note over U, DB: Fluxo de Login com Magic Link
+    U->>F: Acessa página de login
+    F->>U: Exibe formulário de email
+    U->>F: Insere email e clica <br> "Enviar email de acesso"
+    F->>API: POST /authentication<br>/sendAccessEmail
+    Note over F, API: Headers: X-App-BaseUrl,<br>User-Agent
+    API->>AS: SendAccessEmailAsync<br>(email, baseUrl,<br>ip, userAgent)
+    AS->>AS: Gera token aleatório (32 bytes)
+    AS->>AS: Codifica token em Base64Url
+    AS->>AS: Cria URL de callback com token
+    AS->>AS: Cria payload MagicLinkPayload
+    AS->>R: Armazena token<br>com TTL (10 min)
+    Note over AS, R: Chave: sha256(token)
+    AS->>MS: SendAsync<br>(MailMessageDTO)
+    MS->>SP: Envia email com<br>link mágico
+    SP->>U: Email entregue
+    AS->>API: Retorna sucesso
+    API->>F: 200 OK "Email enviado"
+    F->>U: Exibe mensagem<br>de confirmação
+    Note over U, DB: Usuário clica no link do email
+    U->>F: Clica link no email
+    Note over U, F: URL: /login/callback?token=xxx
+    F->>F: Extrai token da URL
+    F->>API: POST /authentication<br>/ValidateSession<br>?token=xxx
+    API->>AS: ValidateSession(token)
+    AS->>R: Busca payload do token
+    alt Token válido e não expirado
+        R->>AS: Retorna MagicLinkPayload
+        AS->>DB: Busca usuário por email
+        alt Usuário existe
+            DB->>AS: Retorna dados do usuário
+            AS->>AS: Cria JWT com dados completos
+        else Usuário não existe
+            AS->>AS: Cria JWT com dados básicos
+        end
+        AS->>API: Retorna JWT
+        API->>F: 200 OK com JWT
+        F->>F: Decodifica e valida JWT
+        F->>F: Atualiza estado de<br>autenticação (Redux)
+        alt Usuário tem perfil configurado
+            F->>U: Redireciona para /home
+        else Primeiro acesso
+            F->>U: Redireciona para /first-access
+        end
+    else Token inválido ou expirado
+        R->>AS: Token não encontrado
+        AS->>API: Lança <br>UnauthorizedAccess<br>Exception
+        API->>F: 401 Unauthorized
+        F->>U: Redireciona para<br>/login?err=invalid-link
+    end
+    Note over U, DB: Fluxo de primeiro acesso (usuário novo)
+    alt Primeiro acesso
+        U->>F: Preenche dados do perfil
+        F->>API: Registra perfil completo
+        API->>DB: Salva dados do usuário
+        DB->>API: Confirma salvamento
+        API->>F: Retorna JWT atualizado
+        F->>F: Atualiza estado de autenticação
+        F->>U: Redireciona para /home
+    end

@@ -1,0 +1,32 @@
+---
+config:
+  theme: redux
+  fontSize: 24
+---
+sequenceDiagram
+    participant C as Cliente
+    participant F as Frontend
+    participant API as BondController
+    participant BS as BondService
+    participant PS as PushService
+    participant DB as Database
+    participant P as Profissional
+
+    C->>F: Solicita vínculo com profissional
+    F->>API: POST /bond (customerId, professionalId, senderId)
+    API->>BS: AddAsync(bond)
+    BS->>DB: Salva vínculo com status "P" (Pendente)
+    BS->>PS: SendToUserAsync(professionalId, notification)
+    PS->>P: Notificação push "Nova solicitação!"
+    BS->>API: Retorna vínculo criado
+    API->>F: 201 Created
+    F->>C: Confirma solicitação enviada
+    
+    P->>F: Acessa notificações
+    F->>API: GET /bond?professionalId=X&onlyPending=true
+    API->>F: Lista de vínculos pendentes
+    P->>F: Aceita/Rejeita vínculo
+    F->>API: PUT /bond/{id} (status="A" ou "R")
+    API->>BS: UpdateAsync(bond)
+    BS->>DB: Atualiza status
+    API->>F: Vínculo atualizado
