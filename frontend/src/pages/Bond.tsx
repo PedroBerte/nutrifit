@@ -88,7 +88,7 @@ export default function Bond() {
               bond.status === "A" && (
                 <div className="flex flex-row justify-between">
                   <div key={bond.id} className="flex flex-col gap-1">
-                    <p>{bond.customer.name}</p>
+                    <p>{bond?.customer?.name}</p>
                     <p className="text-xs text-neutral-dark-02">
                       {bond.createdAt &&
                         new Date(bond.createdAt).toLocaleDateString("pt-BR")}
@@ -118,7 +118,7 @@ export default function Bond() {
               bond.status === "P" && (
                 <div className="flex flex-row justify-between">
                   <div key={bond.id} className="flex flex-col gap-1">
-                    <p>{bond.customer.name}</p>
+                    <p>{bond?.customer?.name}</p>
                     <p className="text-xs text-neutral-dark-02">
                       {bond.createdAt &&
                         new Date(bond.createdAt).toLocaleDateString("pt-BR")}
@@ -155,7 +155,7 @@ export default function Bond() {
                 <>
                   Tem certeza que deseja <strong>{getActionText()}</strong> o
                   vínculo com{" "}
-                  <strong>{pendingAction.bond.customer.name}</strong>?
+                  <strong>{pendingAction?.bond?.customer?.name}</strong>?
                 </>
               )}
             </DrawerDescription>
