@@ -1,10 +1,12 @@
 import { Outlet } from "react-router-dom";
-// import { UpdatePrompt } from "./components/UpdatePrompt";
+import { SidebarProvider } from "./components/ui/sidebar";
 
 function App() {
   return (
     <div className="flex min-h-screen bg-neutral-dark-01 px-4 py-4">
-      <Outlet />
+      <SidebarProvider>
+        <Outlet />
+      </SidebarProvider>
     </div>
   );
 }

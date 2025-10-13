@@ -13,15 +13,13 @@ export default function AppDefaultLayout({
   isMenuButtonVisible,
 }: AppLayoutWithNavbarProps) {
   return (
-    <SidebarProvider>
-      <div className="flex flex-1 flex-col bg-neutral-dark-01">
-        <AppSidebar />
-        <Navbar isMenuButtonVisible={isMenuButtonVisible} />
-        <main className="flex-1 pb-20">
-          <Outlet />
-        </main>
-        <BottomBar />
-      </div>
-    </SidebarProvider>
+    <div className="flex flex-1 flex-col bg-neutral-dark-01">
+      <AppSidebar />
+      <Navbar isMenuButtonVisible={isMenuButtonVisible} />
+      <main className="flex-1 pb-20">
+        <Outlet />
+      </main>
+      <BottomBar />
+    </div>
   );
 }

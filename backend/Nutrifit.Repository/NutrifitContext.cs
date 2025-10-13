@@ -137,9 +137,25 @@ namespace Nutrifit.Repository
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
 
-                e.HasOne<UserEntity>(x => x.Customer).WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict);
-                e.HasOne<UserEntity>(x => x.Professional).WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Restrict);
-                e.HasOne<UserEntity>(x => x.Sender).WithMany().HasForeignKey("SenderId").OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(x => x.Customer)
+                    .WithMany()
+                    .HasForeignKey(x => x.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.Professional)
+                    .WithMany()
+                    .HasForeignKey(x => x.ProfessionalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.Sender)
+                    .WithMany()
+                    .HasForeignKey(x => x.SenderId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasMany(x => x.Appointments)
+                    .WithOne(a => a.CustomerProfessionalBond)
+                    .HasForeignKey(a => a.CustomerProfessionalBondId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             b.Entity<AppointmentEntity>(e =>
@@ -151,11 +167,6 @@ namespace Nutrifit.Repository
                 e.Property(x => x.CreatedAt)
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
-
-                e.HasOne<CustomerProfessionalBondEntity>(x => x.CustomerProfessionalBond)
-                 .WithMany()
-                 .HasForeignKey("CustomerProfessionalBondId")
-                 .OnDelete(DeleteBehavior.Cascade);
             });
 
             b.Entity<CustomerFeedbackEntity>(e =>
@@ -168,8 +179,15 @@ namespace Nutrifit.Repository
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
 
-                e.HasOne<UserEntity>(x => x.Professional).WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Restrict);
-                e.HasOne<UserEntity>(x => x.Customer).WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(x => x.Professional)
+                    .WithMany()
+                    .HasForeignKey(x => x.ProfessionalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.Customer)
+                    .WithMany()
+                    .HasForeignKey(x => x.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             b.Entity<ProfessionalFeedbackEntity>(e =>
@@ -182,8 +200,15 @@ namespace Nutrifit.Repository
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
 
-                e.HasOne<UserEntity>(x => x.Professional).WithMany().HasForeignKey("ProfessionalId").OnDelete(DeleteBehavior.Restrict);
-                e.HasOne<UserEntity>(x => x.Customer).WithMany().HasForeignKey("CustomerId").OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(x => x.Professional)
+                    .WithMany()
+                    .HasForeignKey(x => x.ProfessionalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.Customer)
+                    .WithMany()
+                    .HasForeignKey(x => x.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             b.Entity<ProfessionalCredentialEntity>(e =>
