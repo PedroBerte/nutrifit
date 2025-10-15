@@ -21,7 +21,9 @@ public class UserEntity
 
     public ProfileEntity Profile { get; set; } = null!;
     public AddressEntity? Address { get; set; }
-    public ICollection<CustomerProfessionalBondEntity> CustomerProfessionalBonds { get; set; } = new List<CustomerProfessionalBondEntity>();
     public ProfessionalCredentialEntity? ProfessionalCredential { get; set; }
+    public ICollection<CustomerProfessionalBondEntity> BondsAsCustomer { get; set; } = new List<CustomerProfessionalBondEntity>();
+    public ICollection<CustomerProfessionalBondEntity> BondsAsProfessional { get; set; } = new List<CustomerProfessionalBondEntity>();
+    public ICollection<CustomerProfessionalBondEntity> BondsSent { get; set; } = new List<CustomerProfessionalBondEntity>();
     public ICollection<CustomerFeedbackEntity> CustomerFeedbacks { get; set; }  = new List<CustomerFeedbackEntity>();
 }

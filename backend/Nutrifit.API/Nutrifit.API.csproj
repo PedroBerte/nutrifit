@@ -41,4 +41,8 @@
     <ProjectReference Include="..\Nutrifit.Services\Nutrifit.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Nutrifit.Repository\" />
+  </ItemGroup>
+
 </Project>

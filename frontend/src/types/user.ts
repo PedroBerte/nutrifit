@@ -29,7 +29,9 @@ export interface UserType {
   address?: AddressType | null;
   profile?: ProfileType | null;
   professionalCredential?: ProfessionalCredentialType | null;
-  customerProfessionalBonds?: CustomerProfessionalBondType[] | null;
+  bondsAsCustomer?: CustomerProfessionalBondType[] | null;
+  bondsAsProfessional?: CustomerProfessionalBondType[] | null;
+  BondsSent?: CustomerProfessionalBondType[] | null;
 }
 
 export interface AddressType {
