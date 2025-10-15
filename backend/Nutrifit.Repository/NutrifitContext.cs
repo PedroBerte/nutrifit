@@ -111,10 +111,20 @@ namespace Nutrifit.Repository
 
                 e.HasIndex(u => u.Email).IsUnique();
 
-                e.HasMany(u => u.CustomerProfessionalBonds)
-                    .WithOne(bond => bond.Customer)
-                    .HasForeignKey(bond => bond.CustomerId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                e.HasMany(u => u.BondsAsCustomer)
+                 .WithOne(bond => bond.Customer)
+                 .HasForeignKey(bond => bond.CustomerId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasMany(u => u.BondsAsProfessional)
+                 .WithOne(bond => bond.Professional)
+                 .HasForeignKey(bond => bond.ProfessionalId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasMany(u => u.BondsSent)
+                 .WithOne(bond => bond.Sender)
+                 .HasForeignKey(bond => bond.SenderId)
+                 .OnDelete(DeleteBehavior.Restrict);
 
                 e.HasMany(u => u.CustomerFeedbacks)
                     .WithOne(feedback => feedback.Customer)
@@ -136,21 +146,6 @@ namespace Nutrifit.Repository
                 e.Property(x => x.CreatedAt)
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
-
-                e.HasOne(x => x.Customer)
-                    .WithMany()
-                    .HasForeignKey(x => x.CustomerId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                e.HasOne(x => x.Professional)
-                    .WithMany()
-                    .HasForeignKey(x => x.ProfessionalId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                e.HasOne(x => x.Sender)
-                    .WithMany()
-                    .HasForeignKey(x => x.SenderId)
-                    .OnDelete(DeleteBehavior.Restrict);
 
                 e.HasMany(x => x.Appointments)
                     .WithOne(a => a.CustomerProfessionalBond)

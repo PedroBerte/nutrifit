@@ -21,9 +21,25 @@ public class UserService : IUserService
                 .Include(x => x.Address)
                 .Include(x => x.ProfessionalCredential)
                 .Include(x => x.Profile)
-                .Include(x => x.CustomerProfessionalBonds)
-                .ThenInclude(x => x.Appointments)
-                .ToListAsync();
+
+                // laços onde o usuário é o cliente
+                .Include(x => x.BondsAsCustomer)
+                    .ThenInclude(b => b.Professional)
+                .Include(x => x.BondsAsCustomer)
+                    .ThenInclude(b => b.Appointments)
+
+                // laços onde o usuário é o profissional
+                .Include(x => x.BondsAsProfessional)
+                    .ThenInclude(b => b.Customer)
+                .Include(x => x.BondsAsProfessional)
+                    .ThenInclude(b => b.Appointments)
+
+                // laços enviados por este usuário
+                .Include(x => x.BondsSent)
+                    .ThenInclude(b => b.Customer)
+                .Include(x => x.BondsSent)
+                    .ThenInclude(b => b.Professional)
+                    .ToListAsync();
         }
         catch (Exception ex)
         {
@@ -39,10 +55,19 @@ public class UserService : IUserService
                 .Include(x => x.Address)
                 .Include(x => x.ProfessionalCredential)
                 .Include(x => x.Profile)
-                .Include(x => x.CustomerProfessionalBonds)
-                .ThenInclude(x => x.Professional)
-                .Include(x => x.CustomerProfessionalBonds)
-                .ThenInclude(x => x.Appointments)
+                .Include(x => x.BondsAsCustomer)
+                    .ThenInclude(b => b.Professional)
+                .Include(x => x.BondsAsCustomer)
+                    .ThenInclude(b => b.Appointments)
+                .Include(x => x.BondsAsProfessional)
+                    .ThenInclude(b => b.Customer)
+                .Include(x => x.BondsAsProfessional)
+                    .ThenInclude(b => b.Appointments)
+                .Include(x => x.BondsSent)
+                    .ThenInclude(b => b.Customer)
+                .Include(x => x.BondsSent)
+                    .ThenInclude(b => b.Professional)
+
                 .FirstOrDefaultAsync(x => x.Id == id);
             if (user is null)
                 throw new InvalidOperationException("Usuário não encontrado.");

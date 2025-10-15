@@ -12,7 +12,7 @@ export default function Workout() {
   const { data: userData, isLoading, error } = useGetUserById(user?.id);
 
   function getBondStatus() {
-    if (userData?.customerProfessionalBonds?.length === 0) {
+    if (userData?.bondsAsCustomer?.length === 0) {
       return (
         <InformationCard
           title="Nenhum personal encontrado!"
@@ -23,8 +23,7 @@ export default function Workout() {
     }
 
     if (
-      userData?.customerProfessionalBonds &&
-      userData.customerProfessionalBonds.find(
+      userData?.BondsSent?.find(
         (x) =>
           x.professional &&
           x.professional.profile == (UserProfiles.PERSONAL as any) &&
