@@ -11,11 +11,12 @@ import { signInFromJwt, signOut } from "@/store/authSlice";
 import { useValidateSession } from "@/services/api/auth";
 import { decodeAndNormalizeJwt } from "@/lib/jwt";
 import type { ProfessionalCredentialType } from "@/types/professional";
+import { uploadImage } from "@/services/api/storage";
 
 export type AccountType = "student" | "nutritionist" | "personal";
 
 const formSchema = z.object({
-  image: z.string().url().optional().or(z.literal("")),
+  image: z.string().optional().or(z.literal("")), // Aceita data URL ou URL normal
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   phone: z.string().min(8, "Celular deve ter pelo menos 8 dígitos"),
   sex: z.enum(["male", "female", "other"]),
@@ -57,6 +58,7 @@ type Ctx = {
   handleSubmitAll: () => Promise<void>;
   setStep: (s: RegisterStep) => void;
   handleValidateStep: () => Promise<boolean>;
+  setImageFile: (file: File | null) => void;
 };
 
 const RegisterFormContext = createContext<Ctx | undefined>(undefined);
@@ -73,6 +75,7 @@ export function RegisterFormProvider({
 
   const [step, setStep] = useState<RegisterStep>("choose");
   const [accountType, setAccountTypeState] = useState<AccountType>("student");
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   const { user } = useAuth();
   const createUser = useCreateUser();
@@ -163,12 +166,14 @@ export function RegisterFormProvider({
 
         const payload = form.getValues();
 
+        // Criar usuário SEM imagem primeiro
         var newUser: UserType = {
           id: null,
           addressId: null,
           profileId: UserProfiles.STUDENT,
           name: payload.name,
           email: user?.email || "",
+          imageUrl: null, // Será preenchido depois
           dateOfBirth: payload.dateOfBirth
             ? payload.dateOfBirth.toISOString()
             : null,
@@ -187,7 +192,32 @@ export function RegisterFormProvider({
           profile: null,
         };
 
-        await handleCreateEntity(newUser);
+        // Criar usuário e obter GUID
+        const createdUser = await handleCreateEntity(newUser);
+
+        // Fazer upload da imagem COM o GUID do usuário
+        if (selectedImageFile && createdUser?.id) {
+          try {
+            console.log(
+              "Fazendo upload da imagem com GUID do usuário:",
+              createdUser.id
+            );
+            const uploadResponse = await uploadImage(
+              selectedImageFile,
+              "profiles",
+              createdUser.id // Nome do arquivo será o GUID do usuário
+            );
+            console.log("Upload concluído:", uploadResponse.url);
+
+            // TODO: Atualizar usuário com a URL da imagem
+            // Você pode criar um endpoint PATCH para atualizar apenas a imageUrl
+            // ou deixar para atualizar na próxima edição de perfil
+          } catch (uploadError) {
+            console.error("Erro ao fazer upload da imagem:", uploadError);
+            // Usuário já foi criado, apenas log do erro
+            console.warn("Usuário criado mas imagem não foi enviada");
+          }
+        }
 
         navigate("/home", { replace: true });
         return;
@@ -213,6 +243,7 @@ export function RegisterFormProvider({
 
         const payload = form.getValues();
 
+        // Criar usuário profissional SEM imagem primeiro
         var newUser: UserType = {
           id: null,
           profileId:
@@ -221,6 +252,7 @@ export function RegisterFormProvider({
               : UserProfiles.PERSONAL,
           name: payload.name,
           email: user?.email || "",
+          imageUrl: null, // Será preenchido depois
           dateOfBirth: payload.dateOfBirth
             ? payload.dateOfBirth.toISOString()
             : null,
@@ -246,7 +278,32 @@ export function RegisterFormProvider({
           },
         };
 
-        await handleCreateEntity(newUser);
+        // Criar usuário e obter GUID
+        const createdUser = await handleCreateEntity(newUser);
+
+        // Fazer upload da imagem COM o GUID do usuário
+        if (selectedImageFile && createdUser?.id) {
+          try {
+            console.log(
+              "Fazendo upload da imagem com GUID do usuário:",
+              createdUser.id
+            );
+            const uploadResponse = await uploadImage(
+              selectedImageFile,
+              "profiles",
+              createdUser.id // Nome do arquivo será o GUID do usuário
+            );
+            console.log("Upload concluído:", uploadResponse.url);
+
+            // TODO: Atualizar usuário com a URL da imagem
+            // Você pode criar um endpoint PATCH para atualizar apenas a imageUrl
+            // ou deixar para atualizar na próxima edição de perfil
+          } catch (uploadError) {
+            console.error("Erro ao fazer upload da imagem:", uploadError);
+            // Usuário já foi criado, apenas log do erro
+            console.warn("Usuário criado mas imagem não foi enviada");
+          }
+        }
       }
       navigate("/home", { replace: true });
     } catch (error) {
@@ -256,13 +313,13 @@ export function RegisterFormProvider({
     }
   };
 
-  async function handleCreateEntity(user: UserType) {
+  async function handleCreateEntity(user: UserType): Promise<UserType> {
     try {
       const linkToken = sp.get("token");
       if (!linkToken) {
         console.error("Missing link token in URL");
         navigate("/login?err=missing-token", { replace: true });
-        return;
+        throw new Error("Missing link token");
       }
 
       console.log("Creating user with data:", user);
@@ -272,7 +329,7 @@ export function RegisterFormProvider({
       if (!newUser || !newUser.id) {
         console.error("User creation failed");
         navigate("/login", { replace: true });
-        return;
+        throw new Error("User creation failed");
       }
 
       const jwt = await validationSession.mutateAsync(linkToken);
@@ -286,10 +343,12 @@ export function RegisterFormProvider({
 
       if (!ok) {
         navigate("/login?err=invalid-link", { replace: true });
-        return;
+        throw new Error("Invalid session");
       }
 
       dispatch(signInFromJwt({ accessToken: jwt! }));
+
+      return newUser; // Retornar o usuário criado
     } catch (error) {
       console.error("Failed to create user:", error);
       navigate("/login", { replace: true });
@@ -305,6 +364,7 @@ export function RegisterFormProvider({
     handleSubmitAll,
     setStep,
     handleValidateStep,
+    setImageFile: setSelectedImageFile,
   };
 
   return (

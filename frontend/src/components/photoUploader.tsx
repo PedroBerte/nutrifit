@@ -3,36 +3,62 @@ import { Button } from "./ui/button";
 import { Camera } from "lucide-react";
 
 type Props = {
-  onUpload: (file: File) => void;
+  onFileSelect: (file: File) => void;
   disabled?: boolean;
   description?: string;
+  initialImageUrl?: string; // URL inicial da imagem
 };
 
 export default function PhotoUploader({
-  onUpload,
+  onFileSelect,
   disabled,
   description,
+  initialImageUrl,
 }: Props) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [imageUrl, setImageUrl] = React.useState<string | null>(null);
+  const [imageUrl, setImageUrl] = React.useState<string | null>(
+    initialImageUrl || null
+  );
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
 
   const handleUploadClick = () => {
-    fileInputRef.current?.click();
+    if (!disabled) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageUrl(URL.createObjectURL(file));
-      onUpload(file);
+    if (!file) return;
+
+    // Validações no frontend
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      alert(
+        "Arquivo inválido. Por favor, envie uma imagem no formato JPG, JPEG, PNG ou WEBP."
+      );
+      return;
     }
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Arquivo muito grande. A imagem deve ter no máximo 2MB.");
+      return;
+    }
+
+    // Preview local imediato
+    const localUrl = URL.createObjectURL(file);
+    setImageUrl(localUrl);
+    setSelectedFile(file);
+
+    // Notificar componente pai
+    onFileSelect(file);
   };
 
   return (
     <div className="flex flex-col items-center">
       <input
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
         ref={fileInputRef}
         className="hidden"
         onChange={handleFileChange}
@@ -67,6 +93,7 @@ export default function PhotoUploader({
         onClick={handleUploadClick}
         type="button"
         variant="dark"
+        disabled={disabled}
       >
         Selecionar Imagem
       </Button>

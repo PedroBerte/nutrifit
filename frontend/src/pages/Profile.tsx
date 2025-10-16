@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById } from "@/services/api/user";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,23 @@ import {
   Edit,
   VenusAndMars,
 } from "lucide-react";
+import { getPresignedUrl } from "@/services/api/storage";
 
 export default function Profile() {
   const { user, logout } = useAuth();
   const { data: userData, isLoading, error } = useGetUserById(user?.id);
+  const [profileImageUrl, setProfileImageUrl] = React.useState("");
+
+  useEffect(() => {
+    async function fetchProfileImage() {
+      if (userData?.id) {
+        const url = await getPresignedUrl(`profiles/${userData.id}.jpg`);
+        console.log("Presigned URL:", url);
+        setProfileImageUrl(url);
+      }
+    }
+    fetchProfileImage();
+  }, [userData?.id]);
 
   if (isLoading) {
     return (
@@ -112,6 +125,7 @@ export default function Profile() {
             <span className="text-2xl font-bold text-white">
               {userData.name?.charAt(0)?.toUpperCase() || "U"}
             </span>
+            <img src={profileImageUrl} alt="" />
           </div>
 
           <div className="text-center space-y-2">

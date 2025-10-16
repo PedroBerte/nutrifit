@@ -27,7 +27,7 @@ import {
 } from "../ui/select";
 
 export default function GenericPersonForm() {
-  const { form } = useRegisterForm();
+  const { form, setImageFile } = useRegisterForm();
   return (
     <div className="flex flex-col w-full gap-4">
       <FormField
@@ -36,9 +36,18 @@ export default function GenericPersonForm() {
         render={() => (
           <FormItem>
             <PhotoUploader
-              onUpload={(file) => {
-                const url = URL.createObjectURL(file);
-                form.setValue("image", url, { shouldValidate: true });
+              initialImageUrl={form.getValues("image") || undefined}
+              onFileSelect={(file) => {
+                // Armazena o arquivo no contexto para upload posterior
+                setImageFile(file);
+                // Cria preview local para o formulário
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  form.setValue("image", reader.result as string, {
+                    shouldValidate: true,
+                  });
+                };
+                reader.readAsDataURL(file);
               }}
             />
             <FormMessage />
