@@ -24,6 +24,12 @@ namespace Nutrifit.Repository
         public DbSet<ExerciseEntity> Exercises => Set<ExerciseEntity>();
         public DbSet<ExercisePrimaryMuscleEntity> ExercisePrimaryMuscles => Set<ExercisePrimaryMuscleEntity>();
         public DbSet<ExerciseSecondaryMuscleEntity> ExerciseSecondaryMuscles => Set<ExerciseSecondaryMuscleEntity>();
+        public DbSet<RoutineEntity> Routines => Set<RoutineEntity>();
+        public DbSet<CustomerRoutineEntity> CustomerRoutines => Set<CustomerRoutineEntity>();
+        public DbSet<WorkoutEntity> Workouts => Set<WorkoutEntity>();
+        public DbSet<WorkoutFeedbackEntity> WorkoutFeedbacks => Set<WorkoutFeedbackEntity>();
+        public DbSet<WorkoutSetEntity> WorkoutSets => Set<WorkoutSetEntity>();
+        public DbSet<WorkoutExerciseEntity> WorkoutExercises => Set<WorkoutExerciseEntity>();
 
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
         {
@@ -359,6 +365,150 @@ namespace Nutrifit.Repository
                     .OnDelete(DeleteBehavior.Cascade);
 
                 e.HasIndex(x => new { x.ExerciseId, x.MuscleId }).IsUnique();
+            });
+
+            b.Entity<RoutineEntity>(e =>
+            {
+                e.ToTable("Routines");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.Title).IsRequired().HasMaxLength(200);
+                e.Property(x => x.Goal).HasMaxLength(500);
+                e.Property(x => x.Difficulty).HasMaxLength(50);
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(x => x.Personal)
+                    .WithMany()
+                    .HasForeignKey(x => x.PersonalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasMany(x => x.Workouts)
+                    .WithOne(x => x.Routine)
+                    .HasForeignKey(x => x.RoutineId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasMany(x => x.CustomerRoutines)
+                    .WithOne(x => x.Routine)
+                    .HasForeignKey(x => x.RoutineId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            b.Entity<CustomerRoutineEntity>(e =>
+            {
+                e.ToTable("CustomerRoutines");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(x => x.Routine)
+                    .WithMany(x => x.CustomerRoutines)
+                    .HasForeignKey(x => x.RoutineId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasOne(x => x.Customer)
+                    .WithMany()
+                    .HasForeignKey(x => x.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasIndex(x => new { x.RoutineId, x.CustomerId });
+            });
+
+            b.Entity<WorkoutEntity>(e =>
+            {
+                e.ToTable("Workouts");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.Title).IsRequired().HasMaxLength(200);
+                e.Property(x => x.Description).HasMaxLength(1000);
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(x => x.Routine)
+                    .WithMany(x => x.Workouts)
+                    .HasForeignKey(x => x.RoutineId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasOne(x => x.WorkoutFeedback)
+                    .WithOne(x => x.Workout)
+                    .HasForeignKey<WorkoutEntity>(x => x.WorkoutFeedbackId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                e.HasMany(x => x.WorkoutSets)
+                    .WithOne(x => x.Workout)
+                    .HasForeignKey(x => x.WorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            b.Entity<WorkoutFeedbackEntity>(e =>
+            {
+                e.ToTable("WorkoutFeedbacks");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.Description).HasMaxLength(1000);
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+            });
+
+            b.Entity<WorkoutSetEntity>(e =>
+            {
+                e.ToTable("WorkoutSets");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.Field).HasMaxLength(200);
+                e.Property(x => x.Description).HasMaxLength(500);
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(x => x.Workout)
+                    .WithMany(x => x.WorkoutSets)
+                    .HasForeignKey(x => x.WorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasOne(x => x.Exercise)
+                    .WithMany()
+                    .HasForeignKey(x => x.ExerciseId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasMany(x => x.WorkoutExercises)
+                    .WithOne(x => x.WorkoutSet)
+                    .HasForeignKey(x => x.WorkoutSetId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasIndex(x => new { x.WorkoutId, x.Order });
+            });
+
+            b.Entity<WorkoutExerciseEntity>(e =>
+            {
+                e.ToTable("WorkoutExercises");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.Load).HasPrecision(10, 2);
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(x => x.WorkoutSet)
+                    .WithMany(x => x.WorkoutExercises)
+                    .HasForeignKey(x => x.WorkoutSetId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             DatabaseSeeder.Seed(b);
