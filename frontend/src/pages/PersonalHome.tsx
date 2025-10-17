@@ -23,7 +23,9 @@ export default function PersonalHome() {
           title="Treinos"
           icon={<Dumbbell size={22} />}
           description="Seus planos de treinos"
-          onClick={() => {}}
+          onClick={() => {
+            navigate("/routines");
+          }}
         />
         <BigButton
           title="Agenda"

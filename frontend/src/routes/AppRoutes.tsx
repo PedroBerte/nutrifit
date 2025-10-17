@@ -13,6 +13,7 @@ import Workout from "@/pages/Workout";
 import Students from "@/pages/Students";
 import Diet from "@/pages/Diet";
 import Bond from "@/pages/Bond";
+import Routines from "@/pages/Routines";
 
 export function AppRoutes() {
   return (
@@ -35,6 +36,7 @@ export function AppRoutes() {
             <Route path="students" element={<Students />} />
             <Route path="diet" element={<Diet />} />
             <Route path="bond" element={<Bond />} />
+            <Route path="routines" element={<Routines />} />
           </Route>
         </Route>
       </Route>

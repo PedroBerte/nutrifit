@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 
-export default function WorkoutPlans() {
+export default function Routines() {
   return (
     <div className="flex flex-1 py-4 flex-col gap-3">
       <p className="font-bold text-2xl">Planos de Treinos</p>
