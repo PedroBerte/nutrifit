@@ -222,17 +222,7 @@ public class RoutineService : IRoutineService
                 AssignedCustomersCount = r.CustomerRoutines.Count
             }).ToList();
 
-            return ApiResponse.CreateSuccess("Rotinas encontradas", new
-            {
-                routines = response,
-                pagination = new
-                {
-                    currentPage = page,
-                    pageSize,
-                    totalPages,
-                    totalCount
-                }
-            });
+            return ApiResponse.CreateSuccess("Rotinas encontradas", response);
         }
         catch (Exception ex)
         {
@@ -351,17 +341,7 @@ public class RoutineService : IRoutineService
                 AssignedCustomersCount = 0
             }).ToList();
 
-            return ApiResponse.CreateSuccess("Rotinas do cliente encontradas", new
-            {
-                routines = response,
-                pagination = new
-                {
-                    currentPage = page,
-                    pageSize,
-                    totalPages,
-                    totalCount
-                }
-            });
+            return ApiResponse.CreateSuccess("Rotinas do cliente encontradas", response);
         }
         catch (Exception ex)
         {
