@@ -15,6 +15,7 @@ import Diet from "@/pages/Diet";
 import Bond from "@/pages/Bond";
 import RoutinesList from "@/pages/RoutinesList";
 import NewRoutine from "@/pages/NewRoutine";
+import RoutineDetails from "@/pages/RoutineDetails";
 
 export function AppRoutes() {
   return (
@@ -38,6 +39,7 @@ export function AppRoutes() {
             <Route path="diet" element={<Diet />} />
             <Route path="bond" element={<Bond />} />
             <Route path="routines" element={<RoutinesList />} />
+            <Route path="routines/:id" element={<RoutineDetails />} />
             <Route path="routines/new" element={<NewRoutine />} />
           </Route>
         </Route>
