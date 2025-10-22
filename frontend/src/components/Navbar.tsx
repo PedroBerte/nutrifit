@@ -22,7 +22,7 @@ export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
       <div className="flex items-center">
         {!isOnHome && (
           <button
-            onClick={() => navigate("/home")}
+            onClick={() => navigate(-1)}
             aria-label="Voltar para home"
             className="mr-1 rounded hover:bg-white/10"
           >

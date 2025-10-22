@@ -34,6 +34,25 @@ services:
       retries: 10
     networks: [nutrifit_net]
 
+  minio:
+    image: quay.io/minio/minio
+    container_name: nutrifit_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-admin123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata_nutrifit:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [nutrifit_net]
+
   api:
     build:
       context: .
@@ -43,6 +62,8 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     environment:
       # Use os NOMES DOS SERVIÇOS da rede Docker (db/redis), não localhost
@@ -55,6 +76,12 @@ services:
 
       Vapid__PublicKey: ${VAPID_PUBLIC_KEY}
       Vapid__PrivateKey: ${VAPID_PRIVATE_KEY}
+
+      MinIO__Endpoint: minio:9000
+      MinIO__AccessKey: ${MINIO_ROOT_USER:-admin}
+      MinIO__SecretKey: ${MINIO_ROOT_PASSWORD:-admin123}
+      MinIO__BucketName: nutrifit-images
+      MinIO__UseSSL: "false"
 
       Serilog__WriteTo__0__Args__connectionString: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
 
@@ -86,6 +113,7 @@ services:
 volumes:
   pgdata_nutrifit:
   redisdata_nutrifit:
+  miniodata_nutrifit:
 
 networks:
   nutrifit_net:

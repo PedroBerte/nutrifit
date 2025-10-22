@@ -192,6 +192,819 @@ namespace Nutrifit.Repository.Migrations
                     b.ToTable("CustomerProfessionalBonds", (string)null);
                 });
 
+            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerRoutineEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoutineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("RoutineId", "CustomerId");
+
+                    b.ToTable("CustomerRoutines", (string)null);
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ExerciseCategoryEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExerciseCategories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c4d"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Cardio",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Força",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("c3d4e5f6-a7b8-6c7d-0e9f-1a2b3c4d5e6f"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Flexibilidade",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("d4e5f6a7-b8c9-7d8e-1f0a-2b3c4d5e6f7a"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Funcional",
+                            Status = "A"
+                        });
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ExerciseEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<string>("Instruction")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("Exercises", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("e9f0a1b2-c3d4-0d1e-6f5a-7b8c9d0e1f2a"),
+                            CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Deite-se no banco, pegue a barra com as mãos na largura dos ombros, abaixe até o peito e empurre para cima.",
+                            Name = "Supino Reto",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=rT7DgCr-3pg"
+                        },
+                        new
+                        {
+                            Id = new Guid("f0a1b2c3-d4e5-1e2f-7a6b-8c9d0e1f2a3b"),
+                            CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Com os pés na largura dos ombros, desça flexionando os joelhos até as coxas ficarem paralelas ao chão.",
+                            Name = "Agachamento Livre",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=ultWZbUMPL8"
+                        },
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-e5f6-2f3a-8b7c-9d0e1f2a3b4c"),
+                            CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Com a barra no chão, segure-a e levante mantendo as costas retas até ficar em pé.",
+                            Name = "Levantamento Terra",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=ytGaGIn3SjE"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2c3d4e5-f6a7-3a4b-9c8d-0e1f2a3b4c5d"),
+                            CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Segure a barra com as mãos pronadas e puxe o corpo até o queixo passar a barra.",
+                            Name = "Barra Fixa",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=eGo4IYlbE5g"
+                        },
+                        new
+                        {
+                            Id = new Guid("c3d4e5f6-a7b8-4b5c-0d9e-1f2a3b4c5d6e"),
+                            CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Sentado, empurre os halteres acima da cabeça até estender os braços completamente.",
+                            Name = "Desenvolvimento com Halteres",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=qEwKCR5JCog"
+                        },
+                        new
+                        {
+                            Id = new Guid("d4e5f6a7-b8c9-5c6d-1e0f-2a3b4c5d6e7f"),
+                            CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Em pé, segure a barra e flexione os cotovelos levando a barra até o peito.",
+                            Name = "Rosca Direta",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=ykJmrZ5v0Oo"
+                        },
+                        new
+                        {
+                            Id = new Guid("e5f6a7b8-c9d0-6d7e-2f1a-3b4c5d6e7f8a"),
+                            CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Nas barras paralelas, desça flexionando os cotovelos e empurre para cima.",
+                            Name = "Mergulho em Paralelas",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=2z8JmcrW-As"
+                        },
+                        new
+                        {
+                            Id = new Guid("f6a7b8c9-d0e1-7e8f-3a2b-4c5d6e7f8a9b"),
+                            CategoryId = new Guid("d4e5f6a7-b8c9-7d8e-1f0a-2b3c4d5e6f7a"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Apoie-se nos antebraços e pontas dos pés, mantendo o corpo reto por tempo determinado.",
+                            Name = "Prancha",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=ASdvN_XEl_c"
+                        },
+                        new
+                        {
+                            Id = new Guid("a7b8c9d0-e1f2-8f9a-4b3c-5d6e7f8a9b0c"),
+                            CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Dê um passo à frente e desça flexionando ambos os joelhos em 90 graus.",
+                            Name = "Afundo",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=QOVaHwm-Q6U"
+                        },
+                        new
+                        {
+                            Id = new Guid("b8c9d0e1-f2a3-9a0b-5c4d-6e7f8a9b0c1d"),
+                            CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Instruction = "Em pé, levante os halteres lateralmente até a altura dos ombros.",
+                            Name = "Elevação Lateral",
+                            Status = "A",
+                            Url = "https://www.youtube.com/watch?v=3VcKaXpzqRo"
+                        });
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ExercisePrimaryMuscleEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MuscleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MuscleId");
+
+                    b.HasIndex("ExerciseId", "MuscleId")
+                        .IsUnique();
+
+                    b.ToTable("ExercisePrimaryMuscles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("e9f0a1b2-c3d4-0d1e-6f5a-7b8c9d0e1f2a"),
+                            MuscleId = new Guid("e1f2a3b4-c5d6-4e5f-8a7b-9c0d1e2f3a4b"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("f0a1b2c3-d4e5-1e2f-7a6b-8c9d0e1f2a3b"),
+                            MuscleId = new Guid("a9b0c1d2-e3f4-2a3b-6c5d-7e8f9a0b1c2d"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("f0a1b2c3-d4e5-1e2f-7a6b-8c9d0e1f2a3b"),
+                            MuscleId = new Guid("c1d2e3f4-a5b6-4c5d-8e7f-9a0b1c2d3e4f"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("44444444-4444-4444-4444-444444444444"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("a1b2c3d4-e5f6-2f3a-8b7c-9d0e1f2a3b4c"),
+                            MuscleId = new Guid("d8e9f0a1-b2c3-1d2e-5f4a-6b7c8d9e0f1a"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("55555555-5555-5555-5555-555555555555"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("a1b2c3d4-e5f6-2f3a-8b7c-9d0e1f2a3b4c"),
+                            MuscleId = new Guid("c1d2e3f4-a5b6-4c5d-8e7f-9a0b1c2d3e4f"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("66666666-6666-6666-6666-666666666666"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("a1b2c3d4-e5f6-2f3a-8b7c-9d0e1f2a3b4c"),
+                            MuscleId = new Guid("b0c1d2e3-f4a5-3b4c-7d6e-8f9a0b1c2d3e"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("77777777-7777-7777-7777-777777777777"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("b2c3d4e5-f6a7-3a4b-9c8d-0e1f2a3b4c5d"),
+                            MuscleId = new Guid("a3b4c5d6-e7f8-6a7b-0c9d-1e2f3a4b5c6d"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("88888888-8888-8888-8888-888888888888"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("c3d4e5f6-a7b8-4b5c-0d9e-1f2a3b4c5d6e"),
+                            MuscleId = new Guid("d6e7f8a9-b0c1-9d0e-3f2a-4b5c6d7e8f9a"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-999999999999"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("c3d4e5f6-a7b8-4b5c-0d9e-1f2a3b4c5d6e"),
+                            MuscleId = new Guid("e7f8a9b0-c1d2-0e1f-4a3b-5c6d7e8f9a0b"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("d4e5f6a7-b8c9-5c6d-1e0f-2a3b4c5d6e7f"),
+                            MuscleId = new Guid("e3f4a5b6-c7d8-6e7f-0a9b-1c2d3e4f5a6b"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("e5f6a7b8-c9d0-6d7e-2f1a-3b4c5d6e7f8a"),
+                            MuscleId = new Guid("f4a5b6c7-d8e9-7f8a-1b0c-2d3e4f5a6b7c"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("f6a7b8c9-d0e1-7e8f-3a2b-4c5d6e7f8a9b"),
+                            MuscleId = new Guid("b6c7d8e9-f0a1-9b0c-3d2e-4f5a6b7c8d9e"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("a7b8c9d0-e1f2-8f9a-4b3c-5d6e7f8a9b0c"),
+                            MuscleId = new Guid("a9b0c1d2-e3f4-2a3b-6c5d-7e8f9a0b1c2d"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("a7b8c9d0-e1f2-8f9a-4b3c-5d6e7f8a9b0c"),
+                            MuscleId = new Guid("c1d2e3f4-a5b6-4c5d-8e7f-9a0b1c2d3e4f"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("b8c9d0e1-f2a3-9a0b-5c4d-6e7f8a9b0c1d"),
+                            MuscleId = new Guid("e7f8a9b0-c1d2-0e1f-4a3b-5c6d7e8f9a0b"),
+                            Status = "A"
+                        });
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ExerciseSecondaryMuscleEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MuscleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MuscleId");
+
+                    b.HasIndex("ExerciseId", "MuscleId")
+                        .IsUnique();
+
+                    b.ToTable("ExerciseSecondaryMuscles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("e9f0a1b2-c3d4-0d1e-6f5a-7b8c9d0e1f2a"),
+                            MuscleId = new Guid("f4a5b6c7-d8e9-7f8a-1b0c-2d3e4f5a6b7c"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("e9f0a1b2-c3d4-0d1e-6f5a-7b8c9d0e1f2a"),
+                            MuscleId = new Guid("d6e7f8a9-b0c1-9d0e-3f2a-4b5c6d7e8f9a"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000003"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("f0a1b2c3-d4e5-1e2f-7a6b-8c9d0e1f2a3b"),
+                            MuscleId = new Guid("b0c1d2e3-f4a5-3b4c-7d6e-8f9a0b1c2d3e"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000004"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("f0a1b2c3-d4e5-1e2f-7a6b-8c9d0e1f2a3b"),
+                            MuscleId = new Guid("d8e9f0a1-b2c3-1d2e-5f4a-6b7c8d9e0f1a"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000005"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("a1b2c3d4-e5f6-2f3a-8b7c-9d0e1f2a3b4c"),
+                            MuscleId = new Guid("b4c5d6e7-f8a9-7b8c-1d0e-2f3a4b5c6d7e"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000006"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("a1b2c3d4-e5f6-2f3a-8b7c-9d0e1f2a3b4c"),
+                            MuscleId = new Guid("a9b0c1d2-e3f4-2a3b-6c5d-7e8f9a0b1c2d"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000007"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("b2c3d4e5-f6a7-3a4b-9c8d-0e1f2a3b4c5d"),
+                            MuscleId = new Guid("e3f4a5b6-c7d8-6e7f-0a9b-1c2d3e4f5a6b"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000008"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("b2c3d4e5-f6a7-3a4b-9c8d-0e1f2a3b4c5d"),
+                            MuscleId = new Guid("b4c5d6e7-f8a9-7b8c-1d0e-2f3a4b5c6d7e"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000009"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("c3d4e5f6-a7b8-4b5c-0d9e-1f2a3b4c5d6e"),
+                            MuscleId = new Guid("f4a5b6c7-d8e9-7f8a-1b0c-2d3e4f5a6b7c"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-00000000000a"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("d4e5f6a7-b8c9-5c6d-1e0f-2a3b4c5d6e7f"),
+                            MuscleId = new Guid("a5b6c7d8-e9f0-8a9b-2c1d-3e4f5a6b7c8d"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-00000000000b"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("e5f6a7b8-c9d0-6d7e-2f1a-3b4c5d6e7f8a"),
+                            MuscleId = new Guid("e1f2a3b4-c5d6-4e5f-8a7b-9c0d1e2f3a4b"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-00000000000c"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("e5f6a7b8-c9d0-6d7e-2f1a-3b4c5d6e7f8a"),
+                            MuscleId = new Guid("d6e7f8a9-b0c1-9d0e-3f2a-4b5c6d7e8f9a"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-00000000000d"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("f6a7b8c9-d0e1-7e8f-3a2b-4c5d6e7f8a9b"),
+                            MuscleId = new Guid("d8e9f0a1-b2c3-1d2e-5f4a-6b7c8d9e0f1a"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-00000000000e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("f6a7b8c9-d0e1-7e8f-3a2b-4c5d6e7f8a9b"),
+                            MuscleId = new Guid("c7d8e9f0-a1b2-0c1d-4e3f-5a6b7c8d9e0f"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-00000000000f"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("a7b8c9d0-e1f2-8f9a-4b3c-5d6e7f8a9b0c"),
+                            MuscleId = new Guid("b0c1d2e3-f4a5-3b4c-7d6e-8f9a0b1c2d3e"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000010"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("a7b8c9d0-e1f2-8f9a-4b3c-5d6e7f8a9b0c"),
+                            MuscleId = new Guid("d2e3f4a5-b6c7-5d6e-9f8a-0b1c2d3e4f5a"),
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000011"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ExerciseId = new Guid("b8c9d0e1-f2a3-9a0b-5c4d-6e7f8a9b0c1d"),
+                            MuscleId = new Guid("b4c5d6e7-f8a9-7b8c-1d0e-2f3a4b5c6d7e"),
+                            Status = "A"
+                        });
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.MuscleEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<Guid>("MuscleGroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MuscleGroupId");
+
+                    b.ToTable("Muscles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("e1f2a3b4-c5d6-4e5f-8a7b-9c0d1e2f3a4b"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("e5f6a7b8-c9d0-8e9f-2a1b-3c4d5e6f7a8b"),
+                            Name = "Peitoral Maior",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("f2a3b4c5-d6e7-5f6a-9b8c-0d1e2f3a4b5c"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("e5f6a7b8-c9d0-8e9f-2a1b-3c4d5e6f7a8b"),
+                            Name = "Peitoral Menor",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("a3b4c5d6-e7f8-6a7b-0c9d-1e2f3a4b5c6d"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("f6a7b8c9-d0e1-9f0a-3b2c-4d5e6f7a8b9c"),
+                            Name = "Latíssimo do Dorso",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("b4c5d6e7-f8a9-7b8c-1d0e-2f3a4b5c6d7e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("f6a7b8c9-d0e1-9f0a-3b2c-4d5e6f7a8b9c"),
+                            Name = "Trapézio",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("c5d6e7f8-a9b0-8c9d-2e1f-3a4b5c6d7e8f"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("f6a7b8c9-d0e1-9f0a-3b2c-4d5e6f7a8b9c"),
+                            Name = "Romboides",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("d6e7f8a9-b0c1-9d0e-3f2a-4b5c6d7e8f9a"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("a7b8c9d0-e1f2-0a1b-4c3d-5e6f7a8b9c0d"),
+                            Name = "Deltoide Anterior",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("e7f8a9b0-c1d2-0e1f-4a3b-5c6d7e8f9a0b"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("a7b8c9d0-e1f2-0a1b-4c3d-5e6f7a8b9c0d"),
+                            Name = "Deltoide Lateral",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("f8a9b0c1-d2e3-1f2a-5b4c-6d7e8f9a0b1c"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("a7b8c9d0-e1f2-0a1b-4c3d-5e6f7a8b9c0d"),
+                            Name = "Deltoide Posterior",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("a9b0c1d2-e3f4-2a3b-6c5d-7e8f9a0b1c2d"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("b8c9d0e1-f2a3-1b2c-5d4e-6f7a8b9c0d1e"),
+                            Name = "Quadríceps",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("b0c1d2e3-f4a5-3b4c-7d6e-8f9a0b1c2d3e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("b8c9d0e1-f2a3-1b2c-5d4e-6f7a8b9c0d1e"),
+                            Name = "Isquiotibiais",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("c1d2e3f4-a5b6-4c5d-8e7f-9a0b1c2d3e4f"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("b8c9d0e1-f2a3-1b2c-5d4e-6f7a8b9c0d1e"),
+                            Name = "Glúteos",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("d2e3f4a5-b6c7-5d6e-9f8a-0b1c2d3e4f5a"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("b8c9d0e1-f2a3-1b2c-5d4e-6f7a8b9c0d1e"),
+                            Name = "Panturrilhas",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("e3f4a5b6-c7d8-6e7f-0a9b-1c2d3e4f5a6b"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("c9d0e1f2-a3b4-2c3d-6e5f-7a8b9c0d1e2f"),
+                            Name = "Bíceps",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("f4a5b6c7-d8e9-7f8a-1b0c-2d3e4f5a6b7c"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("c9d0e1f2-a3b4-2c3d-6e5f-7a8b9c0d1e2f"),
+                            Name = "Tríceps",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("a5b6c7d8-e9f0-8a9b-2c1d-3e4f5a6b7c8d"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("c9d0e1f2-a3b4-2c3d-6e5f-7a8b9c0d1e2f"),
+                            Name = "Antebraços",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("b6c7d8e9-f0a1-9b0c-3d2e-4f5a6b7c8d9e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("d0e1f2a3-b4c5-3d4e-7f6a-8b9c0d1e2f3a"),
+                            Name = "Abdominais",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("c7d8e9f0-a1b2-0c1d-4e3f-5a6b7c8d9e0f"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("d0e1f2a3-b4c5-3d4e-7f6a-8b9c0d1e2f3a"),
+                            Name = "Oblíquos",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("d8e9f0a1-b2c3-1d2e-5f4a-6b7c8d9e0f1a"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MuscleGroupId = new Guid("d0e1f2a3-b4c5-3d4e-7f6a-8b9c0d1e2f3a"),
+                            Name = "Lombar",
+                            Status = "A"
+                        });
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.MuscleGroupEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MuscleGroups", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("e5f6a7b8-c9d0-8e9f-2a1b-3c4d5e6f7a8b"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Peito",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("f6a7b8c9-d0e1-9f0a-3b2c-4d5e6f7a8b9c"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Costas",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("a7b8c9d0-e1f2-0a1b-4c3d-5e6f7a8b9c0d"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Ombros",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("b8c9d0e1-f2a3-1b2c-5d4e-6f7a8b9c0d1e"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Pernas",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("c9d0e1f2-a3b4-2c3d-6e5f-7a8b9c0d1e2f"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Braços",
+                            Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("d0e1f2a3-b4c5-3d4e-7f6a-8b9c0d1e2f3a"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Core",
+                            Status = "A"
+                        });
+                });
+
             modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalCredentialEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -373,6 +1186,50 @@ namespace Nutrifit.Repository.Migrations
                     b.ToTable("push_subscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("Nutrifit.Repository.Entities.RoutineEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<string>("Difficulty")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Goal")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("PersonalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("Weeks")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PersonalId");
+
+                    b.ToTable("Routines", (string)null);
+                });
+
             modelBuilder.Entity("Nutrifit.Repository.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -438,6 +1295,167 @@ namespace Nutrifit.Repository.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("ExpectedDuration")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RoutineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("TotalVolume")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("WorkoutFeedbackId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoutineId");
+
+                    b.HasIndex("WorkoutFeedbackId")
+                        .IsUnique();
+
+                    b.ToTable("Workouts", (string)null);
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutExerciseEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<int?>("ExpectedRepetitions")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("Load")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("WorkoutSetId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkoutSetId");
+
+                    b.ToTable("WorkoutExercises", (string)null);
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutFeedbackEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("Value")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WorkoutFeedbacks", (string)null);
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutSetEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("ExpectedSets")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Field")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("MaxSets")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("WorkoutId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("WorkoutId", "Order");
+
+                    b.ToTable("WorkoutSets", (string)null);
+                });
+
             modelBuilder.Entity("Nutrifit.Repository.Entities.AppointmentEntity", b =>
                 {
                     b.HasOne("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", "CustomerProfessionalBond")
@@ -499,6 +1517,85 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerRoutineEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nutrifit.Repository.Entities.RoutineEntity", "Routine")
+                        .WithMany("CustomerRoutines")
+                        .HasForeignKey("RoutineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Routine");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ExerciseEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.ExerciseCategoryEntity", "Category")
+                        .WithMany("Exercises")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ExercisePrimaryMuscleEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.ExerciseEntity", "Exercise")
+                        .WithMany("PrimaryMuscles")
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nutrifit.Repository.Entities.MuscleEntity", "Muscle")
+                        .WithMany("PrimaryMuscleExercises")
+                        .HasForeignKey("MuscleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("Muscle");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ExerciseSecondaryMuscleEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.ExerciseEntity", "Exercise")
+                        .WithMany("SecondaryMuscles")
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nutrifit.Repository.Entities.MuscleEntity", "Muscle")
+                        .WithMany("SecondaryMuscleExercises")
+                        .HasForeignKey("MuscleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("Muscle");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.MuscleEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.MuscleGroupEntity", "MuscleGroup")
+                        .WithMany("Muscles")
+                        .HasForeignKey("MuscleGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("MuscleGroup");
+                });
+
             modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalCredentialEntity", b =>
                 {
                     b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Professional")
@@ -538,6 +1635,17 @@ namespace Nutrifit.Repository.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Nutrifit.Repository.Entities.RoutineEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Personal")
+                        .WithMany()
+                        .HasForeignKey("PersonalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Personal");
+                });
+
             modelBuilder.Entity("Nutrifit.Repository.Entities.UserEntity", b =>
                 {
                     b.HasOne("Nutrifit.Repository.Entities.AddressEntity", "Address")
@@ -556,9 +1664,88 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("Profile");
                 });
 
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.RoutineEntity", "Routine")
+                        .WithMany("Workouts")
+                        .HasForeignKey("RoutineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nutrifit.Repository.Entities.WorkoutFeedbackEntity", "WorkoutFeedback")
+                        .WithOne("Workout")
+                        .HasForeignKey("Nutrifit.Repository.Entities.WorkoutEntity", "WorkoutFeedbackId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Routine");
+
+                    b.Navigation("WorkoutFeedback");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutExerciseEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.WorkoutSetEntity", "WorkoutSet")
+                        .WithMany("WorkoutExercises")
+                        .HasForeignKey("WorkoutSetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkoutSet");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutSetEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.ExerciseEntity", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nutrifit.Repository.Entities.WorkoutEntity", "Workout")
+                        .WithMany("WorkoutSets")
+                        .HasForeignKey("WorkoutId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("Workout");
+                });
+
             modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", b =>
                 {
                     b.Navigation("Appointments");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ExerciseCategoryEntity", b =>
+                {
+                    b.Navigation("Exercises");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.ExerciseEntity", b =>
+                {
+                    b.Navigation("PrimaryMuscles");
+
+                    b.Navigation("SecondaryMuscles");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.MuscleEntity", b =>
+                {
+                    b.Navigation("PrimaryMuscleExercises");
+
+                    b.Navigation("SecondaryMuscleExercises");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.MuscleGroupEntity", b =>
+                {
+                    b.Navigation("Muscles");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.RoutineEntity", b =>
+                {
+                    b.Navigation("CustomerRoutines");
+
+                    b.Navigation("Workouts");
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.UserEntity", b =>
@@ -572,6 +1759,21 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("CustomerFeedbacks");
 
                     b.Navigation("ProfessionalCredential");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutEntity", b =>
+                {
+                    b.Navigation("WorkoutSets");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutFeedbackEntity", b =>
+                {
+                    b.Navigation("Workout");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutSetEntity", b =>
+                {
+                    b.Navigation("WorkoutExercises");
                 });
 #pragma warning restore 612, 618
         }

@@ -10,9 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Nutrifit.Repository\**" />
     <Compile Remove="Services\**" />
+    <Content Remove="Nutrifit.Repository\**" />
     <Content Remove="Services\**" />
+    <EmbeddedResource Remove="Nutrifit.Repository\**" />
     <EmbeddedResource Remove="Services\**" />
+    <None Remove="Nutrifit.Repository\**" />
     <None Remove="Services\**" />
   </ItemGroup>
 
@@ -39,10 +43,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Nutrifit.Repository\Nutrifit.Repository.csproj" />
     <ProjectReference Include="..\Nutrifit.Services\Nutrifit.Services.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Nutrifit.Repository\" />
   </ItemGroup>
 
 </Project>
