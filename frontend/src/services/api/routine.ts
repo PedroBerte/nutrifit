@@ -4,8 +4,8 @@ import type {
   UpdateRoutineRequest,
   AssignRoutineRequest,
   RoutineType,
-  ApiResponse,
 } from "@/types/routine";
+import type { ApiResponse, PaginatedResponse } from "@/types/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function useCreateRoutine() {
@@ -84,9 +84,9 @@ export function useGetMyRoutines(page: number = 1, pageSize: number = 10) {
   return useQuery({
     queryKey: ["getMyRoutines", page, pageSize],
     queryFn: async () => {
-      const request = await api.get<ApiResponse<RoutineType[]>>(
-        `/routine/my-routines?page=${page}&pageSize=${pageSize}`
-      );
+      const request = await api.get<
+        ApiResponse<PaginatedResponse<RoutineType>>
+      >(`/routine/my-routines?page=${page}&pageSize=${pageSize}`);
       return request.data;
     },
     retry: 1,
@@ -138,9 +138,9 @@ export function useGetMyAssignedRoutines(
   return useQuery({
     queryKey: ["getMyAssignedRoutines", page, pageSize],
     queryFn: async () => {
-      const request = await api.get<ApiResponse<RoutineType[]>>(
-        `/routine/my-assigned-routines?page=${page}&pageSize=${pageSize}`
-      );
+      const request = await api.get<
+        ApiResponse<PaginatedResponse<RoutineType>>
+      >(`/routine/my-assigned-routines?page=${page}&pageSize=${pageSize}`);
       return request.data;
     },
     retry: 1,
@@ -156,9 +156,9 @@ export function useGetCustomerRoutines(
     queryKey: ["getCustomerRoutines", customerId, page, pageSize],
     queryFn: async () => {
       if (!customerId) throw new Error("ID do cliente é obrigatório");
-      const request = await api.get<ApiResponse<RoutineType[]>>(
-        `/routine/customer/${customerId}?page=${page}&pageSize=${pageSize}`
-      );
+      const request = await api.get<
+        ApiResponse<PaginatedResponse<RoutineType>>
+      >(`/routine/customer/${customerId}?page=${page}&pageSize=${pageSize}`);
       return request.data;
     },
     enabled: !!customerId,

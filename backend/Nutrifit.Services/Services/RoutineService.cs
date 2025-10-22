@@ -25,7 +25,7 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(u => u.Id == personalId);
 
             if (personal == null)
-                return ApiResponse.CreateFailure("Personal não encontrado");
+                return ApiResponse.CreateFailure("Personal nï¿½o encontrado");
 
             if (personal.Profile.Name != "Personal")
                 return ApiResponse.CreateFailure("Apenas Personal Trainers podem criar rotinas");
@@ -76,7 +76,7 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(r => r.Id == routineId && r.PersonalId == personalId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão para editá-la");
+                return ApiResponse.CreateFailure("Rotina nï¿½o encontrada ou vocï¿½ nï¿½o tem permissï¿½o para editï¿½-la");
 
             if (!string.IsNullOrEmpty(request.Title))
                 routine.Title = request.Title;
@@ -113,12 +113,12 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(r => r.Id == routineId && r.PersonalId == personalId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão para excluí-la");
+                return ApiResponse.CreateFailure("Rotina nï¿½o encontrada ou vocï¿½ nï¿½o tem permissï¿½o para excluï¿½-la");
 
             _context.Routines.Remove(routine);
             await _context.SaveChangesAsync();
 
-            return ApiResponse.CreateSuccess("Rotina excluída com sucesso");
+            return ApiResponse.CreateSuccess("Rotina excluï¿½da com sucesso");
         }
         catch (Exception ex)
         {
@@ -140,7 +140,7 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(r => r.Id == routineId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina não encontrada");
+                return ApiResponse.CreateFailure("Rotina nï¿½o encontrada");
 
             var response = new RoutineDetailResponse
             {
@@ -222,7 +222,9 @@ public class RoutineService : IRoutineService
                 AssignedCustomersCount = r.CustomerRoutines.Count
             }).ToList();
 
-            return ApiResponse.CreateSuccess("Rotinas encontradas", response);
+            var paginatedResponse = PaginatedResponse<RoutineResponse>.Create(response, page, pageSize, totalCount);
+
+            return ApiResponse.CreateSuccess("Rotinas encontradas", paginatedResponse);
         }
         catch (Exception ex)
         {
@@ -238,21 +240,21 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(r => r.Id == request.RoutineId && r.PersonalId == personalId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão");
+                return ApiResponse.CreateFailure("Rotina nï¿½o encontrada ou vocï¿½ nï¿½o tem permissï¿½o");
 
             var customer = await _context.Users
                 .FirstOrDefaultAsync(u => u.Id == request.CustomerId);
 
             if (customer == null)
-                return ApiResponse.CreateFailure("Cliente não encontrado");
+                return ApiResponse.CreateFailure("Cliente nï¿½o encontrado");
 
             var existingAssignment = await _context.CustomerRoutines
-                .FirstOrDefaultAsync(cr => cr.RoutineId == request.RoutineId 
-                    && cr.CustomerId == request.CustomerId 
+                .FirstOrDefaultAsync(cr => cr.RoutineId == request.RoutineId
+                    && cr.CustomerId == request.CustomerId
                     && cr.Status == "A");
 
             if (existingAssignment != null)
-                return ApiResponse.CreateFailure("Esta rotina já está atribuída a este cliente");
+                return ApiResponse.CreateFailure("Esta rotina jï¿½ estï¿½ atribuï¿½da a este cliente");
 
             var customerRoutine = new CustomerRoutineEntity
             {
@@ -266,7 +268,7 @@ public class RoutineService : IRoutineService
             _context.CustomerRoutines.Add(customerRoutine);
             await _context.SaveChangesAsync();
 
-            return ApiResponse.CreateSuccess("Rotina atribuída ao cliente com sucesso");
+            return ApiResponse.CreateSuccess("Rotina atribuï¿½da ao cliente com sucesso");
         }
         catch (Exception ex)
         {
@@ -282,15 +284,15 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(r => r.Id == routineId && r.PersonalId == personalId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão");
+                return ApiResponse.CreateFailure("Rotina nï¿½o encontrada ou vocï¿½ nï¿½o tem permissï¿½o");
 
             var assignment = await _context.CustomerRoutines
-                .FirstOrDefaultAsync(cr => cr.RoutineId == routineId 
-                    && cr.CustomerId == customerId 
+                .FirstOrDefaultAsync(cr => cr.RoutineId == routineId
+                    && cr.CustomerId == customerId
                     && cr.Status == "A");
 
             if (assignment == null)
-                return ApiResponse.CreateFailure("Atribuição não encontrada");
+                return ApiResponse.CreateFailure("Atribuiï¿½ï¿½o nï¿½o encontrada");
 
             assignment.Status = "I";
             assignment.UpdatedAt = DateTime.UtcNow;
@@ -301,7 +303,7 @@ public class RoutineService : IRoutineService
         }
         catch (Exception ex)
         {
-            return ApiResponse.CreateFailure($"Erro ao remover atribuição: {ex.Message}");
+            return ApiResponse.CreateFailure($"Erro ao remover atribuiï¿½ï¿½o: {ex.Message}");
         }
     }
 
@@ -341,7 +343,9 @@ public class RoutineService : IRoutineService
                 AssignedCustomersCount = 0
             }).ToList();
 
-            return ApiResponse.CreateSuccess("Rotinas do cliente encontradas", response);
+            var paginatedResponse = PaginatedResponse<RoutineResponse>.Create(response, page, pageSize, totalCount);
+
+            return ApiResponse.CreateSuccess("Rotinas do cliente encontradas", paginatedResponse);
         }
         catch (Exception ex)
         {

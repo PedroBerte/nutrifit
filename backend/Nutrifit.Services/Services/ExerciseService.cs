@@ -46,21 +46,13 @@ public class ExerciseService : IExerciseService
                 SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
             }).ToList();
 
-            return ApiResponse.CreateSuccess("Exercícios encontrados", new
-            {
-                exercises = response,
-                pagination = new
-                {
-                    currentPage = page,
-                    pageSize,
-                    totalPages,
-                    totalCount
-                }
-            });
+            var paginatedResponse = PaginatedResponse<ExerciseResponse>.Create(response, page, pageSize, totalCount);
+
+            return ApiResponse.CreateSuccess("Exercï¿½cios encontrados", paginatedResponse);
         }
         catch (Exception ex)
         {
-            return ApiResponse.CreateFailure($"Erro ao buscar exercícios: {ex.Message}");
+            return ApiResponse.CreateFailure($"Erro ao buscar exercï¿½cios: {ex.Message}");
         }
     }
 
@@ -79,7 +71,7 @@ public class ExerciseService : IExerciseService
                 .FirstOrDefaultAsync(e => e.Id == exerciseId);
 
             if (exercise == null)
-                return ApiResponse.CreateFailure("Exercício não encontrado");
+                return ApiResponse.CreateFailure("Exercï¿½cio nï¿½o encontrado");
 
             var response = new ExerciseResponse
             {
@@ -92,11 +84,11 @@ public class ExerciseService : IExerciseService
                 SecondaryMuscles = exercise.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
             };
 
-            return ApiResponse.CreateSuccess("Exercício encontrado", response);
+            return ApiResponse.CreateSuccess("Exercï¿½cio encontrado", response);
         }
         catch (Exception ex)
         {
-            return ApiResponse.CreateFailure($"Erro ao buscar exercício: {ex.Message}");
+            return ApiResponse.CreateFailure($"Erro ao buscar exercï¿½cio: {ex.Message}");
         }
     }
 
@@ -114,7 +106,7 @@ public class ExerciseService : IExerciseService
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                query = query.Where(e => 
+                query = query.Where(e =>
                     e.Name.ToLower().Contains(searchTerm.ToLower()) ||
                     (e.Instruction != null && e.Instruction.ToLower().Contains(searchTerm.ToLower())));
             }
@@ -144,23 +136,13 @@ public class ExerciseService : IExerciseService
                 SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
             }).ToList();
 
-            return ApiResponse.CreateSuccess("Pesquisa realizada com sucesso", new
-            {
-                exercises = response,
-                pagination = new
-                {
-                    currentPage = page,
-                    pageSize,
-                    totalPages,
-                    totalCount
-                },
-                searchTerm,
-                categoryId
-            });
+            var paginatedResponse = PaginatedResponse<ExerciseResponse>.Create(response, page, pageSize, totalCount);
+
+            return ApiResponse.CreateSuccess("Pesquisa realizada com sucesso", paginatedResponse);
         }
         catch (Exception ex)
         {
-            return ApiResponse.CreateFailure($"Erro ao pesquisar exercícios: {ex.Message}");
+            return ApiResponse.CreateFailure($"Erro ao pesquisar exercï¿½cios: {ex.Message}");
         }
     }
 
@@ -221,16 +203,16 @@ public class ExerciseService : IExerciseService
     {
         try
         {
-            // Buscar IDs dos músculos deste grupo
+            // Buscar IDs dos mï¿½sculos deste grupo
             var muscleIds = await _context.Muscles
                 .Where(m => m.MuscleGroupId == muscleGroupId && m.Status == "A")
                 .Select(m => m.Id)
                 .ToListAsync();
 
             if (!muscleIds.Any())
-                return ApiResponse.CreateSuccess("Nenhum músculo encontrado neste grupo", new List<ExerciseResponse>());
+                return ApiResponse.CreateSuccess("Nenhum mï¿½sculo encontrado neste grupo", new List<ExerciseResponse>());
 
-            // Buscar exercícios que trabalham estes músculos (primários ou secundários)
+            // Buscar exercï¿½cios que trabalham estes mï¿½sculos (primï¿½rios ou secundï¿½rios)
             var exercises = await _context.Exercises
                 .Include(e => e.Category)
                 .Include(e => e.PrimaryMuscles)
@@ -255,11 +237,11 @@ public class ExerciseService : IExerciseService
                 SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
             }).ToList();
 
-            return ApiResponse.CreateSuccess("Exercícios encontrados", response);
+            return ApiResponse.CreateSuccess("Exercï¿½cios encontrados", response);
         }
         catch (Exception ex)
         {
-            return ApiResponse.CreateFailure($"Erro ao buscar exercícios: {ex.Message}");
+            return ApiResponse.CreateFailure($"Erro ao buscar exercï¿½cios: {ex.Message}");
         }
     }
 }

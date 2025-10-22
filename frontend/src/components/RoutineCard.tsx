@@ -7,10 +7,12 @@ import {
   Target,
 } from "lucide-react";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { getDifficultyLabel, getGoalLabel } from "@/constants/routine";
 
 interface RoutineCardProps {
+  id: string;
   title: string;
   difficulty: string;
   goal: string;
@@ -18,11 +20,18 @@ interface RoutineCardProps {
 }
 
 export default function RoutineCard({
+  id,
   title,
   difficulty,
   goal,
   weeks,
 }: RoutineCardProps) {
+  const navigate = useNavigate();
+
+  const handleDetails = () => {
+    navigate(`/routines/${id}`);
+  };
+
   return (
     <div className="w-full bg-neutral-dark-03 rounded-sm p-4 space-y-4">
       <p className="text-2xl font-bold">{title}</p>
@@ -48,7 +57,7 @@ export default function RoutineCard({
           <Copy />
           Clonar
         </Button>
-        <Button className="bg-secondary">
+        <Button className="bg-secondary" onClick={handleDetails}>
           <BookText />
           Detalhes
         </Button>

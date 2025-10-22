@@ -22,17 +22,18 @@ export default function RoutinesList() {
         </Button>
       </div>
       {!isLoading &&
-        Array.isArray(routines?.data) &&
-        routines.data.length === 0 && (
+        routines?.data?.items &&
+        routines.data.items.length === 0 && (
           <p className="text-center mt-10 text-neutral-white-03">
             Nenhum plano de treino encontrado.
           </p>
         )}
       {!isLoading &&
-        Array.isArray(routines?.data) &&
-        routines.data.map((routine) => (
+        routines?.data?.items &&
+        routines.data.items.map((routine) => (
           <RoutineCard
             key={routine.id}
+            id={routine.id}
             title={routine.title}
             difficulty={routine.difficulty || ""}
             goal={routine.goal || ""}
