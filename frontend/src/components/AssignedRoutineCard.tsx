@@ -8,7 +8,7 @@ import {
 import { useState } from "react";
 import { getDifficultyLabel, getGoalLabel } from "@/constants/routine";
 import type { RoutineType } from "@/types/routine";
-import { useGetWorkoutsByRoutine } from "@/services/api/workout";
+import { useGetWorkoutTemplatesByRoutine } from "@/services/api/workoutTemplate";
 import WorkoutItemCard from "./WorkoutItemCard";
 
 interface AssignedRoutineCardProps {
@@ -19,11 +19,10 @@ export default function AssignedRoutineCard({
   routine,
 }: AssignedRoutineCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { data: workoutsResponse, isLoading } = useGetWorkoutsByRoutine(
-    isExpanded ? routine.id : null
-  );
+  const { data: templatesResponse, isLoading } =
+    useGetWorkoutTemplatesByRoutine(isExpanded ? routine.id : null);
 
-  const workouts = workoutsResponse?.data || [];
+  const templates = templatesResponse?.data || [];
 
   return (
     <div className="w-full bg-neutral-dark-03 rounded-sm p-4 space-y-4">
@@ -69,15 +68,15 @@ export default function AssignedRoutineCard({
             </p>
           )}
 
-          {!isLoading && workouts.length === 0 && (
+          {!isLoading && templates.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-4">
               Nenhum treino cadastrado nesta rotina ainda.
             </p>
           )}
 
           {!isLoading &&
-            workouts.map((workout) => (
-              <WorkoutItemCard key={workout.id} workout={workout} />
+            templates.map((template) => (
+              <WorkoutItemCard key={template.id} workout={template} />
             ))}
         </div>
       )}

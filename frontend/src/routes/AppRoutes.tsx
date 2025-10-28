@@ -16,7 +16,8 @@ import Bond from "@/pages/Bond";
 import RoutinesList from "@/pages/RoutinesList";
 import NewRoutine from "@/pages/NewRoutine";
 import RoutineDetails from "@/pages/RoutineDetails";
-import NewWorkout from "@/pages/NewWorkout";
+import { NewWorkoutTemplate } from "@/pages/NewWorkoutTemplate";
+import { EditWorkoutTemplate } from "@/pages/EditWorkoutTemplate";
 
 export function AppRoutes() {
   return (
@@ -44,7 +45,11 @@ export function AppRoutes() {
             <Route path="routines/:routineId" element={<RoutineDetails />} />
             <Route
               path="routines/:routineId/workouts/new"
-              element={<NewWorkout />}
+              element={<NewWorkoutTemplate />}
+            />
+            <Route
+              path="routines/:routineId/workouts/:templateId"
+              element={<EditWorkoutTemplate />}
             />
           </Route>
         </Route>

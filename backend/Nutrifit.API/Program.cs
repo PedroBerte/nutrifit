@@ -69,8 +69,9 @@ builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 builder.Services.AddScoped<IRoutineService, RoutineService>();
-builder.Services.AddScoped<IWorkoutService, WorkoutService>();
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
+builder.Services.AddScoped<IWorkoutTemplateService, WorkoutTemplateService>();
+builder.Services.AddScoped<IWorkoutSessionService, WorkoutSessionService>();
 
 builder.Services.AddCors(o =>
 {

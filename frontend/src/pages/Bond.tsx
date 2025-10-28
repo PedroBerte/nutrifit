@@ -12,14 +12,14 @@ import {
 } from "@/components/ui/drawer";
 import { useGetAllBonds, useUpdateBond } from "@/services/api/bond";
 import type { CustomerProfessionalBondType } from "@/types/professional";
-import type { UserType } from "@/types/user";
-import type { ColumnDef } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
 import React, { useState } from "react";
+import { useToast } from "@/contexts/ToastContext";
 
 export default function Bond() {
   const { data, isLoading, refetch } = useGetAllBonds();
   const { mutate: updateBond } = useUpdateBond();
+  const toast = useToast();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
@@ -43,16 +43,22 @@ export default function Bond() {
     switch (action) {
       case "accept":
         updateBond({ ...bond, status: "A" });
+        toast.success("Vínculo aceito com sucesso!");
         break;
       case "reject":
         updateBond({ ...bond, status: "R" });
+        toast.error("Vínculo rejeitado com sucesso!");
         break;
       case "cancel":
         updateBond({ ...bond, status: "C" });
+        toast.info("Vínculo cancelado com sucesso!");
         break;
     }
 
-    await refetch();
+    setTimeout(async () => {
+      await refetch();
+    }, 1000);
+
     setIsDrawerOpen(false);
     setPendingAction(null);
   };
@@ -81,12 +87,12 @@ export default function Bond() {
     <div className="flex flex-1 py-4 flex-col gap-3">
       <p className="font-bold text-2xl">Vínculos</p>
       <p className="font-bold">Vínculos ativos:</p>
-      <section className="bg-neutral-dark-03 rounded-sm p-4">
+      <section className="bg-neutral-dark-03 rounded-sm p-4 space-y-3">
         {data && data.filter((bond) => bond.status === "A").length > 0 ? (
           data.map(
             (bond) =>
               bond.status === "A" && (
-                <div className="flex flex-row justify-between">
+                <div className="flex flex-row justify-between ">
                   <div key={bond.id} className="flex flex-col gap-1">
                     <p>{bond?.customer?.name}</p>
                     <p className="text-xs text-neutral-dark-02">
@@ -111,7 +117,7 @@ export default function Bond() {
       </section>
       <p className="font-bold">Vínculos solicitados:</p>
 
-      <section className="bg-neutral-dark-03 rounded-sm p-4">
+      <section className="bg-neutral-dark-03 rounded-sm p-4 space-y-3">
         {data && data.filter((x) => x.status === "P").length > 0 ? (
           data.map(
             (bond) =>
