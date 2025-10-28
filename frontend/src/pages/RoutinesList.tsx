@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGetMyRoutines } from "@/services/api/routine";
 import { CirclePlus } from "lucide-react";
+import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 
 export default function RoutinesList() {
@@ -21,30 +22,36 @@ export default function RoutinesList() {
           <CirclePlus /> Novo
         </Button>
       </div>
-      {!isLoading &&
-        routines?.data?.items &&
-        routines.data.items.length === 0 && (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full"
+      >
+        {!isLoading &&
+          routines?.data?.items &&
+          routines.data.items.length === 0 && (
+            <p className="text-center mt-10 text-neutral-white-03">
+              Nenhum plano de treino encontrado.
+            </p>
+          )}
+        {!isLoading &&
+          routines?.data?.items &&
+          routines.data.items.map((routine) => (
+            <RoutineCard
+              key={routine.id}
+              id={routine.id}
+              title={routine.title}
+              difficulty={routine.difficulty || ""}
+              goal={routine.goal || ""}
+              weeks={routine.weeks || 0}
+            />
+          ))}
+        {isLoading && (
           <p className="text-center mt-10 text-neutral-white-03">
-            Nenhum plano de treino encontrado.
+            Carregando planos de treino...
           </p>
         )}
-      {!isLoading &&
-        routines?.data?.items &&
-        routines.data.items.map((routine) => (
-          <RoutineCard
-            key={routine.id}
-            id={routine.id}
-            title={routine.title}
-            difficulty={routine.difficulty || ""}
-            goal={routine.goal || ""}
-            weeks={routine.weeks || 0}
-          />
-        ))}
-      {isLoading && (
-        <p className="text-center mt-10 text-neutral-white-03">
-          Carregando planos de treino...
-        </p>
-      )}
+      </motion.div>
     </div>
   );
 }

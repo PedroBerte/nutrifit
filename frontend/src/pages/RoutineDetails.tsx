@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useGetRoutineById, useUpdateRoutine } from "@/services/api/routine";
-import { useGetWorkoutsByRoutine } from "@/services/api/workout";
+import { useGetWorkoutTemplatesByRoutine } from "@/services/api/workoutTemplate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +33,7 @@ import {
 import { Calendar, Plus, Edit, Settings, FileX2 } from "lucide-react";
 import { GOAL_OPTIONS, DIFFICULTY_OPTIONS } from "@/constants/routine";
 import { Spinner } from "@/components/ui/spinner";
+import { motion } from "motion/react";
 
 const WEEK_OPTIONS = [
   { value: 4, label: "4 semanas (1 mês)" },
@@ -59,8 +60,8 @@ export default function RoutineDetails() {
   const { routineId } = useParams<{ routineId: string }>();
   const { data: routine, isLoading: loadingRoutine } =
     useGetRoutineById(routineId);
-  const { data: workouts, isLoading: loadingWorkouts } =
-    useGetWorkoutsByRoutine(routineId);
+  const { data: templates, isLoading: loadingTemplates } =
+    useGetWorkoutTemplatesByRoutine(routineId);
   const updateRoutine = useUpdateRoutine();
   const [isWeeksDrawerOpen, setIsWeeksDrawerOpen] = useState(false);
 
@@ -148,236 +149,260 @@ export default function RoutineDetails() {
 
   return (
     <div className="flex h-full flex-col items-center">
-      <section className="bg-neutral-dark-01 w-full">
-        <div className="mx-auto w-full bg-neutral-dark-03 p-3 rounded-sm mt-5">
-          {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-neutral-white-01">
-              Editar Plano de Treino
-            </h1>
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full"
+      >
+        <section className="bg-neutral-dark-01 w-full">
+          <div className="mx-auto w-full bg-neutral-dark-03 p-3 rounded-sm mt-5">
+            {/* Header */}
+            <div className="mb-6 flex items-center justify-between">
+              <h1 className="text-2xl font-semibold text-neutral-white-01">
+                Editar Plano de Treino
+              </h1>
+            </div>
 
-          {/* Form */}
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-4"
-            >
-              {/* Título */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Nome do treino"
-                        maxLength={200}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Form */}
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleSubmit)}
+                className="space-y-4"
+              >
+                {/* Título */}
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Título</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Nome do treino"
+                          maxLength={200}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Objetivo */}
-              <FormField
-                control={form.control}
-                name="goal"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Objetivo</FormLabel>
-                    <FormControl>
+                {/* Objetivo */}
+                <FormField
+                  control={form.control}
+                  name="goal"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Objetivo</FormLabel>
+                      <FormControl>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione um objetivo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {GOAL_OPTIONS.map((option) => {
+                              return (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Nível */}
+                <FormField
+                  control={form.control}
+                  name="difficulty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nível</FormLabel>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione um objetivo" />
-                        </SelectTrigger>
+                        <FormControl>
+                          <SelectTrigger value={field.value} className="w-full">
+                            <SelectValue placeholder="Selecione um nível" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
-                          {GOAL_OPTIONS.map((option) => {
-                            return (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            );
-                          })}
+                          {DIFFICULTY_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Nível */}
-              <FormField
-                control={form.control}
-                name="difficulty"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nível</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger value={field.value} className="w-full">
-                          <SelectValue placeholder="Selecione um nível" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {DIFFICULTY_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Semanas */}
+                <FormField
+                  control={form.control}
+                  name="weeks"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Semanas</FormLabel>
+                      <Drawer
+                        open={isWeeksDrawerOpen}
+                        onOpenChange={setIsWeeksDrawerOpen}
+                      >
+                        <DrawerTrigger asChild className="bg-transparent">
+                          <FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full justify-start text-left font-normal"
+                            >
+                              <Calendar className="mr-2 size-4" />
+                              {selectedWeekLabel || "Selecione a duração"}
+                            </Button>
+                          </FormControl>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <DrawerHeader>
+                            <DrawerTitle>Selecione a duração</DrawerTitle>
+                          </DrawerHeader>
+                          <div className="p-4 space-y-2">
+                            {WEEK_OPTIONS.map((option) => (
+                              <DrawerClose asChild key={option.value}>
+                                <Button
+                                  type="button"
+                                  variant={
+                                    selectedWeeks === option.value
+                                      ? "default"
+                                      : "outline"
+                                  }
+                                  className="w-full justify-start"
+                                  onClick={() => {
+                                    field.onChange(option.value);
+                                    setIsWeeksDrawerOpen(false);
+                                  }}
+                                >
+                                  {option.label}
+                                </Button>
+                              </DrawerClose>
+                            ))}
+                          </div>
+                        </DrawerContent>
+                      </Drawer>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Semanas */}
-              <FormField
-                control={form.control}
-                name="weeks"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Semanas</FormLabel>
-                    <Drawer
-                      open={isWeeksDrawerOpen}
-                      onOpenChange={setIsWeeksDrawerOpen}
-                    >
-                      <DrawerTrigger asChild className="bg-transparent">
-                        <FormControl>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal"
-                          >
-                            <Calendar className="mr-2 size-4" />
-                            {selectedWeekLabel || "Selecione a duração"}
-                          </Button>
-                        </FormControl>
-                      </DrawerTrigger>
-                      <DrawerContent>
-                        <DrawerHeader>
-                          <DrawerTitle>Selecione a duração</DrawerTitle>
-                        </DrawerHeader>
-                        <div className="p-4 space-y-2">
-                          {WEEK_OPTIONS.map((option) => (
-                            <DrawerClose asChild key={option.value}>
-                              <Button
-                                type="button"
-                                variant={
-                                  selectedWeeks === option.value
-                                    ? "default"
-                                    : "outline"
-                                }
-                                className="w-full justify-start"
-                                onClick={() => {
-                                  field.onChange(option.value);
-                                  setIsWeeksDrawerOpen(false);
-                                }}
-                              >
-                                {option.label}
-                              </Button>
-                            </DrawerClose>
-                          ))}
-                        </div>
-                      </DrawerContent>
-                    </Drawer>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Botões de ação */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="button"
-                  className="flex-1 bg-primary-green-01 hover:bg-primary-green-02"
-                  onClick={handleCancel}
-                  disabled={updateRoutine.isPending}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={updateRoutine.isPending}
-                  className="flex-1"
-                >
-                  {updateRoutine.isPending ? "Salvando..." : "Salvar"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
-      </section>
+                {/* Botões de ação */}
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="button"
+                    className="flex-1 bg-primary-green-01 hover:bg-primary-green-02"
+                    onClick={handleCancel}
+                    disabled={updateRoutine.isPending}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={updateRoutine.isPending}
+                    className="flex-1"
+                  >
+                    {updateRoutine.isPending ? "Salvando..." : "Salvar"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </section>
+      </motion.div>
 
       {/* Seção de Treinos */}
-      <section className="bg-neutral-dark-03 w-full p-3 mt-5 rounded-sm">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-neutral-white-01">
-            Treinos
-          </h1>
-          <Button onClick={handleNewWorkout}>
-            <Plus /> Adicionar Treino
-          </Button>
-        </div>
-
-        {loadingWorkouts && (
-          <div className="flex flex-col items-center gap-1 w-full text-neutral-white-02 text-sm p-3">
-            <Spinner />
-            <p className="text-center text-neutral-white-03">
-              Carregando treinos...
-            </p>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full"
+      >
+        <section className="bg-neutral-dark-03 w-full p-3 mt-5 rounded-sm">
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="text-2xl font-semibold text-neutral-white-01">
+              Treinos
+            </h1>
+            <Button onClick={handleNewWorkout}>
+              <Plus /> Adicionar Treino
+            </Button>
           </div>
-        )}
 
-        {!loadingWorkouts && workouts?.data && workouts.data.length === 0 && (
-          <div className="flex flex-col items-center gap-1 w-full text-neutral-white-02 text-sm p-3">
-            <FileX2 />
-            <p className="text-center text-neutral-white-03">
-              Nenhum treino adicionado ainda.
-            </p>
-          </div>
-        )}
+          {loadingTemplates && (
+            <div className="flex flex-col items-center gap-1 w-full text-neutral-white-02 text-sm p-3">
+              <Spinner />
+              <p className="text-center text-neutral-white-03">
+                Carregando treinos...
+              </p>
+            </div>
+          )}
 
-        {!loadingWorkouts && workouts?.data && workouts.data.length > 0 && (
-          <div className="space-y-3">
-            {workouts.data.map((workout) => (
-              <div
-                key={workout.id}
-                className="bg-neutral-dark-01 p-4 rounded-sm flex items-center justify-between"
-              >
-                <div>
-                  <h3 className="text-lg font-semibold text-neutral-white-01">
-                    {workout.title}
-                  </h3>
-                  {workout.description && (
-                    <p className="text-sm text-neutral-white-03 mt-1">
-                      {workout.description}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  variant={"ghost"}
-                  size="sm"
-                  onClick={() => handleEditWorkout(workout.id)}
-                >
-                  <Settings className="size-5" />
-                </Button>
+          {!loadingTemplates &&
+            templates?.data &&
+            templates.data.length === 0 && (
+              <div className="flex flex-col items-center gap-1 w-full text-neutral-white-02 text-sm p-3">
+                <FileX2 />
+                <p className="text-center text-neutral-white-03">
+                  Nenhum treino adicionado ainda.
+                </p>
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+            )}
+
+          {!loadingTemplates &&
+            templates?.data &&
+            templates.data.length > 0 && (
+              <div className="space-y-3">
+                {templates.data.map((template) => (
+                  <div
+                    key={template.id}
+                    className="bg-neutral-dark-01 p-4 rounded-sm flex items-center justify-between"
+                  >
+                    <div>
+                      <h3 className="text-lg font-semibold text-neutral-white-01">
+                        {template.title}
+                      </h3>
+                      {template.description && (
+                        <p className="text-sm text-neutral-white-03 mt-1">
+                          {template.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-neutral-white-03 mt-1">
+                        {template.exerciseTemplates?.length || 0} exercícios
+                        {template.estimatedDurationMinutes &&
+                          ` • ${template.estimatedDurationMinutes} min`}
+                      </p>
+                    </div>
+                    <Button
+                      variant={"ghost"}
+                      size="sm"
+                      onClick={() => handleEditWorkout(template.id)}
+                    >
+                      <Settings className="size-5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+        </section>
+      </motion.div>
     </div>
   );
 }
