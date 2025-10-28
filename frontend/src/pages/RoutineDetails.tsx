@@ -77,9 +77,9 @@ export default function RoutineDetails() {
   useEffect(() => {
     if (routine?.data) {
       form.reset({
-        title: routine.data.title || "",
-        goal: routine.data.goal || "",
-        difficulty: routine.data.difficulty || "",
+        title: routine.data.title ?? undefined,
+        goal: routine.data.goal ?? undefined,
+        difficulty: routine.data.difficulty ?? undefined,
         weeks: routine.data.weeks || undefined,
       });
     }

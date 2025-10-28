@@ -123,21 +123,6 @@ namespace Nutrifit.Repository
 
                 e.HasIndex(u => u.Email).IsUnique();
 
-                e.HasMany(u => u.BondsAsCustomer)
-                 .WithOne(bond => bond.Customer)
-                 .HasForeignKey(bond => bond.CustomerId)
-                 .OnDelete(DeleteBehavior.Restrict);
-
-                e.HasMany(u => u.BondsAsProfessional)
-                 .WithOne(bond => bond.Professional)
-                 .HasForeignKey(bond => bond.ProfessionalId)
-                 .OnDelete(DeleteBehavior.Restrict);
-
-                e.HasMany(u => u.BondsSent)
-                 .WithOne(bond => bond.Sender)
-                 .HasForeignKey(bond => bond.SenderId)
-                 .OnDelete(DeleteBehavior.Restrict);
-
                 e.HasMany(u => u.CustomerFeedbacks)
                     .WithOne(feedback => feedback.Customer)
                     .HasForeignKey(feedback => feedback.CustomerId)

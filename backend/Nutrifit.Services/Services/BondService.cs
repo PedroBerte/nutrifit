@@ -124,4 +124,114 @@ public class BondService : IBondService
             throw new Exception("Erro ao excluir vínculo cliente-profissional.", ex);
         }
     }
+
+    public async Task<List<CustomerProfessionalBondEntity>> GetBySenderIdAsync(Guid senderId)
+    {
+        try
+        {
+            return await _context.CustomerProfessionalBonds
+                .Include(x => x.Customer)
+                    .ThenInclude(c => c.Profile)
+                .Include(x => x.Professional)
+                    .ThenInclude(p => p.Profile)
+                .Include(x => x.Sender)
+                    .ThenInclude(s => s.Profile)
+                .Include(x => x.Appointments)
+                .Where(x => x.SenderId == senderId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Erro ao buscar vínculos enviados pelo usuário.", ex);
+        }
+    }
+
+    public async Task<List<CustomerProfessionalBondEntity>> GetByCustomerIdAsync(Guid customerId)
+    {
+        try
+        {
+            return await _context.CustomerProfessionalBonds
+                .Include(x => x.Customer)
+                    .ThenInclude(c => c.Profile)
+                .Include(x => x.Professional)
+                    .ThenInclude(p => p.Profile)
+                .Include(x => x.Sender)
+                    .ThenInclude(s => s.Profile)
+                .Include(x => x.Appointments)
+                .Where(x => x.CustomerId == customerId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Erro ao buscar vínculos do cliente.", ex);
+        }
+    }
+
+    public async Task<List<CustomerProfessionalBondEntity>> GetByProfessionalIdAsync(Guid professionalId)
+    {
+        try
+        {
+            return await _context.CustomerProfessionalBonds
+                .Include(x => x.Customer)
+                    .ThenInclude(c => c.Profile)
+                .Include(x => x.Professional)
+                    .ThenInclude(p => p.Profile)
+                .Include(x => x.Sender)
+                    .ThenInclude(s => s.Profile)
+                .Include(x => x.Appointments)
+                .Where(x => x.ProfessionalId == professionalId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Erro ao buscar vínculos do profissional.", ex);
+        }
+    }
+
+    public async Task<List<CustomerProfessionalBondEntity>> GetByUserIdAsync(Guid userId)
+    {
+        try
+        {
+            return await _context.CustomerProfessionalBonds
+                .Include(x => x.Customer)
+                    .ThenInclude(c => c.Profile)
+                .Include(x => x.Professional)
+                    .ThenInclude(p => p.Profile)
+                .Include(x => x.Sender)
+                    .ThenInclude(s => s.Profile)
+                .Include(x => x.Appointments)
+                .Where(x => x.CustomerId == userId || x.ProfessionalId == userId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Erro ao buscar vínculos do usuário.", ex);
+        }
+    }
+
+    public async Task<List<CustomerProfessionalBondEntity>> GetReceivedByUserIdAsync(Guid userId)
+    {
+        try
+        {
+            return await _context.CustomerProfessionalBonds
+                .Include(x => x.Customer)
+                    .ThenInclude(c => c.Profile)
+                .Include(x => x.Professional)
+                    .ThenInclude(p => p.Profile)
+                .Include(x => x.Sender)
+                    .ThenInclude(s => s.Profile)
+                .Include(x => x.Appointments)
+                .Where(x => (x.CustomerId == userId || x.ProfessionalId == userId) && x.SenderId != userId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Erro ao buscar vínculos recebidos pelo usuário.", ex);
+        }
+    }
 }

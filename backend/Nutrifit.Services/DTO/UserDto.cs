@@ -1,3 +1,4 @@
+using Nutrifit.Repository.Entities;
 using System.Net;
 
 namespace Nutrifit.Services.DTO;
@@ -20,7 +21,6 @@ public class UserDto
     public AddressDto? Address { get; set; }
     public ProfileDto? Profile { get; set; } = null!;    
     public ProfessionalCredentialDto? ProfessionalCredential { get; set; }
-    public List<BondDto>? CustomerProfessionalBonds { get; set; }
 }
 
 public class AddressDto
