@@ -4,6 +4,7 @@ import BottomBar from "@/components/BottomBar";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { Toast } from "@/components/Toast";
 
 type AppLayoutWithNavbarProps = {
   isMenuButtonVisible?: boolean;

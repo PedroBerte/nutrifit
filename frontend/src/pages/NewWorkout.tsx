@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Plus, X, Dumbbell, ClipboardPlus } from "lucide-react";
+import { useToast } from "@/contexts/ToastContext";
 
 const createWorkoutSchema = z.object({
   title: z
@@ -51,6 +52,7 @@ export default function NewWorkout() {
   const createWorkout = useCreateWorkout();
   const createWorkoutSet = useCreateWorkoutSet();
   const { data: exercises, isLoading: loadingExercises } = useGetExercises();
+  const toast = useToast();
 
   const [isExerciseDrawerOpen, setIsExerciseDrawerOpen] = useState(false);
   const [selectedExercises, setSelectedExercises] = useState<
@@ -82,7 +84,7 @@ export default function NewWorkout() {
 
   const handleSubmit = async (data: CreateWorkoutFormData) => {
     if (!routineId) {
-      alert("ID da rotina não encontrado");
+      toast.error("ID da rotina não encontrado");
       return;
     }
 
@@ -98,7 +100,7 @@ export default function NewWorkout() {
       });
 
       if (!response.success || !response.data) {
-        alert(response.message || "Erro ao criar treino");
+        toast.error(response.message || "Erro ao criar treino");
         return;
       }
 
@@ -119,14 +121,14 @@ export default function NewWorkout() {
         });
       }
 
-      alert("Treino criado com sucesso!");
+      toast.success("Treino criado com sucesso!");
       navigate(`/routines/${routineId}`);
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
         "Erro ao criar treino";
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
