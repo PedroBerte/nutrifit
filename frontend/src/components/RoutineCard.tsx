@@ -6,10 +6,11 @@ import {
   Send,
   Target,
 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { getDifficultyLabel, getGoalLabel } from "@/constants/routine";
+import AssignRoutineDrawer from "./AssignRoutineDrawer";
 
 interface RoutineCardProps {
   id: string;
@@ -27,9 +28,14 @@ export default function RoutineCard({
   weeks,
 }: RoutineCardProps) {
   const navigate = useNavigate();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleDetails = () => {
     navigate(`/routines/${id}`);
+  };
+
+  const handleSend = () => {
+    setIsDrawerOpen(true);
   };
 
   return (
@@ -61,11 +67,18 @@ export default function RoutineCard({
           <BookText />
           Detalhes
         </Button>
-        <Button>
+        <Button onClick={handleSend}>
           <Send />
           Enviar
         </Button>
       </article>
+
+      <AssignRoutineDrawer
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+        routineId={id}
+        routineTitle={title}
+      />
     </div>
   );
 }

@@ -39,6 +39,116 @@ public class BondController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retorna os vínculos enviados pelo usuário autenticado
+    /// </summary>
+    [HttpGet("sent")]
+    public async Task<ActionResult<List<BondDto>>> GetSent()
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")!.Value);
+            var bonds = await _service.GetBySenderIdAsync(userId);
+            
+            if (bonds.Count == 0)
+                return NoContent();
+
+            return Ok(bonds.Adapt<List<BondDto>>());
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Retorna os vínculos recebidos pelo usuário autenticado (onde ele não é o sender)
+    /// </summary>
+    [HttpGet("received")]
+    public async Task<ActionResult<List<BondDto>>> GetReceived()
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")!.Value);
+            var bonds = await _service.GetReceivedByUserIdAsync(userId);
+            
+            if (bonds.Count == 0)
+                return NoContent();
+
+            return Ok(bonds.Adapt<List<BondDto>>());
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Retorna os vínculos onde o usuário autenticado é o cliente
+    /// </summary>
+    [HttpGet("as-customer")]
+    public async Task<ActionResult<List<BondDto>>> GetAsCustomer()
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")!.Value);
+            var bonds = await _service.GetByCustomerIdAsync(userId);
+            
+            if (bonds.Count == 0)
+                return NoContent();
+
+            return Ok(bonds.Adapt<List<BondDto>>());
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Retorna os vínculos onde o usuário autenticado é o profissional
+    /// </summary>
+    [HttpGet("as-professional")]
+    public async Task<ActionResult<List<BondDto>>> GetAsProfessional()
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")!.Value);
+            var bonds = await _service.GetByProfessionalIdAsync(userId);
+            
+            if (bonds.Count == 0)
+                return NoContent();
+
+            return Ok(bonds.Adapt<List<BondDto>>());
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Retorna todos os vínculos do usuário autenticado (como cliente ou profissional)
+    /// </summary>
+    [HttpGet("my-bonds")]
+    public async Task<ActionResult<List<BondDto>>> GetMyBonds()
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")!.Value);
+            var bonds = await _service.GetByUserIdAsync(userId);
+            
+            if (bonds.Count == 0)
+                return NoContent();
+
+            return Ok(bonds.Adapt<List<BondDto>>());
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<BondDto>> GetById(Guid id)
     {

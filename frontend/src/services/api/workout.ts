@@ -5,9 +5,15 @@ import type {
   WorkoutType,
   CreateWorkoutSetRequest,
   WorkoutSetType,
+  CompleteWorkoutRequest,
+  CreateWorkoutFeedbackRequest,
+  UpdateWorkoutSetRequest,
+  CreateWorkoutExerciseRequest,
+  UpdateWorkoutExerciseRequest,
+  WorkoutExerciseType,
 } from "@/types/workout";
 import type { ApiResponse } from "@/types/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useCreateWorkout() {
   return useMutation({
@@ -136,6 +142,97 @@ export function useDeleteWorkoutSet() {
     },
     onError: (e) => {
       console.error("Erro ao remover exercício", e);
+      throw e;
+    },
+  });
+}
+
+export function useCompleteWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["completeWorkout"],
+    retry: 0,
+    mutationFn: async ({
+      workoutId,
+      data,
+    }: {
+      workoutId: string;
+      data: CompleteWorkoutRequest;
+    }) => {
+      const request = await api.post<ApiResponse<WorkoutType>>(
+        `/workout/${workoutId}/complete`,
+        data
+      );
+      return request.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["getWorkoutById", variables.workoutId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["getMyAssignedRoutines"] });
+    },
+    onError: (e) => {
+      console.error("Erro ao completar treino", e);
+      throw e;
+    },
+  });
+}
+
+export function useCreateWorkoutFeedback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["createWorkoutFeedback"],
+    retry: 0,
+    mutationFn: async ({
+      workoutId,
+      data,
+    }: {
+      workoutId: string;
+      data: CreateWorkoutFeedbackRequest;
+    }) => {
+      const request = await api.post<ApiResponse<WorkoutType>>(
+        `/workout/${workoutId}/feedback`,
+        data
+      );
+      return request.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["getWorkoutById", variables.workoutId],
+      });
+    },
+    onError: (e) => {
+      console.error("Erro ao criar feedback", e);
+      throw e;
+    },
+  });
+}
+
+export function useUpdateWorkoutFeedback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updateWorkoutFeedback"],
+    retry: 0,
+    mutationFn: async ({
+      workoutId,
+      data,
+    }: {
+      workoutId: string;
+      data: CreateWorkoutFeedbackRequest;
+    }) => {
+      const request = await api.put<ApiResponse<WorkoutType>>(
+        `/workout/${workoutId}/feedback`,
+        data
+      );
+      return request.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["getWorkoutById", variables.workoutId],
+      });
+    },
+    onError: (e) => {
+      console.error("Erro ao atualizar feedback", e);
       throw e;
     },
   });
