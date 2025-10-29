@@ -25,5 +25,8 @@ namespace Nutrifit.Services.Services.Interfaces
         Task<ApiResponse> RegisterSetAsync(Guid exerciseSessionId, Guid customerId, RegisterSetSessionRequest request);
         Task<ApiResponse> UpdateSetAsync(Guid setId, Guid customerId, UpdateSetSessionRequest request);
         Task<ApiResponse> DeleteSetAsync(Guid setId, Guid customerId);
+
+        // Previous Exercise Data
+        Task<ApiResponse> GetPreviousExerciseDataAsync(Guid exerciseId, Guid customerId);
     }
 }

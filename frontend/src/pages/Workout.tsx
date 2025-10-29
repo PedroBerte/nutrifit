@@ -7,6 +7,7 @@ import { useGetAllBonds } from "@/services/api/bond";
 import { UserProfiles } from "@/types/user";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
 
 export default function Workout() {
   const navigate = useNavigate();

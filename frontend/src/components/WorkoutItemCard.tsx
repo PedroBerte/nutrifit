@@ -1,12 +1,14 @@
 import { Clock, Dumbbell } from "lucide-react";
 import type { WorkoutTemplateResponse } from "@/services/api/workoutTemplate";
 import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface WorkoutItemCardProps {
   workout: WorkoutTemplateResponse;
 }
 
 export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
+  const navigate = useNavigate();
   const totalExercises = workout.exerciseTemplates?.length || 0;
 
   const formatDuration = (minutes?: number) => {
@@ -48,10 +50,7 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
       <Button
         size="sm"
         variant="default"
-        onClick={() => {
-          // TODO: Implementar navegação para detalhes do template ou iniciar sessão
-          console.log("Template:", workout.id);
-        }}
+        onClick={() => navigate(`/workout/session/${workout.id}`)}
         className="ml-2"
       >
         Ver
