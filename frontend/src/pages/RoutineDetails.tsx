@@ -34,6 +34,7 @@ import { Calendar, Plus, Edit, Settings, FileX2 } from "lucide-react";
 import { GOAL_OPTIONS, DIFFICULTY_OPTIONS } from "@/constants/routine";
 import { Spinner } from "@/components/ui/spinner";
 import { motion } from "motion/react";
+import { useToast } from "@/contexts/ToastContext";
 
 const WEEK_OPTIONS = [
   { value: 4, label: "4 semanas (1 mês)" },
@@ -64,6 +65,7 @@ export default function RoutineDetails() {
     useGetWorkoutTemplatesByRoutine(routineId);
   const updateRoutine = useUpdateRoutine();
   const [isWeeksDrawerOpen, setIsWeeksDrawerOpen] = useState(false);
+  const toast = useToast();
 
   const form = useForm<UpdateRoutineFormData>({
     resolver: zodResolver(updateRoutineSchema),
@@ -101,16 +103,17 @@ export default function RoutineDetails() {
       });
 
       if (response.success) {
-        alert("Rotina atualizada com sucesso!");
+        toast.success("Rotina atualizada com sucesso!");
+        navigate("/routines");
       } else {
-        alert(response.message || "Erro ao atualizar rotina");
+        toast.error(response.message || "Erro ao atualizar rotina");
       }
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
         "Erro ao atualizar rotina";
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   };
 

@@ -90,14 +90,18 @@ namespace Nutrifit.Services.Services
         {
             try
             {
-                var session = await _context.WorkoutSessions
-                    .FirstOrDefaultAsync(ws => ws.Id == sessionId && ws.CustomerId == customerId);
+                var sessions = await _context.WorkoutSessions
+                    .Where(ws => ws.Id == sessionId && ws.CustomerId == customerId)
+                    .ToListAsync();
 
-                if (session == null)
+                if (sessions == null)
                     return ApiResponse.CreateFailure("Sessão não encontrada.");
 
-                session.Status = "CA";
-                session.UpdatedAt = DateTime.UtcNow;
+                foreach(var session in sessions)
+                {
+                    session.Status = "CA";
+                    session.UpdatedAt = DateTime.UtcNow;
+                }
 
                 await _context.SaveChangesAsync();
 

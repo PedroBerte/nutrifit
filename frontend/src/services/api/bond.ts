@@ -35,6 +35,19 @@ export function useGetBondById(id: string | null | undefined) {
   });
 }
 
+export function useGetBondsSent() {
+  return useQuery({
+    queryKey: ["getBondsSent"],
+    queryFn: async () => {
+      const request = await api.get<Array<CustomerProfessionalBondType>>(
+        `/bond/sent`
+      );
+      return request.data;
+    },
+    retry: 1,
+  });
+}
+
 export function useGetAllBonds(
   customerId?: string | null,
   professionalId?: string | null,

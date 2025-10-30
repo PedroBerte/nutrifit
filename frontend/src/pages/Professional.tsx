@@ -17,16 +17,19 @@ import {
   VenusAndMars,
 } from "lucide-react";
 import type { CustomerProfessionalBondType } from "@/types/professional";
-import { useCreateBond } from "@/services/api/bond";
+import { useCreateBond, useGetBondsSent } from "@/services/api/bond";
 
 export default function Professional() {
   const { user, logout } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
+  const { data: bondsSent } = useGetBondsSent();
   const { mutate: createProposal } = useCreateBond();
 
   if (!id) navigate("/home");
+
+  const alreadySentProposal =
+    bondsSent?.some((bond) => bond.professionalId === id) ?? false;
 
   const { data: userData, isLoading, error } = useGetUserById(id);
 
@@ -267,8 +270,11 @@ export default function Professional() {
           Conta criada em {formatDate(userData.createdAt)}
         </div>
 
-        <Button onClick={() => id && sendProposal(id)}>
-          Enviar proposta ao profissional
+        <Button
+          onClick={() => id && sendProposal(id)}
+          disabled={alreadySentProposal}
+        >
+          {alreadySentProposal ? "Proposta Enviada" : "Enviar Proposta"}
         </Button>
       </div>
     </div>

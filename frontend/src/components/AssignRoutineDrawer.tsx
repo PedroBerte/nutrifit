@@ -14,6 +14,7 @@ import type { RootState } from "@/store";
 import { useSelector } from "react-redux";
 import { Loader2, UserCheck, CheckCircle, Circle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/contexts/ToastContext";
 
 interface AssignRoutineDrawerProps {
   open: boolean;
@@ -31,6 +32,7 @@ export default function AssignRoutineDrawer({
   const userId = useSelector((state: RootState) => state.auth.user?.id);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   // Buscar vínculos do personal (alunos)
   const { data: bonds, isLoading } = useGetAllBonds(null, userId, false);
@@ -49,7 +51,7 @@ export default function AssignRoutineDrawer({
   // Enviar atribuições
   const handleAssign = async () => {
     if (selectedCustomers.length === 0) {
-      alert("Selecione pelo menos um aluno");
+      toast.warning("Selecione pelo menos um aluno");
       return;
     }
 
@@ -66,10 +68,12 @@ export default function AssignRoutineDrawer({
 
       // Invalidar queries relacionadas para atualizar listas
       queryClient.invalidateQueries({ queryKey: ["getMyRoutines"] });
-      queryClient.invalidateQueries({ queryKey: ["getRoutineById", routineId] });
+      queryClient.invalidateQueries({
+        queryKey: ["getRoutineById", routineId],
+      });
 
-      alert(
-        `✅ Rotina "${routineTitle}" atribuída com sucesso a ${selectedCustomers.length} aluno(s)!`
+      toast.success(
+        `Rotina "${routineTitle}" atribuída com sucesso a ${selectedCustomers.length} aluno(s)!`
       );
       setSelectedCustomers([]);
       onOpenChange(false);
@@ -79,7 +83,7 @@ export default function AssignRoutineDrawer({
         error?.response?.data?.message ||
         error?.message ||
         "Erro desconhecido ao atribuir rotina.";
-      alert(`❌ ${errorMessage}`);
+      toast.error(errorMessage);
     }
   };
 

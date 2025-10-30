@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/card";
 import { Plus, Trash2, GripVertical, Loader2, Edit } from "lucide-react";
 import { motion } from "motion/react";
+import { useToast } from "@/contexts/ToastContext";
 
 // Schema para editar template
 const updateTemplateSchema = z.object({
@@ -65,6 +66,7 @@ type ExerciseConfigForm = z.infer<typeof exerciseConfigSchema>;
 
 export function EditWorkoutTemplate() {
   const navigate = useNavigate();
+  const toast = useToast();
   const { routineId, templateId } = useParams<{
     routineId: string;
     templateId: string;
@@ -195,7 +197,7 @@ export function EditWorkoutTemplate() {
       setEditingExerciseTemplate(null);
     } catch (error) {
       console.error("Erro ao salvar exercício:", error);
-      alert("Erro ao salvar exercício");
+      toast.error("Erro ao salvar exercício");
     }
   };
 
@@ -206,7 +208,7 @@ export function EditWorkoutTemplate() {
       await removeExercise.mutateAsync(exerciseTemplateId);
     } catch (error) {
       console.error("Erro ao remover exercício:", error);
-      alert("Erro ao remover exercício");
+      toast.error("Erro ao remover exercício");
     }
   };
 
@@ -222,11 +224,11 @@ export function EditWorkoutTemplate() {
           estimatedDurationMinutes: data.estimatedDurationMinutes,
         },
       });
-      alert("Template atualizado com sucesso!");
+      toast.success("Template atualizado com sucesso!");
       navigate(`/routines/${routineId}`);
     } catch (error) {
       console.error("Erro ao atualizar template:", error);
-      alert("Erro ao atualizar template");
+      toast.error("Erro ao atualizar template");
     }
   };
 

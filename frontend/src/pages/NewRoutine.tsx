@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/form";
 import { Calendar } from "lucide-react";
 import { GOAL_OPTIONS, DIFFICULTY_OPTIONS } from "@/constants/routine";
+import { useToast } from "@/contexts/ToastContext";
 
 const WEEK_OPTIONS = [
   { value: 4, label: "4 semanas (1 mês)" },
@@ -56,6 +57,7 @@ export default function NewRoutine() {
   const navigate = useNavigate();
   const createRoutine = useCreateRoutine();
   const [isWeeksDrawerOpen, setIsWeeksDrawerOpen] = useState(false);
+  const toast = useToast();
 
   const form = useForm<CreateRoutineFormData>({
     resolver: zodResolver(createRoutineSchema),
@@ -77,17 +79,17 @@ export default function NewRoutine() {
       });
 
       if (response.success) {
-        alert("Rotina criada com sucesso!");
+        toast.success("Rotina criada com sucesso!");
         navigate("/routines");
       } else {
-        alert(response.message || "Erro ao criar rotina");
+        toast.error(response.message || "Erro ao criar rotina");
       }
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
         "Erro ao criar rotina";
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   };
 

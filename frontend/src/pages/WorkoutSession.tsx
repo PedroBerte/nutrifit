@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useStartWorkoutSession,
@@ -28,13 +28,19 @@ import {
   Play,
   Pause,
 } from "lucide-react";
+import { useToast } from "@/contexts/ToastContext";
 
 export default function WorkoutSession() {
   const { templateId } = useParams<{ templateId: string }>();
+  const [searchParams] = useSearchParams();
+  const existingSessionId = searchParams.get("sessionId");
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToast();
 
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(
+    existingSessionId || null
+  );
   const [workoutTimer, setWorkoutTimer] = useState(0);
   const [isWorkoutTimerRunning, setIsWorkoutTimerRunning] = useState(false);
   const [restTimer, setRestTimer] = useState<number | null>(null);
@@ -112,10 +118,17 @@ export default function WorkoutSession() {
 
   // Iniciar sessão de treino
   useEffect(() => {
+    // Se já tem sessionId (vindo da URL), não tenta criar uma nova
+    if (existingSessionId) {
+      setIsWorkoutTimerRunning(true);
+      return;
+    }
+
+    // Só cria nova sessão se não existe
     if (templateId && !sessionId) {
       handleStartSession();
     }
-  }, [templateId]);
+  }, [templateId, existingSessionId]);
 
   const handleStartSession = async () => {
     if (!templateId) return;
@@ -128,9 +141,18 @@ export default function WorkoutSession() {
         setSessionId(response.data.toString());
         setIsWorkoutTimerRunning(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao iniciar treino", error);
-      navigate(-1);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao iniciar treino";
+
+      // Em vez de mostrar erro e voltar, mostra toast informativo
+      toast.info("Este treino já foi iniciado anteriormente");
+
+      // Tenta buscar o treino ativo e redirecionar
+      navigate("/workout", { replace: true });
     }
   };
 
@@ -143,9 +165,15 @@ export default function WorkoutSession() {
         data: {},
       });
       setIsWorkoutTimerRunning(false);
+      toast.success("Treino concluído com sucesso!");
       navigate("/workout");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao concluir treino", error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao concluir treino";
+      toast.error(errorMessage);
     }
   };
 
@@ -157,9 +185,15 @@ export default function WorkoutSession() {
     try {
       await cancelSession.mutateAsync(sessionId);
       setIsWorkoutTimerRunning(false);
+      toast.info("Treino cancelado");
       navigate("/workout");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao cancelar treino", error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao cancelar treino";
+      toast.error(errorMessage);
     }
   };
 
@@ -250,7 +284,7 @@ export default function WorkoutSession() {
   return (
     <div className="flex flex-1 flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-neutral-dark-02 p-4">
+      <div className="sticky top-0 z-10 bg-neutral-dark-01 border-b border-neutral-dark-02 p-4">
         <div className="flex items-center justify-between mb-3">
           <button
             onClick={() => navigate(-1)}
@@ -302,7 +336,7 @@ export default function WorkoutSession() {
       </div>
 
       {/* Lista de Exercícios */}
-      <div className="flex-1 p-4 space-y-4">
+      <div className="flex-1 p-2 space-y-4">
         {session.exerciseSessions && session.exerciseSessions.length > 0 ? (
           session.exerciseSessions.map((exerciseSession, index) => (
             <ExerciseCard
@@ -448,7 +482,7 @@ function ExerciseCard({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0"
+              className="h-8 w-full p-0"
               onClick={() => {
                 onRegisterSet(
                   exerciseSession.id,
