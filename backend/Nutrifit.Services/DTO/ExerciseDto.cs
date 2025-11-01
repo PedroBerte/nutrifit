@@ -5,7 +5,6 @@ public class ExerciseDto
     public Guid Id { get; set; }
     public Guid CategoryId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string? Url { get; set; }
     public string? Instruction { get; set; }
     public string Status { get; set; } = "A";
     public DateTime CreatedAt { get; set; }

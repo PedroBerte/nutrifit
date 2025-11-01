@@ -476,9 +476,9 @@ export function EditWorkoutTemplate() {
                         {exercise.primaryMuscles &&
                           exercise.primaryMuscles.length > 0 && (
                             <p className="text-xs text-muted-foreground">
-                              {exercise.primaryMuscles
-                                .map((m: any) => m.muscle?.name)
-                                .join(", ")}
+                              {exercise.primaryMuscles.map(
+                                (m: any) => m.muscle?.name
+                              )}
                             </p>
                           )}
                       </div>

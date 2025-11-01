@@ -1,12 +1,20 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { UserProfiles } from "@/types/user";
-import React from "react";
 import PersonalHome from "./PersonalHome";
-import StudentHome from "./StudentHome";
+import Workout from "./Workout";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 export default function Home() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  if (user?.profile == UserProfiles.PERSONAL) return <PersonalHome />;
-  if (user?.profile == UserProfiles.STUDENT) return <StudentHome />;
+  useEffect(() => {
+    if (user?.profile == UserProfiles.PERSONAL)
+      navigate("/personal", { replace: true });
+    if (user?.profile == UserProfiles.STUDENT)
+      navigate("/workout", { replace: true });
+  }, [user]);
+
+  return <div>Redirecionando...</div>;
 }

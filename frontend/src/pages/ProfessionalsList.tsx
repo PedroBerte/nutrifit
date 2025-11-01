@@ -1,13 +1,10 @@
 import ProfessionalCard from "@/components/ProfessionalCard";
 import { Input } from "@/components/ui/input";
 import { useGetAllUsers } from "@/services/api/user";
-import type { RootState } from "@/store";
-import { useSelector } from "react-redux";
 import { motion } from "motion/react";
 
-export default function StudentHome() {
-  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
-  const { data, isLoading, error } = useGetAllUsers(false, false, true);
+export default function ProfessionalsList() {
+  const { data, isLoading } = useGetAllUsers(false, false, true);
 
   return (
     <motion.div

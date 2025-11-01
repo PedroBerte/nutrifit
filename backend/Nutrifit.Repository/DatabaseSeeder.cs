@@ -168,7 +168,6 @@ namespace Nutrifit.Repository
                     Id = benchPressId,
                     Name = "Supino Reto",
                     CategoryId = strengthId,
-                    Url = "https://www.youtube.com/watch?v=rT7DgCr-3pg",
                     Instruction = "Deite-se no banco, pegue a barra com as mãos na largura dos ombros, abaixe até o peito e empurre para cima.",
                     Status = "A"
                 },
@@ -177,7 +176,6 @@ namespace Nutrifit.Repository
                     Id = squatId,
                     Name = "Agachamento Livre",
                     CategoryId = strengthId,
-                    Url = "https://www.youtube.com/watch?v=ultWZbUMPL8",
                     Instruction = "Com os pés na largura dos ombros, desça flexionando os joelhos até as coxas ficarem paralelas ao chão.",
                     Status = "A"
                 },
@@ -186,7 +184,6 @@ namespace Nutrifit.Repository
                     Id = deadliftId,
                     Name = "Levantamento Terra",
                     CategoryId = strengthId,
-                    Url = "https://www.youtube.com/watch?v=ytGaGIn3SjE",
                     Instruction = "Com a barra no chão, segure-a e levante mantendo as costas retas até ficar em pé.",
                     Status = "A"
                 },
@@ -195,7 +192,6 @@ namespace Nutrifit.Repository
                     Id = pullUpId,
                     Name = "Barra Fixa",
                     CategoryId = strengthId,
-                    Url = "https://www.youtube.com/watch?v=eGo4IYlbE5g",
                     Instruction = "Segure a barra com as mãos pronadas e puxe o corpo até o queixo passar a barra.",
                     Status = "A"
                 },
@@ -204,7 +200,6 @@ namespace Nutrifit.Repository
                     Id = shoulderPressId,
                     Name = "Desenvolvimento com Halteres",
                     CategoryId = strengthId,
-                    Url = "https://www.youtube.com/watch?v=qEwKCR5JCog",
                     Instruction = "Sentado, empurre os halteres acima da cabeça até estender os braços completamente.",
                     Status = "A"
                 },
@@ -213,7 +208,6 @@ namespace Nutrifit.Repository
                     Id = bicepCurlId,
                     Name = "Rosca Direta",
                     CategoryId = strengthId,
-                    Url = "https://www.youtube.com/watch?v=ykJmrZ5v0Oo",
                     Instruction = "Em pé, segure a barra e flexione os cotovelos levando a barra até o peito.",
                     Status = "A"
                 },
@@ -222,7 +216,6 @@ namespace Nutrifit.Repository
                     Id = tricepDipsId,
                     Name = "Mergulho em Paralelas",
                     CategoryId = strengthId,
-                    Url = "https://www.youtube.com/watch?v=2z8JmcrW-As",
                     Instruction = "Nas barras paralelas, desça flexionando os cotovelos e empurre para cima.",
                     Status = "A"
                 },
@@ -231,7 +224,6 @@ namespace Nutrifit.Repository
                     Id = plankId,
                     Name = "Prancha",
                     CategoryId = functionalId,
-                    Url = "https://www.youtube.com/watch?v=ASdvN_XEl_c",
                     Instruction = "Apoie-se nos antebraços e pontas dos pés, mantendo o corpo reto por tempo determinado.",
                     Status = "A"
                 },
@@ -240,7 +232,6 @@ namespace Nutrifit.Repository
                     Id = lungesId,
                     Name = "Afundo",
                     CategoryId = strengthId,
-                    Url = "https://www.youtube.com/watch?v=QOVaHwm-Q6U",
                     Instruction = "Dê um passo à frente e desça flexionando ambos os joelhos em 90 graus.",
                     Status = "A"
                 },
@@ -249,7 +240,6 @@ namespace Nutrifit.Repository
                     Id = lateralRaiseId,
                     Name = "Elevação Lateral",
                     CategoryId = strengthId,
-                    Url = "https://www.youtube.com/watch?v=3VcKaXpzqRo",
                     Instruction = "Em pé, levante os halteres lateralmente até a altura dos ombros.",
                     Status = "A"
                 }

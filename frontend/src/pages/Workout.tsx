@@ -10,6 +10,7 @@ import { UserProfiles } from "@/types/user";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import { Button } from "@/components/ui/button";
 
 export default function Workout() {
   const navigate = useNavigate();
@@ -37,8 +38,17 @@ export default function Workout() {
         <InformationCard
           title="Nenhum personal encontrado!"
           description="Encontre um personal para você!"
-          onClick={() => navigate("/home", { replace: true })}
-        />
+        >
+          <Button
+            className="w-full"
+            type="button"
+            onClick={() => {
+              navigate("/ProfessionalsList", { replace: true });
+            }}
+          >
+            Encontrar Personal
+          </Button>
+        </InformationCard>
       );
     }
 
@@ -54,7 +64,6 @@ export default function Workout() {
         <InformationCard
           title="Solicitação pendente"
           description="Sua solicitação ao personal está pendente."
-          showButton={false}
         />
       );
     }
@@ -71,7 +80,6 @@ export default function Workout() {
         <InformationCard
           title="Vínculo inativo"
           description="Seu vínculo com o personal não está ativo."
-          onClick={() => navigate("/home", { replace: true })}
         />
       );
     }
@@ -87,13 +95,27 @@ export default function Workout() {
 
       {/* Alerta de treino ativo */}
       {activeSession && (
-        <section className="py-2">
+        <motion.section
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="py-2"
+        >
           <ActiveWorkoutAlert session={activeSession} />
-        </section>
+        </motion.section>
       )}
 
       {/* Avisos de vínculo */}
-      {bondWarning && <section className="py-2">{bondWarning}</section>}
+      {bondWarning && (
+        <motion.section
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="py-2 mt-2 flex w-full justify-center"
+        >
+          {bondWarning}
+        </motion.section>
+      )}
 
       {/* Rotinas atribuídas */}
       {!bondWarning && (
