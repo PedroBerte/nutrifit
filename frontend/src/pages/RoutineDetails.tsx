@@ -49,8 +49,8 @@ const updateRoutineSchema = z.object({
     .string()
     .min(1, "O título é obrigatório")
     .max(200, "Título muito longo"),
-  goal: z.string().optional(),
-  difficulty: z.string().optional(),
+  goal: z.string(),
+  difficulty: z.string(),
   weeks: z.number().optional(),
 });
 
@@ -69,24 +69,26 @@ export default function RoutineDetails() {
 
   const form = useForm<UpdateRoutineFormData>({
     resolver: zodResolver(updateRoutineSchema),
-    defaultValues: {
-      title: "",
-      goal: "",
-      difficulty: "",
-      weeks: undefined,
-    },
   });
 
   useEffect(() => {
     if (routine?.data) {
-      form.reset({
-        title: routine.data.title ?? undefined,
-        goal: routine.data.goal ?? undefined,
-        difficulty: routine.data.difficulty ?? undefined,
+      const formData = {
+        title: routine.data.title || "",
+        goal: routine.data.goal || "",
+        difficulty: routine.data.difficulty || "",
         weeks: routine.data.weeks || undefined,
-      });
+      };
+      form.reset(formData, { keepDefaultValues: false });
+
+      const goal = routine.data.goal || "";
+      const difficulty = routine.data.difficulty || "";
+      setTimeout(() => {
+        form.setValue("goal", goal, { shouldValidate: false });
+        form.setValue("difficulty", difficulty, { shouldValidate: false });
+      }, 0);
     }
-  }, [routine]);
+  }, [routine?.data]);
 
   const handleSubmit = async (data: UpdateRoutineFormData) => {
     if (!routineId) return;
@@ -96,8 +98,8 @@ export default function RoutineDetails() {
         routineId,
         data: {
           title: data.title.trim(),
-          goal: data.goal || "",
-          difficulty: data.difficulty || "",
+          goal: data.goal || undefined,
+          difficulty: data.difficulty || undefined,
           weeks: data.weeks,
         },
       });
@@ -195,17 +197,26 @@ export default function RoutineDetails() {
                 <FormField
                   control={form.control}
                   name="goal"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Objetivo</FormLabel>
-                      <FormControl>
+                  render={({ field }) => {
+                    console.log(
+                      "🎨 Renderizando Goal - Valor atual:",
+                      field.value
+                    );
+                    return (
+                      <FormItem>
+                        <FormLabel>Objetivo</FormLabel>
                         <Select
                           value={field.value}
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            console.log("✏️ Goal mudou para:", value);
+                            field.onChange(value);
+                          }}
                         >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecione um objetivo" />
-                          </SelectTrigger>
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Selecione um objetivo" />
+                            </SelectTrigger>
+                          </FormControl>
                           <SelectContent>
                             {GOAL_OPTIONS.map((option) => {
                               return (
@@ -219,39 +230,52 @@ export default function RoutineDetails() {
                             })}
                           </SelectContent>
                         </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 {/* Nível */}
                 <FormField
                   control={form.control}
                   name="difficulty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nível</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger value={field.value} className="w-full">
-                            <SelectValue placeholder="Selecione um nível" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {DIFFICULTY_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                  render={({ field }) => {
+                    console.log(
+                      "🎨 Renderizando Difficulty - Valor atual:",
+                      field.value
+                    );
+                    return (
+                      <FormItem>
+                        <FormLabel>Nível</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={(value) => {
+                            console.log("✏️ Difficulty mudou para:", value);
+                            field.onChange(value);
+                          }}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Selecione um nível" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem key={"BEG"} value={"BEG"}>
+                              Iniciante
                             </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                            <SelectItem key={"INT"} value={"INT"}>
+                              Intermediário
+                            </SelectItem>
+                            <SelectItem key={"ADV"} value={"ADV"}>
+                              Avançado
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 {/* Semanas */}
