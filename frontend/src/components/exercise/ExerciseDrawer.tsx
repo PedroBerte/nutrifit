@@ -15,7 +15,11 @@ import { CreateExerciseDrawer } from "./CreateExerciseDrawer";
 interface ExerciseDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onExerciseSelect: (exerciseId: string, exerciseName: string) => void;
+  onExerciseSelect: (
+    exerciseId: string,
+    exerciseName: string,
+    exerciseImageUrl?: string
+  ) => void;
   selectedExerciseIds?: string[];
   onLongPress?: (exercise: ExerciseType) => void;
 }
@@ -78,7 +82,7 @@ export function ExerciseDrawer({
     handlePressEnd();
     const isAdded = selectedExerciseIds.includes(exercise.id);
     if (!isAdded) {
-      onExerciseSelect(exercise.id, exercise.name);
+      onExerciseSelect(exercise.id, exercise.name, exercise.imageUrl);
     }
   };
 
@@ -146,6 +150,20 @@ export function ExerciseDrawer({
                       onMouseLeave={handlePressEnd}
                       disabled={isAdded}
                     >
+                      {/* Thumbnail da imagem/GIF */}
+                      {exercise.imageUrl && (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-muted mr-3">
+                          <img
+                            src={exercise.imageUrl}
+                            alt={exercise.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        </div>
+                      )}
+
                       <div className="text-left flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{exercise.name}</p>

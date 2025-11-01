@@ -59,6 +59,7 @@ type ExerciseConfigForm = z.infer<typeof exerciseConfigSchema>;
 
 interface ConfiguredExercise extends ExerciseTemplateRequest {
   exerciseName: string;
+  exerciseImageUrl?: string;
 }
 
 export function NewWorkoutTemplate() {
@@ -71,6 +72,7 @@ export function NewWorkoutTemplate() {
   const [selectedExercise, setSelectedExercise] = useState<{
     id: string;
     name: string;
+    imageUrl?: string;
   } | null>(null);
   const [configuredExercises, setConfiguredExercises] = useState<
     ConfiguredExercise[]
@@ -100,8 +102,16 @@ export function NewWorkoutTemplate() {
     },
   });
 
-  const handleExerciseSelect = (exerciseId: string, exerciseName: string) => {
-    setSelectedExercise({ id: exerciseId, name: exerciseName });
+  const handleExerciseSelect = (
+    exerciseId: string,
+    exerciseName: string,
+    exerciseImageUrl?: string
+  ) => {
+    setSelectedExercise({
+      id: exerciseId,
+      name: exerciseName,
+      imageUrl: exerciseImageUrl,
+    });
     setExerciseDrawerOpen(false);
     setConfigDrawerOpen(true);
     exerciseForm.reset();
@@ -113,6 +123,7 @@ export function NewWorkoutTemplate() {
     const configured: ConfiguredExercise = {
       exerciseId: selectedExercise.id,
       exerciseName: selectedExercise.name,
+      exerciseImageUrl: selectedExercise.imageUrl,
       order: configuredExercises.length,
       targetSets: data.targetSets,
       targetRepsMin: data.targetRepsMin,
@@ -274,6 +285,21 @@ export function NewWorkoutTemplate() {
                     className="flex items-center gap-3 p-3 border rounded-lg bg-card"
                   >
                     <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+
+                    {/* Thumbnail da imagem/GIF do exercício */}
+                    {exercise.exerciseImageUrl && (
+                      <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-muted">
+                        <img
+                          src={exercise.exerciseImageUrl}
+                          alt={exercise.exerciseName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      </div>
+                    )}
+
                     <div className="flex-1">
                       <p className="font-medium">{exercise.exerciseName}</p>
                       <p className="text-sm text-muted-foreground">

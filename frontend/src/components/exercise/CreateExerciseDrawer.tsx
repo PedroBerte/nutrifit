@@ -37,8 +37,9 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/contexts/ToastContext";
-import { Trash2, Upload } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { ExerciseMediaUploader } from "./ExerciseMediaUploader";
 
 const exerciseSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
@@ -68,7 +69,7 @@ export function CreateExerciseDrawer({
   exerciseToEdit,
 }: CreateExerciseDrawerProps) {
   const toast = useToast();
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string | null>(null);
 
   const { data: categories } = useGetExerciseCategories();
   const { data: muscleGroups } = useGetMuscleGroups();
@@ -125,22 +126,26 @@ export function CreateExerciseDrawer({
         secondaryMuscleIds: secondaryIds,
       });
 
-      if (exerciseToEdit.imageUrl) {
-        setImagePreview(exerciseToEdit.imageUrl);
-      }
+      setUploadedMediaUrl(exerciseToEdit.imageUrl || null);
     } else if (!open) {
       form.reset();
-      setImagePreview("");
+      setUploadedMediaUrl(null);
     }
   }, [exerciseToEdit, open, form, categories, muscleGroups]);
 
   const handleSubmit = async (data: ExerciseForm) => {
     try {
+      // Usar a URL da mídia carregada (se houver) ou manter vazio
+      const exerciseData = {
+        ...data,
+        imageUrl: uploadedMediaUrl || "",
+      };
+
       if (isEditing) {
-        await updateExercise.mutateAsync(data);
+        await updateExercise.mutateAsync(exerciseData);
         toast.success("Exercício atualizado com sucesso!");
       } else {
-        await createExercise.mutateAsync(data);
+        await createExercise.mutateAsync(exerciseData);
         toast.success("Exercício criado com sucesso!");
       }
       onOpenChange(false);
@@ -261,51 +266,32 @@ export function CreateExerciseDrawer({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Imagem do Exercício</FormLabel>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="URL da imagem (temporário - Minio em breve)"
-                            {...field}
-                            onChange={(e) => {
-                              field.onChange(e);
-                              setImagePreview(e.target.value);
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            disabled
-                          >
-                            <Upload className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        {imagePreview && (
-                          <div className="relative w-full h-32 bg-muted rounded-md overflow-hidden">
-                            <img
-                              src={imagePreview}
-                              alt="Preview"
-                              className="w-full h-full object-cover"
-                              onError={() => setImagePreview("")}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Upload de imagem será implementado em breve
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Upload de Mídia do Exercício */}
+              {isEditing && exerciseToEdit?.id && (
+                <div className="space-y-2">
+                  <Label>Imagem/GIF do Exercício</Label>
+                  <ExerciseMediaUploader
+                    exerciseId={exerciseToEdit.id}
+                    currentMediaUrl={uploadedMediaUrl || undefined}
+                    onMediaChange={(url) => {
+                      setUploadedMediaUrl(url);
+                      form.setValue("imageUrl", url || "");
+                    }}
+                    disabled={
+                      createExercise.isPending || updateExercise.isPending
+                    }
+                  />
+                </div>
+              )}
+
+              {!isEditing && (
+                <div className="rounded-md border border-dashed p-4">
+                  <p className="text-sm text-muted-foreground text-center">
+                    💡 Crie o exercício primeiro, depois você poderá adicionar
+                    imagens/GIFs editando-o
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <Label>Músculos Primários *</Label>
@@ -410,8 +396,9 @@ export function CreateExerciseDrawer({
                     variant="destructive"
                     onClick={handleDelete}
                     disabled={deleteExercise.isPending}
+                    className="flex-1"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    {/* <Trash2 className="mr-2 h-4 w-4" /> */}
                     Deletar
                   </Button>
                 )}

@@ -124,7 +124,11 @@ export function EditWorkoutTemplate() {
     }
   }, [template]);
 
-  const handleExerciseSelect = (exerciseId: string, exerciseName: string) => {
+  const handleExerciseSelect = (
+    exerciseId: string,
+    exerciseName: string,
+    exerciseImageUrl?: string
+  ) => {
     setSelectedExercise({ id: exerciseId, name: exerciseName });
     setEditingExerciseTemplate(null);
     setExerciseDrawerOpen(false);
@@ -377,6 +381,21 @@ export function EditWorkoutTemplate() {
                       className="flex items-center gap-3 p-3 bg-neutral-dark-01 rounded-lg"
                     >
                       <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+
+                      {/* Thumbnail da imagem/GIF do exercício */}
+                      {exerciseTemplate.exerciseUrl && (
+                        <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-muted">
+                          <img
+                            src={exerciseTemplate.exerciseUrl}
+                            alt={exerciseTemplate.exerciseName}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        </div>
+                      )}
+
                       <div className="flex-1">
                         <p className="font-medium">
                           {exerciseTemplate.exerciseName}

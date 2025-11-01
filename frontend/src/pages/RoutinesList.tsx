@@ -25,7 +25,7 @@ export default function RoutinesList() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full"
+        className="w-full space-y-3"
       >
         {!isLoading &&
           routines?.data?.items &&

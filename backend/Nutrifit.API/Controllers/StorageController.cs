@@ -71,6 +71,99 @@ public class StorageController : ControllerBase
     }
 
     /// <summary>
+    /// Faz upload de uma imagem/GIF de exercício usando o ID do exercício como chave
+    /// </summary>
+    /// <param name="file">Arquivo de imagem ou GIF</param>
+    /// <param name="exerciseId">ID do exercício (usado como nome do arquivo)</param>
+    /// <returns>URL da imagem</returns>
+    [HttpPost("exercise/{exerciseId}")]
+    [Authorize]
+    [RequestSizeLimit(5 * 1024 * 1024)] // 5MB para GIFs
+    public async Task<IActionResult> UploadExerciseMedia(IFormFile file, Guid exerciseId)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { message = "Nenhum arquivo foi enviado" });
+            }
+
+            // Validar extensão do arquivo (incluindo GIF)
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (!allowedExtensions.Contains(extension))
+            {
+                return BadRequest(new
+                {
+                    message = $"Extensão de arquivo não permitida. Use: {string.Join(", ", allowedExtensions)}"
+                });
+            }
+
+            using var stream = file.OpenReadStream();
+            var result = await _storageService.UploadImageAsync(
+                stream,
+                file.FileName,
+                file.ContentType,
+                folder: "exercises",
+                customFileName: exerciseId.ToString()
+            );
+
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Erro de validação no upload: {Message}", ex.Message);
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao fazer upload de mídia do exercício");
+            return StatusCode(500, new { message = "Erro ao fazer upload da mídia" });
+        }
+    }
+
+    /// <summary>
+    /// Remove a imagem/GIF de um exercício
+    /// </summary>
+    /// <param name="exerciseId">ID do exercício</param>
+    [HttpDelete("exercise/{exerciseId}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteExerciseMedia(Guid exerciseId)
+    {
+        try
+        {
+            // Tentar deletar todos os formatos possíveis (não sabemos qual foi usado)
+            var extensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+            bool anyDeleted = false;
+
+            foreach (var ext in extensions)
+            {
+                var objectName = $"exercises/{exerciseId}{ext}";
+                var exists = await _storageService.ImageExistsAsync(objectName);
+
+                if (exists)
+                {
+                    await _storageService.DeleteImageAsync(objectName);
+                    anyDeleted = true;
+                    _logger.LogInformation("Mídia do exercício {ExerciseId} removida: {ObjectName}", exerciseId, objectName);
+                }
+            }
+
+            if (!anyDeleted)
+            {
+                return NotFound(new { message = "Nenhuma mídia encontrada para este exercício" });
+            }
+
+            return Ok(new { message = "Mídia do exercício removida com sucesso" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao remover mídia do exercício {ExerciseId}", exerciseId);
+            return StatusCode(500, new { message = "Erro ao remover mídia" });
+        }
+    }
+
+    /// <summary>
     /// Remove uma imagem do storage
     /// </summary>
     /// <param name="objectName">Nome do objeto no storage</param>

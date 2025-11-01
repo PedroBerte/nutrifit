@@ -85,17 +85,17 @@ public class StorageService : IStorageService
     {
         try
         {
-            // Validar tipo de arquivo
-            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp" };
+            // Validar tipo de arquivo (adicionando GIF)
+            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif" };
             if (!allowedTypes.Contains(contentType.ToLower()))
             {
                 throw new ArgumentException($"Tipo de arquivo não permitido. Apenas {string.Join(", ", allowedTypes)} são aceitos.");
             }
 
-            // Validar tamanho (máx 2MB)
-            if (stream.Length > 2 * 1024 * 1024)
+            // Validar tamanho (máx 5MB para permitir GIFs)
+            if (stream.Length > 5 * 1024 * 1024)
             {
-                throw new ArgumentException("Arquivo muito grande. Tamanho máximo: 2MB");
+                throw new ArgumentException("Arquivo muito grande. Tamanho máximo: 5MB");
             }
 
             // Gerar nome para o arquivo

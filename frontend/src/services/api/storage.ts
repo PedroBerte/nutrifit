@@ -31,6 +31,40 @@ export async function uploadImage(
   return response.data;
 }
 
+/**
+ * Faz upload de uma imagem/GIF de exercício usando o ID do exercício como chave
+ * @param file - Arquivo de imagem ou GIF
+ * @param exerciseId - ID do exercício (será usado como nome do arquivo)
+ * @returns URL da mídia no MinIO
+ */
+export async function uploadExerciseMedia(
+  file: File,
+  exerciseId: string
+): Promise<ImageUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await api.post<ImageUploadResponse>(
+    `/storage/exercise/${exerciseId}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return response.data;
+}
+
+/**
+ * Remove a mídia de um exercício
+ * @param exerciseId - ID do exercício
+ */
+export async function deleteExerciseMedia(exerciseId: string): Promise<void> {
+  await api.delete(`/storage/exercise/${exerciseId}`);
+}
+
 export async function deleteImage(objectName: string): Promise<void> {
   await api.delete(`/storage/${encodeURIComponent(objectName)}`);
 }
