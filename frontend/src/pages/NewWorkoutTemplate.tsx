@@ -9,6 +9,7 @@ import {
 } from "@/services/api/workoutTemplate";
 import { useGetExercises } from "@/services/api/exercise";
 import type { ExerciseType } from "@/types/exercise";
+import { ExerciseDrawer } from "@/components/exercise/ExerciseDrawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -331,56 +332,12 @@ export function NewWorkoutTemplate() {
       </Form>
 
       {/* Drawer 1: Seleção de Exercício */}
-      <Drawer open={exerciseDrawerOpen} onOpenChange={setExerciseDrawerOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Selecionar Exercício</DrawerTitle>
-          </DrawerHeader>
-          <div className="p-4 max-h-[60vh] overflow-y-auto">
-            {exercisesLoading ? (
-              <p className="text-center text-muted-foreground">
-                Carregando exercícios...
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {exercises?.data?.items?.map((exercise: ExerciseType) => {
-                  const isAdded = configuredExercises.some(
-                    (ex) => ex.exerciseId === exercise.id
-                  );
-                  return (
-                    <Button
-                      key={exercise.id}
-                      variant={isAdded ? "secondary" : "outline"}
-                      className="w-full justify-start"
-                      onClick={() =>
-                        handleExerciseSelect(exercise.id, exercise.name)
-                      }
-                      disabled={isAdded}
-                    >
-                      <div className="text-left">
-                        <p className="font-medium">{exercise.name}</p>
-                        {exercise.primaryMuscles &&
-                          exercise.primaryMuscles.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              {exercise.primaryMuscles.map(
-                                (m: any) => m.muscle?.name
-                              )}
-                            </p>
-                          )}
-                      </div>
-                      {isAdded && (
-                        <span className="ml-auto text-xs text-muted-foreground">
-                          Adicionado
-                        </span>
-                      )}
-                    </Button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <ExerciseDrawer
+        open={exerciseDrawerOpen}
+        onOpenChange={setExerciseDrawerOpen}
+        onExerciseSelect={handleExerciseSelect}
+        selectedExerciseIds={configuredExercises.map((ex) => ex.exerciseId)}
+      />
 
       {/* Drawer 2: Configuração do Exercício */}
       <Drawer open={configDrawerOpen} onOpenChange={setConfigDrawerOpen}>

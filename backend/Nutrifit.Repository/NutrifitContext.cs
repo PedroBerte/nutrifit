@@ -298,8 +298,9 @@ namespace Nutrifit.Repository
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
 
                 e.Property(x => x.Name).IsRequired().HasMaxLength(200);
-                e.Property(x => x.Url).HasMaxLength(500);
                 e.Property(x => x.Instruction).HasMaxLength(2000);
+                e.Property(x => x.ImageUrl).HasMaxLength(500);
+                e.Property(x => x.IsPublished).HasDefaultValue(false);
 
                 e.Property(x => x.CreatedAt)
                     .HasColumnType("timestamp without time zone")
@@ -309,6 +310,11 @@ namespace Nutrifit.Repository
                     .WithMany(x => x.Exercises)
                     .HasForeignKey(x => x.CategoryId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.CreatedByUser)
+                    .WithMany()
+                    .HasForeignKey(x => x.CreatedByUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             b.Entity<ExercisePrimaryMuscleEntity>(e =>

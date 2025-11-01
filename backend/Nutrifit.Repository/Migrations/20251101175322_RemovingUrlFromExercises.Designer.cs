@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrifit.Repository;
@@ -11,9 +12,11 @@ using Nutrifit.Repository;
 namespace Nutrifit.Repository.Migrations
 {
     [DbContext(typeof(NutrifitContext))]
-    partial class NutrifitContextModelSnapshot : ModelSnapshot
+    [Migration("20251101175322_RemovingUrlFromExercises")]
+    partial class RemovingUrlFromExercises
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -297,21 +300,9 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("timezone('utc', now())");
 
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ImageUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<string>("Instruction")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
-
-                    b.Property<bool>("IsPublished")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -329,8 +320,6 @@ namespace Nutrifit.Repository.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("CreatedByUserId");
-
                     b.ToTable("Exercises", (string)null);
 
                     b.HasData(
@@ -340,7 +329,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Deite-se no banco, pegue a barra com as mãos na largura dos ombros, abaixe até o peito e empurre para cima.",
-                            IsPublished = false,
                             Name = "Supino Reto",
                             Status = "A"
                         },
@@ -350,7 +338,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Com os pés na largura dos ombros, desça flexionando os joelhos até as coxas ficarem paralelas ao chão.",
-                            IsPublished = false,
                             Name = "Agachamento Livre",
                             Status = "A"
                         },
@@ -360,7 +347,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Com a barra no chão, segure-a e levante mantendo as costas retas até ficar em pé.",
-                            IsPublished = false,
                             Name = "Levantamento Terra",
                             Status = "A"
                         },
@@ -370,7 +356,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Segure a barra com as mãos pronadas e puxe o corpo até o queixo passar a barra.",
-                            IsPublished = false,
                             Name = "Barra Fixa",
                             Status = "A"
                         },
@@ -380,7 +365,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Sentado, empurre os halteres acima da cabeça até estender os braços completamente.",
-                            IsPublished = false,
                             Name = "Desenvolvimento com Halteres",
                             Status = "A"
                         },
@@ -390,7 +374,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Em pé, segure a barra e flexione os cotovelos levando a barra até o peito.",
-                            IsPublished = false,
                             Name = "Rosca Direta",
                             Status = "A"
                         },
@@ -400,7 +383,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Nas barras paralelas, desça flexionando os cotovelos e empurre para cima.",
-                            IsPublished = false,
                             Name = "Mergulho em Paralelas",
                             Status = "A"
                         },
@@ -410,7 +392,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("d4e5f6a7-b8c9-7d8e-1f0a-2b3c4d5e6f7a"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Apoie-se nos antebraços e pontas dos pés, mantendo o corpo reto por tempo determinado.",
-                            IsPublished = false,
                             Name = "Prancha",
                             Status = "A"
                         },
@@ -420,7 +401,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Dê um passo à frente e desça flexionando ambos os joelhos em 90 graus.",
-                            IsPublished = false,
                             Name = "Afundo",
                             Status = "A"
                         },
@@ -430,7 +410,6 @@ namespace Nutrifit.Repository.Migrations
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Instruction = "Em pé, levante os halteres lateralmente até a altura dos ombros.",
-                            IsPublished = false,
                             Name = "Elevação Lateral",
                             Status = "A"
                         });
@@ -1821,14 +1800,7 @@ namespace Nutrifit.Repository.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Category");
-
-                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.ExercisePrimaryMuscleEntity", b =>

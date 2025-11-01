@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nutrifit.Services.DTO;
 using Nutrifit.Services.Services.Interfaces;
 
 namespace Nutrifit.API.Controllers;
@@ -17,14 +18,15 @@ public class ExerciseController : ControllerBase
     }
 
     /// <summary>
-    /// Lista todos os exercícios disponíveis
+    /// Lista todos os exercï¿½cios disponï¿½veis
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetAllExercises([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
     {
         try
         {
-            var result = await _exerciseService.GetAllExercisesAsync(page, pageSize);
+            var userIdClaim = User.FindFirst("id")?.Value;
+            var result = await _exerciseService.GetAllExercisesAsync(page, pageSize, userIdClaim);
 
             if (!result.Success)
                 return BadRequest(result);
@@ -33,12 +35,12 @@ public class ExerciseController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao buscar exercícios: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao buscar exercï¿½cios: {ex.Message}" });
         }
     }
 
     /// <summary>
-    /// Busca um exercício por ID
+    /// Busca um exercï¿½cio por ID
     /// </summary>
     [HttpGet("{exerciseId}")]
     public async Task<IActionResult> GetExerciseById(Guid exerciseId)
@@ -54,23 +56,24 @@ public class ExerciseController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao buscar exercício: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao buscar exercï¿½cio: {ex.Message}" });
         }
     }
 
     /// <summary>
-    /// Pesquisa exercícios por nome ou categoria
+    /// Pesquisa exercï¿½cios por nome ou categoria
     /// </summary>
     [HttpGet("search")]
     public async Task<IActionResult> SearchExercises(
-        [FromQuery] string? searchTerm, 
-        [FromQuery] Guid? categoryId = null, 
-        [FromQuery] int page = 1, 
+        [FromQuery] string? searchTerm,
+        [FromQuery] Guid? categoryId = null,
+        [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
         try
         {
-            var result = await _exerciseService.SearchExercisesAsync(searchTerm ?? "", categoryId, page, pageSize);
+            var userIdClaim = User.FindFirst("id")?.Value;
+            var result = await _exerciseService.SearchExercisesAsync(searchTerm ?? "", categoryId, page, pageSize, userIdClaim);
 
             if (!result.Success)
                 return BadRequest(result);
@@ -79,12 +82,12 @@ public class ExerciseController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao pesquisar exercícios: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao pesquisar exercï¿½cios: {ex.Message}" });
         }
     }
 
     /// <summary>
-    /// Lista todas as categorias de exercícios
+    /// Lista todas as categorias de exercï¿½cios
     /// </summary>
     [HttpGet("categories")]
     public async Task<IActionResult> GetExerciseCategories()
@@ -105,7 +108,7 @@ public class ExerciseController : ControllerBase
     }
 
     /// <summary>
-    /// Lista todos os grupos musculares com seus músculos
+    /// Lista todos os grupos musculares com seus mï¿½sculos
     /// </summary>
     [HttpGet("muscle-groups")]
     public async Task<IActionResult> GetMuscleGroups()
@@ -126,7 +129,7 @@ public class ExerciseController : ControllerBase
     }
 
     /// <summary>
-    /// Lista exercícios que trabalham um grupo muscular específico
+    /// Lista exercï¿½cios que trabalham um grupo muscular especï¿½fico
     /// </summary>
     [HttpGet("muscle-groups/{muscleGroupId}/exercises")]
     public async Task<IActionResult> GetExercisesByMuscleGroup(Guid muscleGroupId)
@@ -142,7 +145,107 @@ public class ExerciseController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao buscar exercícios: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao buscar exercï¿½cios: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Cria um novo exercÃ­cio personalizado
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CreateExercise([FromBody] CreateExerciseRequest request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "UsuÃ¡rio nÃ£o autenticado" });
+
+            var result = await _exerciseService.CreateExerciseAsync(request, userId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao criar exercÃ­cio: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Atualiza um exercÃ­cio personalizado
+    /// </summary>
+    [HttpPut("{exerciseId}")]
+    public async Task<IActionResult> UpdateExercise(Guid exerciseId, [FromBody] UpdateExerciseRequest request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "UsuÃ¡rio nÃ£o autenticado" });
+
+            var result = await _exerciseService.UpdateExerciseAsync(exerciseId, request, userId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao atualizar exercÃ­cio: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Deleta um exercÃ­cio personalizado (soft delete)
+    /// </summary>
+    [HttpDelete("{exerciseId}")]
+    public async Task<IActionResult> DeleteExercise(Guid exerciseId)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "UsuÃ¡rio nÃ£o autenticado" });
+
+            var result = await _exerciseService.DeleteExerciseAsync(exerciseId, userId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao deletar exercÃ­cio: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Lista os exercÃ­cios personalizados do usuÃ¡rio autenticado
+    /// </summary>
+    [HttpGet("my-exercises")]
+    public async Task<IActionResult> GetUserExercises([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "UsuÃ¡rio nÃ£o autenticado" });
+
+            var result = await _exerciseService.GetUserExercisesAsync(userId, page, pageSize);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao buscar exercÃ­cios do usuÃ¡rio: {ex.Message}" });
         }
     }
 }
