@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "./ui/button";
 import { Camera } from "lucide-react";
+import { useToast } from "@/contexts/ToastContext";
 
 type Props = {
   onFileSelect: (file: File) => void;
@@ -20,6 +21,7 @@ export default function PhotoUploader({
     initialImageUrl || null
   );
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const toast = useToast();
 
   const handleUploadClick = () => {
     if (!disabled) {
@@ -34,14 +36,14 @@ export default function PhotoUploader({
     // Validações no frontend
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      alert(
+      toast.error(
         "Arquivo inválido. Por favor, envie uma imagem no formato JPG, JPEG, PNG ou WEBP."
       );
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("Arquivo muito grande. A imagem deve ter no máximo 2MB.");
+      toast.error("Arquivo muito grande. A imagem deve ter no máximo 2MB.");
       return;
     }
 

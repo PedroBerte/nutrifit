@@ -90,14 +90,18 @@ namespace Nutrifit.Services.Services
         {
             try
             {
-                var session = await _context.WorkoutSessions
-                    .FirstOrDefaultAsync(ws => ws.Id == sessionId && ws.CustomerId == customerId);
+                var sessions = await _context.WorkoutSessions
+                    .Where(ws => ws.Id == sessionId && ws.CustomerId == customerId)
+                    .ToListAsync();
 
-                if (session == null)
+                if (sessions == null)
                     return ApiResponse.CreateFailure("Sessão não encontrada.");
 
-                session.Status = "CA";
-                session.UpdatedAt = DateTime.UtcNow;
+                foreach(var session in sessions)
+                {
+                    session.Status = "CA";
+                    session.UpdatedAt = DateTime.UtcNow;
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -471,6 +475,43 @@ namespace Nutrifit.Services.Services
             catch (Exception ex)
             {
                 return ApiResponse.CreateFailure($"Erro ao deletar série: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse> GetPreviousExerciseDataAsync(Guid exerciseId, Guid customerId)
+        {
+            try
+            {
+                // Busca a última sessão de treino completa onde o usuário executou este exercício
+                var previousExerciseSession = await _context.ExerciseSessions
+                    .Include(es => es.SetSessions)
+                    .Include(es => es.WorkoutSession)
+                    .Where(es => es.ExerciseId == exerciseId
+                        && es.WorkoutSession.CustomerId == customerId
+                        && es.WorkoutSession.Status == "C"
+                        && es.Status == "C")
+                    .OrderByDescending(es => es.WorkoutSession.CompletedAt)
+                    .FirstOrDefaultAsync();
+
+                if (previousExerciseSession == null)
+                    return ApiResponse.CreateSuccess("Nenhum histórico encontrado", new List<object>());
+
+                var previousSets = previousExerciseSession.SetSessions
+                    .OrderBy(ss => ss.SetNumber)
+                    .Select(ss => new
+                    {
+                        setNumber = ss.SetNumber,
+                        load = ss.Load,
+                        reps = ss.Reps,
+                        date = previousExerciseSession.WorkoutSession.CompletedAt
+                    })
+                    .ToList();
+
+                return ApiResponse.CreateSuccess("Dados anteriores encontrados", previousSets);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse.CreateFailure($"Erro ao buscar dados anteriores: {ex.Message}");
             }
         }
     }

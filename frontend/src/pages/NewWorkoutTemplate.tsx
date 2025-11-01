@@ -9,6 +9,7 @@ import {
 } from "@/services/api/workoutTemplate";
 import { useGetExercises } from "@/services/api/exercise";
 import type { ExerciseType } from "@/types/exercise";
+import { ExerciseDrawer } from "@/components/exercise/ExerciseDrawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +36,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Plus, Trash2, GripVertical } from "lucide-react";
+import { useToast } from "@/contexts/ToastContext";
 
 const createTemplateSchema = z.object({
   title: z.string().min(3, "Título deve ter no mínimo 3 caracteres"),
@@ -62,6 +64,7 @@ interface ConfiguredExercise extends ExerciseTemplateRequest {
 export function NewWorkoutTemplate() {
   const navigate = useNavigate();
   const { routineId } = useParams<{ routineId: string }>();
+  const toast = useToast();
 
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
   const [configDrawerOpen, setConfigDrawerOpen] = useState(false);
@@ -145,9 +148,15 @@ export function NewWorkoutTemplate() {
           exerciseTemplates: configuredExercises,
         },
       });
+      toast.success("Treino criado com sucesso!");
       navigate(`/routines/${routineId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao criar template:", error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao criar treino";
+      toast.error(errorMessage);
     }
   };
 
@@ -173,11 +182,11 @@ export function NewWorkoutTemplate() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto p-3 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Novo Treino</h1>
         <p className="text-muted-foreground">
-          Crie um template de treino para sua rotina
+          Crie um novo treino para sua rotina
         </p>
       </div>
 
@@ -188,9 +197,9 @@ export function NewWorkoutTemplate() {
         >
           <Card>
             <CardHeader>
-              <CardTitle>Informações do Template</CardTitle>
+              <CardTitle>Informações do Treino</CardTitle>
               <CardDescription>
-                Configure os detalhes básicos do template
+                Configure os detalhes básicos do treino
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -323,56 +332,12 @@ export function NewWorkoutTemplate() {
       </Form>
 
       {/* Drawer 1: Seleção de Exercício */}
-      <Drawer open={exerciseDrawerOpen} onOpenChange={setExerciseDrawerOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Selecionar Exercício</DrawerTitle>
-          </DrawerHeader>
-          <div className="p-4 max-h-[60vh] overflow-y-auto">
-            {exercisesLoading ? (
-              <p className="text-center text-muted-foreground">
-                Carregando exercícios...
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {exercises?.data?.items?.map((exercise: ExerciseType) => {
-                  const isAdded = configuredExercises.some(
-                    (ex) => ex.exerciseId === exercise.id
-                  );
-                  return (
-                    <Button
-                      key={exercise.id}
-                      variant={isAdded ? "secondary" : "outline"}
-                      className="w-full justify-start"
-                      onClick={() =>
-                        handleExerciseSelect(exercise.id, exercise.name)
-                      }
-                      disabled={isAdded}
-                    >
-                      <div className="text-left">
-                        <p className="font-medium">{exercise.name}</p>
-                        {exercise.primaryMuscles &&
-                          exercise.primaryMuscles.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              {exercise.primaryMuscles
-                                .map((m: any) => m.muscle?.name)
-                                .join(", ")}
-                            </p>
-                          )}
-                      </div>
-                      {isAdded && (
-                        <span className="ml-auto text-xs text-muted-foreground">
-                          Adicionado
-                        </span>
-                      )}
-                    </Button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <ExerciseDrawer
+        open={exerciseDrawerOpen}
+        onOpenChange={setExerciseDrawerOpen}
+        onExerciseSelect={handleExerciseSelect}
+        selectedExerciseIds={configuredExercises.map((ex) => ex.exerciseId)}
+      />
 
       {/* Drawer 2: Configuração do Exercício */}
       <Drawer open={configDrawerOpen} onOpenChange={setConfigDrawerOpen}>

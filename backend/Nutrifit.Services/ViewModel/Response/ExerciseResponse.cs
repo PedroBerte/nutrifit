@@ -6,6 +6,10 @@ public class ExerciseResponse
     public string Name { get; set; } = string.Empty;
     public string? Url { get; set; }
     public string? Instruction { get; set; }
+    public string? ImageUrl { get; set; }
+    public Guid? CreatedByUserId { get; set; }
+    public bool IsPublished { get; set; }
+    public bool IsCustom { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public List<string> PrimaryMuscles { get; set; } = new();
     public List<string> SecondaryMuscles { get; set; } = new();

@@ -17,16 +17,21 @@ import {
   VenusAndMars,
 } from "lucide-react";
 import type { CustomerProfessionalBondType } from "@/types/professional";
-import { useCreateBond } from "@/services/api/bond";
+import { useCreateBond, useGetBondsSent } from "@/services/api/bond";
+import { motion } from "motion/react";
 
 export default function Professional() {
   const { user, logout } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
+  const { data: bondsSent } = useGetBondsSent();
   const { mutate: createProposal } = useCreateBond();
 
   if (!id) navigate("/home");
+
+  const alreadySentProposal = bondsSent
+    ? bondsSent?.some((bond) => bond.professionalId === id) ?? false
+    : false;
 
   const { data: userData, isLoading, error } = useGetUserById(id);
 
@@ -126,7 +131,11 @@ export default function Professional() {
     <div className="flex flex-1 flex-col h-full bg-neutral-dark-01">
       <div className="flex-1 mt-6 overflow-y-auto flex gap-3 flex-col">
         {/* User Avatar and Basic Info */}
-        <div className="flex flex-col items-center gap-3 bg-neutral-dark-03 p-4 rounded-lg">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center gap-3 bg-neutral-dark-03 p-4 rounded-lg"
+        >
           <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center">
             <span className="text-2xl font-bold text-white">
               {userData.name?.charAt(0)?.toUpperCase() || "U"}
@@ -150,9 +159,13 @@ export default function Professional() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-col gap-3 bg-neutral-dark-03 rounded-lg p-4">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-3 bg-neutral-dark-03 rounded-lg p-4"
+        >
           <div className="flex items-center space-x-2 text-neutral-white-01">
             <Mail className="w-5 h-5" />
             <span className="text-sm">{userData.email}</span>
@@ -182,10 +195,14 @@ export default function Professional() {
               <span className="text-sm">{getSexLabel(userData.sex)}</span>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {userData.professionalCredential && (
-          <div className="bg-neutral-dark-03 rounded-lg p-4 space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-neutral-dark-03 rounded-lg p-4 space-y-3"
+          >
             <div className="space-y-2">
               <div>
                 <span className="text-xs text-neutral-white-02 block mb-1">
@@ -210,11 +227,15 @@ export default function Professional() {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {userData.address && (
-          <div className="bg-neutral-dark-03 rounded-lg p-4 space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-neutral-dark-03 rounded-lg p-4 space-y-3"
+          >
             <div className="space-y-3 text-sm">
               <div>
                 <span className="text-xs text-neutral-white-02 block mb-1">
@@ -260,15 +281,22 @@ export default function Professional() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
-        <div className="text-xs text-neutral-white-02 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xs text-neutral-white-02 text-center"
+        >
           Conta criada em {formatDate(userData.createdAt)}
-        </div>
+        </motion.div>
 
-        <Button onClick={() => id && sendProposal(id)}>
-          Enviar proposta ao profissional
+        <Button
+          onClick={() => id && sendProposal(id)}
+          disabled={alreadySentProposal}
+        >
+          {alreadySentProposal ? "Proposta Enviada" : "Enviar Proposta"}
         </Button>
       </div>
     </div>

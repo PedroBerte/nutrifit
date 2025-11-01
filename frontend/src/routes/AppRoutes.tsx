@@ -18,6 +18,9 @@ import NewRoutine from "@/pages/NewRoutine";
 import RoutineDetails from "@/pages/RoutineDetails";
 import { NewWorkoutTemplate } from "@/pages/NewWorkoutTemplate";
 import { EditWorkoutTemplate } from "@/pages/EditWorkoutTemplate";
+import WorkoutSession from "@/pages/WorkoutSession";
+import ProfessionalsList from "@/pages/ProfessionalsList";
+import PersonalHome from "@/pages/PersonalHome";
 
 export function AppRoutes() {
   return (
@@ -35,7 +38,13 @@ export function AppRoutes() {
           <Route element={<AppDefaultLayout />}>
             <Route path="home" element={<Home />} />
             <Route path="workout" element={<Workout />} />
+            <Route
+              path="workout/session/:templateId"
+              element={<WorkoutSession />}
+            />
+            <Route path="personal" element={<PersonalHome />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="professionalsList" element={<ProfessionalsList />} />
             <Route path="professional/:id" element={<Professional />} />
             <Route path="students" element={<Students />} />
             <Route path="diet" element={<Diet />} />

@@ -46,7 +46,11 @@ export default function Callback() {
       dispatch(signInFromJwt({ accessToken: jwt }));
 
       if (decoded.profile) {
-        navigate("/home", { replace: true });
+        if (decoded.profile === UserProfiles.PERSONAL) {
+          navigate("/personal", { replace: true });
+        } else {
+          navigate("/workout", { replace: true });
+        }
       } else {
         navigate("/first-access?token=" + token, { replace: true });
       }

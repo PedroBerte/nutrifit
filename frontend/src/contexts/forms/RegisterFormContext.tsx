@@ -12,6 +12,7 @@ import { useValidateSession } from "@/services/api/auth";
 import { decodeAndNormalizeJwt } from "@/lib/jwt";
 import type { ProfessionalCredentialType } from "@/types/professional";
 import { uploadImage } from "@/services/api/storage";
+import { useToast } from "../ToastContext";
 
 export type AccountType = "student" | "nutritionist" | "personal";
 
@@ -70,6 +71,7 @@ export function RegisterFormProvider({
 }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const toast = useToast();
 
   const [sp] = useSearchParams();
 
@@ -302,12 +304,19 @@ export function RegisterFormProvider({
             console.error("Erro ao fazer upload da imagem:", uploadError);
             // Usuário já foi criado, apenas log do erro
             console.warn("Usuário criado mas imagem não foi enviada");
+            toast.warning("Perfil criado, mas a imagem não pôde ser enviada");
           }
         }
       }
+      toast.success("Cadastro realizado com sucesso!");
       navigate("/home", { replace: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to submit form:", error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao criar cadastro";
+      toast.error(errorMessage);
       signOut();
       navigate("/login", { replace: true });
     }

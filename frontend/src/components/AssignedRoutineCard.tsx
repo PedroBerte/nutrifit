@@ -6,6 +6,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { getDifficultyLabel, getGoalLabel } from "@/constants/routine";
 import type { RoutineType } from "@/types/routine";
 import { useGetWorkoutTemplatesByRoutine } from "@/services/api/workoutTemplate";
@@ -60,26 +61,38 @@ export default function AssignedRoutineCard({
         )}
       </article>
 
-      {isExpanded && (
-        <div className="mt-4 pt-4 border-t border-neutral-dark-02 space-y-3">
-          {isLoading && (
-            <p className="text-center text-sm text-muted-foreground py-4">
-              Carregando treinos...
-            </p>
-          )}
+      <motion.div
+        initial={{ height: 0, opacity: 0, marginTop: 0, paddingTop: 0 }}
+        animate={
+          isExpanded
+            ? { height: "auto", opacity: 1, marginTop: 16, paddingTop: 16 }
+            : { height: 0, opacity: 0, marginTop: 0, paddingTop: 0 }
+        }
+        transition={{ duration: 0.2, ease: "easeInOut" }}
+        style={{ overflow: "hidden" }}
+        className="mt-4 pt-4 border-t border-neutral-dark-02 space-y-3"
+      >
+        {isExpanded && (
+          <>
+            {isLoading && (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                Carregando treinos...
+              </p>
+            )}
 
-          {!isLoading && templates.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-4">
-              Nenhum treino cadastrado nesta rotina ainda.
-            </p>
-          )}
+            {!isLoading && templates.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                Nenhum treino cadastrado nesta rotina ainda.
+              </p>
+            )}
 
-          {!isLoading &&
-            templates.map((template) => (
-              <WorkoutItemCard key={template.id} workout={template} />
-            ))}
-        </div>
-      )}
+            {!isLoading &&
+              templates.map((template) => (
+                <WorkoutItemCard key={template.id} workout={template} />
+              ))}
+          </>
+        )}
+      </motion.div>
     </div>
   );
 }
