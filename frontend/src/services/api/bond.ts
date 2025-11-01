@@ -48,6 +48,19 @@ export function useGetBondsSent() {
   });
 }
 
+export function useGetBondAsCustomer() {
+  return useQuery({
+    queryKey: ["getBondsAsCustomer"],
+    queryFn: async () => {
+      const request = await api.get<Array<CustomerProfessionalBondType>>(
+        `/bond/as-customer`
+      );
+      return request.data && request.data[0];
+    },
+    retry: 1,
+  });
+}
+
 export function useGetAllBonds(
   customerId?: string | null,
   professionalId?: string | null,

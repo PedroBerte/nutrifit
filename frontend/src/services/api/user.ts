@@ -75,3 +75,18 @@ export function useGetAllUsers(
     },
   });
 }
+
+export function useUpdateUser() {
+  return useMutation({
+    mutationKey: ["updateUser"],
+    retry: 0,
+    mutationFn: async (user: UserType) => {
+      const request = await api.put<UserType>(`/user/${user.id}`, user);
+      return request.data;
+    },
+    onError: (e) => {
+      console.error("Erro ao atualizar usuário", e);
+      throw e;
+    },
+  });
+}
