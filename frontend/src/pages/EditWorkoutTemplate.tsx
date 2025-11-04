@@ -280,14 +280,12 @@ export function EditWorkoutTemplate() {
   }
 
   return (
-    <div className="container mx-auto p-2 mt-2">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Editar Treino</h1>
-        <p className="text-muted-foreground">
-          Edite as informações e exercícios do treino
-        </p>
-      </div>
-
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="mx-auto mt-2"
+    >
       <Form {...templateForm}>
         <form
           onSubmit={templateForm.handleSubmit(handleSubmit)}
@@ -297,14 +295,14 @@ export function EditWorkoutTemplate() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card className="border-none">
-              <CardHeader>
-                <CardTitle>Informações do Treino</CardTitle>
-                <CardDescription>
-                  Configure os detalhes básicos do treino
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <section className="bg-neutral-dark-01 w-full">
+              <div className="mx-auto w-full bg-neutral-dark-03 p-4 space-y-4 rounded-sm mt-5">
+                {/* Header */}
+                <div className="mb-6 flex items-center justify-between">
+                  <h1 className="text-2xl font-semibold text-neutral-white-01">
+                    Editar treino
+                  </h1>
+                </div>
                 <FormField
                   control={templateForm.control}
                   name="title"
@@ -358,22 +356,22 @@ export function EditWorkoutTemplate() {
                     </FormItem>
                   )}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card>
-              <CardHeader>
-                <CardTitle>Exercícios</CardTitle>
-                <CardDescription>
-                  Gerencie os exercícios do template
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+            <section className="bg-neutral-dark-01 w-full">
+              <div className="mx-auto w-full bg-neutral-dark-03 p-3 rounded-sm mt-5">
+                {/* Header */}
+                <div className="mb-6 flex items-center justify-between">
+                  <h1 className="text-2xl font-semibold text-neutral-white-01">
+                    Exercícios
+                  </h1>
+                </div>
                 <div className="space-y-3">
                   {template.exerciseTemplates?.map((exerciseTemplate) => (
                     <div
@@ -441,8 +439,8 @@ export function EditWorkoutTemplate() {
                     Adicionar Exercício
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           </motion.div>
 
           <div className="flex gap-3">
@@ -651,6 +649,6 @@ export function EditWorkoutTemplate() {
           </div>
         </DrawerContent>
       </Drawer>
-    </div>
+    </motion.div>
   );
 }

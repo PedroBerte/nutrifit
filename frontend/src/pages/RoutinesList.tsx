@@ -11,7 +11,12 @@ export default function RoutinesList() {
   const { data: routines, isLoading } = useGetMyRoutines();
 
   return (
-    <div className="flex flex-1 py-4 flex-col gap-3">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-1 py-4 flex-col gap-3"
+    >
       <p className="font-bold text-2xl">Planos de Treinos</p>
       <div className="flex flex-1 gap-3">
         <Input
@@ -52,6 +57,6 @@ export default function RoutinesList() {
           </p>
         )}
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

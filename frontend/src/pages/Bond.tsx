@@ -10,11 +10,14 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useGetAllBonds, useUpdateBond } from "@/services/api/bond";
 import type { CustomerProfessionalBondType } from "@/types/professional";
 import { Check, X } from "lucide-react";
 import React, { useState } from "react";
 import { useToast } from "@/contexts/ToastContext";
+import { motion } from "motion/react";
 
 export default function Bond() {
   const { data, isLoading, refetch } = useGetAllBonds();
@@ -84,11 +87,20 @@ export default function Bond() {
   };
 
   return (
-    <div className="flex flex-1 py-4 flex-col gap-3">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-1 py-4 flex-col gap-3"
+    >
       <p className="font-bold text-2xl">Vínculos</p>
       <p className="font-bold">Vínculos ativos:</p>
       <section className="bg-neutral-dark-03 rounded-sm p-4 space-y-3">
-        {data && data.filter((bond) => bond.status === "A").length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <Spinner className="size-6 text-primary" />
+          </div>
+        ) : data && data.filter((bond) => bond.status === "A").length > 0 ? (
           data.map(
             (bond) =>
               bond.status === "A" && (
@@ -118,7 +130,11 @@ export default function Bond() {
       <p className="font-bold">Vínculos solicitados:</p>
 
       <section className="bg-neutral-dark-03 rounded-sm p-4 space-y-3">
-        {data && data.filter((x) => x.status === "P").length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <Spinner className="size-6 text-primary" />
+          </div>
+        ) : data && data.filter((x) => x.status === "P").length > 0 ? (
           data.map(
             (bond) =>
               bond.status === "P" && (
@@ -178,6 +194,6 @@ export default function Bond() {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
-    </div>
+    </motion.div>
   );
 }

@@ -4,6 +4,7 @@ import PersonalHome from "./PersonalHome";
 import Workout from "./Workout";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { motion } from "motion/react";
 
 export default function Home() {
   const { user } = useAuth();
@@ -16,5 +17,13 @@ export default function Home() {
       navigate("/workout", { replace: true });
   }, [user]);
 
-  return <div>Redirecionando...</div>;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
+      Redirecionando...
+    </motion.div>
+  );
 }
