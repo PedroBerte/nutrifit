@@ -49,7 +49,7 @@ async function refreshIfNeeded() {
 
 api.interceptors.request.use(async (config) => {
   const state = store.getState() as RootState;
-  console.log("Current auth state in interceptor:", state.auth);
+  // console.log("Current auth state in interceptor:", state.auth);
   const { accessToken, tokenType } = state.auth;
 
   if (accessToken) {

@@ -164,7 +164,7 @@ export default function Bond() {
               )
           )
         ) : (
-          <div>Nenhum vínculo ativo.</div>
+          <div>Nenhum vínculo solicitado.</div>
         )}
       </section>
 

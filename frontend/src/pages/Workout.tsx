@@ -2,9 +2,9 @@ import InformationCard from "@/components/InformationCard";
 import AssignedRoutineCard from "@/components/AssignedRoutineCard";
 import ActiveWorkoutAlert from "@/components/ActiveWorkoutAlert";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useGetUserById } from "@/services/api/user";
 import { useGetMyAssignedRoutines } from "@/services/api/routine";
-import { useGetActiveWorkoutSession } from "@/services/api/workoutSession";
 import { UserProfiles } from "@/types/user";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -15,15 +15,14 @@ import { useGetBondAsCustomer } from "@/services/api/bond";
 export default function Workout() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { activeSession, isLoading: isActiveSessionLoading } = useActiveWorkout();
   const { data: userData, isLoading: isLoadingUser } = useGetUserById(user?.id);
   const { data: studentBond, isLoading: isLoadingBonds } =
     useGetBondAsCustomer();
   const { data: routinesResponse, isLoading: isLoadingRoutines } =
     useGetMyAssignedRoutines();
-  const { data: activeSessionResponse } = useGetActiveWorkoutSession();
 
   const routines = routinesResponse?.data?.items || [];
-  const activeSession = activeSessionResponse?.data;
 
   function getBondStatus() {
     if (isLoadingUser || isLoadingBonds) return null;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import {
   useStartWorkoutSession,
   useGetWorkoutSessionById,
@@ -14,17 +15,18 @@ import {
   type SetSessionResponse,
 } from "@/services/api/workoutSession";
 import { useGetWorkoutTemplateById } from "@/services/api/workoutTemplate";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   ChevronLeft,
   Clock,
@@ -35,9 +37,15 @@ import {
   Timer,
   Play,
   Pause,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  Circle,
+  PlayCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function WorkoutSession() {
   const { templateId } = useParams<{ templateId: string }>();
@@ -46,6 +54,7 @@ export default function WorkoutSession() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
+  const queryClient = useQueryClient();
 
   const [sessionId, setSessionId] = useState<string | null>(
     existingSessionId || null
@@ -57,7 +66,11 @@ export default function WorkoutSession() {
   const [currentExerciseId, setCurrentExerciseId] = useState<string | null>(
     null
   );
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
 
   // Queries
   const { data: templateData } = useGetWorkoutTemplateById(templateId);
@@ -76,13 +89,14 @@ export default function WorkoutSession() {
   const template = templateData?.data;
   const session = sessionData?.data;
 
-  // Inicializa ExerciseSessions quando sessão é criada
+  // Inicializa ExerciseSessions se estiver vazio (fallback para migration pendente)
   useEffect(() => {
     if (session && template && session.exerciseSessions?.length === 0) {
-      // Auto-inicializa todos os exercícios do template
+      console.log("Inicializando exercícios automaticamente...");
       const initExercises = async () => {
         for (const exerciseTemplate of template.exerciseTemplates || []) {
           try {
+            console.log("Criando exercício:", exerciseTemplate.exerciseName);
             await startExercise.mutateAsync({
               sessionId: session.id,
               data: { exerciseTemplateId: exerciseTemplate.id },
@@ -91,11 +105,44 @@ export default function WorkoutSession() {
             console.error("Erro ao inicializar exercício", error);
           }
         }
+        console.log("Atualizando dados da sessão...");
         refetchSession();
       };
       initExercises();
     }
-  }, [session?.id, template?.id]);
+  }, [session?.id, template?.id, session?.exerciseSessions?.length]);
+
+  // Expande automaticamente o primeiro exercício "em andamento" (IP), se existir
+  // Caso contrário, expande o primeiro exercício "não iniciado" (NS)
+  useEffect(() => {
+    if (session?.exerciseSessions && expandedExerciseIds.size === 0) {
+      const inProgressExercise = session.exerciseSessions.find(
+        (ex) => ex.status === "IP"
+      );
+      
+      if (inProgressExercise) {
+        setExpandedExerciseIds(new Set([inProgressExercise.id]));
+        setCurrentExerciseId(inProgressExercise.id);
+      } else {
+        // Se não há exercício em andamento, expande o primeiro não iniciado
+        const notStartedExercise = session.exerciseSessions.find(
+          (ex) => ex.status === "NS"
+        );
+        if (notStartedExercise) {
+          setExpandedExerciseIds(new Set([notStartedExercise.id]));
+        }
+      }
+    }
+  }, [session?.exerciseSessions]);
+
+  // Debug temporário
+  useEffect(() => {
+    console.log("DEBUG - session:", session);
+    console.log("DEBUG - exerciseSessions:", session?.exerciseSessions);
+    console.log("DEBUG - length:", session?.exerciseSessions?.length);
+    console.log("DEBUG - template:", template);
+    console.log("DEBUG - template exerciseTemplates:", template?.exerciseTemplates?.length);
+  }, [session, template]);
 
   // Timer do treino
   useEffect(() => {
@@ -188,13 +235,18 @@ export default function WorkoutSession() {
   };
 
   const handleCancelSession = async () => {
-    if (!sessionId) return;
+    if (!sessionId || isCanceling) return;
+
+    setIsCanceling(true);
 
     try {
       await cancelSession.mutateAsync(sessionId);
+      
       setIsWorkoutTimerRunning(false);
       toast.info("Treino cancelado");
-      navigate("/workout");
+      
+      // Navega imediatamente - o contexto cuida da limpeza
+      navigate("/workout", { replace: true });
     } catch (error: any) {
       console.error("Erro ao cancelar treino", error);
       const errorMessage =
@@ -203,7 +255,8 @@ export default function WorkoutSession() {
         "Erro ao cancelar treino";
       toast.error(errorMessage);
     } finally {
-      setShowCancelDialog(false);
+      setIsCanceling(false);
+      setShowCancelConfirm(false);
     }
   };
 
@@ -351,8 +404,8 @@ export default function WorkoutSession() {
       </div>
 
       {/* Lista de Exercícios */}
-      <div className="flex-1 p-2 space-y-4">
-        {session.exerciseSessions && session.exerciseSessions.length > 0 ? (
+      <div className="flex-1 p-2 space-y-4">        
+        {session?.exerciseSessions && session.exerciseSessions.length > 0 ? (
           session.exerciseSessions.map((exerciseSession, index) => (
             <ExerciseCard
               key={exerciseSession.id}
@@ -360,11 +413,26 @@ export default function WorkoutSession() {
               onStartExercise={handleStartExercise}
               onRegisterSet={handleRegisterSet}
               isActive={currentExerciseId === exerciseSession.id}
+              isExpanded={expandedExerciseIds.has(exerciseSession.id)}
+              onToggleExpand={() => {
+                setExpandedExerciseIds((prev) => {
+                  const newSet = new Set(prev);
+                  if (newSet.has(exerciseSession.id)) {
+                    newSet.delete(exerciseSession.id);
+                  } else {
+                    newSet.add(exerciseSession.id);
+                  }
+                  return newSet;
+                });
+              }}
             />
           ))
         ) : (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">Carregando exercícios...</p>
+            <p className="text-muted-foreground">
+              Carregando exercícios... 
+              {session?.exerciseSessions ? ` (${session.exerciseSessions.length} encontrados)` : " (dados ainda não carregados)"}
+            </p>
           </div>
         )}
 
@@ -372,7 +440,7 @@ export default function WorkoutSession() {
         <div className="pt-4">
           <Button
             variant="destructive"
-            onClick={() => setShowCancelDialog(true)}
+            onClick={() => setShowCancelConfirm(true)}
             className="w-full"
           >
             Cancelar Treino
@@ -380,34 +448,41 @@ export default function WorkoutSession() {
         </div>
       </div>
 
-      {/* Dialog de Confirmação de Cancelamento */}
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancelar Treino</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja cancelar este treino? Todo o progresso será
-              perdido.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+      {/* Sheet de confirmação de cancelamento */}
+      <Sheet open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <SheetContent side="bottom" className="max-h-[80vh]">
+          <SheetHeader>
+            <div className="flex items-center gap-2 text-yellow-500 mb-2">
+              <AlertTriangle size={24} />
+              <SheetTitle>Cancelar Treino?</SheetTitle>
+            </div>
+            <SheetDescription>
+              Tem certeza que deseja cancelar este treino?
+              <br />
+              Todo o progresso será perdido.
+            </SheetDescription>
+          </SheetHeader>
+
+          <SheetFooter className="gap-2 sm:gap-2 mt-4">
             <Button
               variant="outline"
-              onClick={() => setShowCancelDialog(false)}
-              disabled={cancelSession.isPending}
+              onClick={() => setShowCancelConfirm(false)}
+              disabled={isCanceling}
+              className="flex-1"
             >
-              Não, continuar
+              Continuar Treino
             </Button>
             <Button
               variant="destructive"
               onClick={handleCancelSession}
-              disabled={cancelSession.isPending}
+              disabled={isCanceling}
+              className="flex-1"
             >
-              Sim, cancelar treino
+              {isCanceling ? "Cancelando..." : "Sim, Cancelar"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </motion.div>
   );
 }
@@ -424,6 +499,8 @@ interface ExerciseCardProps {
     restSeconds?: number
   ) => void;
   isActive: boolean;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
 }
 
 function ExerciseCard({
@@ -431,6 +508,8 @@ function ExerciseCard({
   onStartExercise,
   onRegisterSet,
   isActive,
+  isExpanded,
+  onToggleExpand,
 }: ExerciseCardProps) {
   const [notes, setNotes] = useState(exerciseSession.notes || "");
   const [newSetData, setNewSetData] = useState<{
@@ -440,127 +519,184 @@ function ExerciseCard({
 
   const nextSetNumber = (exerciseSession.setSessions?.length || 0) + 1;
   const restSeconds = exerciseSession.restSeconds;
+  const totalSets = exerciseSession.setSessions?.length || 0;
+  const completedSets = exerciseSession.setSessions?.filter(s => s.completed)?.length || 0;
+
+  // Determina o status visual
+  const getExerciseStatus = () => {
+    if (exerciseSession.status === "C") return "completed";
+    if (exerciseSession.status === "IP") return "in-progress";
+    return "not-started";
+  };
+
+  const status = getExerciseStatus();
+
+  const getStatusIcon = () => {
+    switch (status) {
+      case "completed":
+        return <CheckCircle2 size={20} className="text-green-500" />;
+      case "in-progress":
+        return <PlayCircle size={20} className="text-primary" />;
+      default:
+        return <Circle size={20} className="text-muted-foreground" />;
+    }
+  };
+
+  const getStatusLabel = () => {
+    switch (status) {
+      case "completed":
+        return "Concluído";
+      case "in-progress":
+        return "Em andamento";
+      default:
+        return "Não feito";
+    }
+  };
 
   return (
-    <div
-      className={`bg-neutral-dark-03 rounded-lg p-4 space-y-4 ${
-        isActive ? "ring-2 ring-primary" : ""
-      }`}
-    >
-      {/* Cabeçalho do Exercício */}
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <h3 className="font-bold text-lg">{exerciseSession.exerciseName}</h3>
-          {restSeconds && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-              <Timer size={14} />
-              Tempo de Descanso: {restSeconds}s
-            </p>
-          )}
-        </div>
-        {exerciseSession.status === "IP" && (
-          <span className="px-2 py-1 bg-primary/20 text-primary text-xs rounded">
-            Em andamento
-          </span>
-        )}
-      </div>
-
-      {/* Campo de Notas */}
-      <Textarea
-        placeholder="Adicionar notas aqui..."
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        className="min-h-[60px]"
-      />
-
-      {/* Tabela de Séries */}
-      <div className="space-y-2">
-        <div className="grid grid-cols-5 gap-2 text-xs font-bold text-muted-foreground">
-          <span>SÉRIE</span>
-          <span>ANTERIOR</span>
-          <span>KG</span>
-          <span>REPS</span>
-          <span className="text-center">✓</span>
-        </div>
-
-        {/* Séries já registradas */}
-        {exerciseSession.setSessions?.map((set) => (
-          <SetRow key={set.id} set={set} />
-        ))}
-
-        {/* Nova série */}
-        {exerciseSession.status === "IP" && (
-          <div className="grid grid-cols-5 gap-2 items-center">
-            <span className="text-sm font-bold">{nextSetNumber}</span>
-            <span className="text-sm text-muted-foreground">
-              {exerciseSession.suggestedLoad
-                ? `${exerciseSession.suggestedLoad}kg x ${
-                    exerciseSession.targetRepsMin || ""
-                  }`
-                : "-"}
-            </span>
-            <Input
-              type="number"
-              placeholder="kg"
-              className="h-8 text-sm"
-              value={newSetData.load || ""}
-              onChange={(e) =>
-                setNewSetData((prev) => ({
-                  ...prev,
-                  load: parseFloat(e.target.value) || undefined,
-                }))
-              }
-            />
-            <Input
-              type="number"
-              placeholder="reps"
-              className="h-8 text-sm"
-              value={newSetData.reps || ""}
-              onChange={(e) =>
-                setNewSetData((prev) => ({
-                  ...prev,
-                  reps: parseInt(e.target.value) || undefined,
-                }))
-              }
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-full p-0"
-              onClick={() => {
-                onRegisterSet(
-                  exerciseSession.id,
-                  nextSetNumber,
-                  newSetData.load,
-                  newSetData.reps,
-                  restSeconds
-                );
-                setNewSetData({});
-              }}
-            >
-              <Check size={16} />
-            </Button>
+    <div className="bg-neutral-dark-03 rounded-lg overflow-hidden border border-neutral-dark-02">
+      {/* Cabeçalho do Exercício - Sempre visível */}
+      <div
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-neutral-dark-02/50 transition-colors"
+        onClick={onToggleExpand}
+      >
+        <div className="flex items-center gap-3 flex-1">
+          {getStatusIcon()}
+          <div className="flex-1">
+            <h3 className="font-bold text-base">{exerciseSession.exerciseName}</h3>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+              <span>{getStatusLabel()}</span>
+              {totalSets > 0 && (
+                <>
+                  <span>•</span>
+                  <span>{completedSets}/{totalSets} séries</span>
+                </>
+              )}
+              {restSeconds && (
+                <>
+                  <span>•</span>
+                  <span>{restSeconds}s descanso</span>
+                </>
+              )}
+            </div>
           </div>
-        )}
+        </div>
+        <div className="ml-2 text-muted-foreground">
+          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
       </div>
 
-      {/* Botão Adicionar Série */}
-      {exerciseSession.status === "IP" && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => {
-            // Só inicia o exercício se ainda não foi iniciado
-            if (!isActive) {
-              onStartExercise(exerciseSession.exerciseTemplateId);
-            }
-          }}
-        >
-          <Plus size={16} className="mr-2" />
-          Adicionar Série
-        </Button>
-      )}
+
+      {/* Conteúdo Expansível */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="border-t border-neutral-dark-02"
+          >
+            <div className="p-4 space-y-4">
+              {/* Campo de Notas */}
+              <Textarea
+                placeholder="Adicionar notas aqui..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="min-h-[60px]"
+              />
+
+              {/* Tabela de Séries */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-5 gap-2 text-xs font-bold text-muted-foreground">
+                  <span>SÉRIE</span>
+                  <span>ANTERIOR</span>
+                  <span>KG</span>
+                  <span>REPS</span>
+                  <span className="text-center">✓</span>
+                </div>
+
+                {/* Séries já registradas */}
+                {exerciseSession.setSessions?.map((set) => (
+                  <SetRow key={set.id} set={set} />
+                ))}
+
+                {/* Nova série - apenas para exercícios em andamento */}
+                {status === "in-progress" && (
+                  <div className="grid grid-cols-5 gap-2 items-center">
+                    <span className="text-sm font-bold">{nextSetNumber}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {exerciseSession.suggestedLoad
+                        ? `${exerciseSession.suggestedLoad}kg x ${
+                            exerciseSession.targetRepsMin || ""
+                          }`
+                        : "-"}
+                    </span>
+                    <Input
+                      type="number"
+                      placeholder="kg"
+                      className="h-8 text-sm"
+                      value={newSetData.load || ""}
+                      onChange={(e) =>
+                        setNewSetData((prev) => ({
+                          ...prev,
+                          load: parseFloat(e.target.value) || undefined,
+                        }))
+                      }
+                    />
+                    <Input
+                      type="number"
+                      placeholder="reps"
+                      className="h-8 text-sm"
+                      value={newSetData.reps || ""}
+                      onChange={(e) =>
+                        setNewSetData((prev) => ({
+                          ...prev,
+                          reps: parseInt(e.target.value) || undefined,
+                        }))
+                      }
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-full p-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRegisterSet(
+                          exerciseSession.id,
+                          nextSetNumber,
+                          newSetData.load,
+                          newSetData.reps,
+                          restSeconds
+                        );
+                        setNewSetData({});
+                      }}
+                    >
+                      <Check size={16} />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Botão de Ação baseado no status */}
+              {status === "not-started" && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="w-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartExercise(exerciseSession.exerciseTemplateId);
+                  }}
+                >
+                  <Play size={16} className="mr-2" />
+                  Iniciar Exercício
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

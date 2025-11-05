@@ -180,11 +180,29 @@ export function useCancelWorkoutSession() {
       );
       return request.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["getActiveWorkoutSession"] });
+    onSuccess: async () => {
+      console.log("[CANCEL API] Sucesso no cancelamento - backend confirmou");
+      // Limpa cache do React Query
+      queryClient.clear();
+      
+      // Seta dados como null explicitamente
+      queryClient.setQueryData(["getActiveWorkoutSession"], {
+        success: true,
+        message: "Nenhuma sessão ativa",
+        data: null
+      });
+      
+      // Notifica o contexto sobre o cancelamento
+      localStorage.setItem("workoutCancelled", "true");
+      window.dispatchEvent(new CustomEvent("workoutCancelled"));
+      
+      // Invalida queries após um delay
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["getActiveWorkoutSession"] });
+      }, 100);
     },
     onError: (e) => {
-      console.error("Erro ao cancelar treino", e);
+      console.error("[CANCEL API] Erro ao cancelar treino:", e);
       throw e;
     },
   });
@@ -218,6 +236,10 @@ export function useGetActiveWorkoutSession() {
       return request.data;
     },
     retry: 1,
+    staleTime: 0, // Sempre considera os dados como "stale" para refetch
+    gcTime: 0, // Remove do cache imediatamente quando não está em uso
+    refetchOnMount: true, // Sempre refetch ao montar
+    refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
   });
 }
 

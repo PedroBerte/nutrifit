@@ -624,12 +624,12 @@ namespace Nutrifit.Repository
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).ValueGeneratedOnAdd();
 
-                e.Property(x => x.Status).HasMaxLength(2).HasDefaultValue("IP");
+                e.Property(x => x.Status).HasMaxLength(2).HasDefaultValue("NS");
                 e.Property(x => x.Notes).HasMaxLength(500);
 
                 e.Property(x => x.StartedAt)
                     .HasColumnType("timestamp without time zone")
-                    .IsRequired();
+                    .IsRequired(false);
 
                 e.Property(x => x.CompletedAt)
                     .HasColumnType("timestamp without time zone");
