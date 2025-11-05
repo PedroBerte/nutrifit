@@ -4,6 +4,7 @@ import type {
   UpdateRoutineRequest,
   AssignRoutineRequest,
   RoutineType,
+  RoutineCustomersResponse,
 } from "@/types/routine";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -162,6 +163,21 @@ export function useGetCustomerRoutines(
       return request.data;
     },
     enabled: !!customerId,
+    retry: 1,
+  });
+}
+
+export function useGetRoutineCustomers(routineId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["getRoutineCustomers", routineId],
+    queryFn: async () => {
+      if (!routineId) throw new Error("ID da rotina é obrigatório");
+      const request = await api.get<ApiResponse<RoutineCustomersResponse>>(
+        `/routine/${routineId}/customers`
+      );
+      return request.data;
+    },
+    enabled: !!routineId,
     retry: 1,
   });
 }

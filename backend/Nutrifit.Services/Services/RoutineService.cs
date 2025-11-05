@@ -110,15 +110,53 @@ public class RoutineService : IRoutineService
         try
         {
             var routine = await _context.Routines
+                .Include(r => r.Workouts)
+                .Include(r => r.CustomerRoutines)
                 .FirstOrDefaultAsync(r => r.Id == routineId && r.PersonalId == personalId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina n�o encontrada ou voc� n�o tem permiss�o para exclu�-la");
+                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão para excluí-la");
 
-            _context.Routines.Remove(routine);
+            // Soft delete da rotina
+            routine.Status = "I"; // I = Inativo
+            routine.UpdatedAt = DateTime.UtcNow;
+
+            // Soft delete das atribuições (CustomerRoutines)
+            foreach (var customerRoutine in routine.CustomerRoutines)
+            {
+                customerRoutine.Status = "I";
+                customerRoutine.UpdatedAt = DateTime.UtcNow;
+            }
+
+            // Soft delete dos workouts
+            foreach (var workout in routine.Workouts)
+            {
+                workout.Status = "I";
+                workout.UpdatedAt = DateTime.UtcNow;
+            }
+
+            // Buscar e fazer soft delete dos workout templates
+            var workoutTemplates = await _context.WorkoutTemplates
+                .Include(wt => wt.WorkoutSessions)
+                .Where(wt => wt.RoutineId == routineId)
+                .ToListAsync();
+
+            foreach (var workoutTemplate in workoutTemplates)
+            {
+                workoutTemplate.Status = "I";
+                workoutTemplate.UpdatedAt = DateTime.UtcNow;
+
+                // Soft delete das sessões de treino
+                foreach (var session in workoutTemplate.WorkoutSessions)
+                {
+                    session.Status = "CA"; // CA = Cancelado
+                    session.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+
             await _context.SaveChangesAsync();
 
-            return ApiResponse.CreateSuccess("Rotina exclu�da com sucesso");
+            return ApiResponse.CreateSuccess("Rotina excluída com sucesso");
         }
         catch (Exception ex)
         {
@@ -350,6 +388,72 @@ public class RoutineService : IRoutineService
         catch (Exception ex)
         {
             return ApiResponse.CreateFailure($"Erro ao buscar rotinas do cliente: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse> GetRoutineCustomersAsync(Guid routineId, Guid personalId)
+    {
+        try
+        {
+            // Verificar se a rotina existe e pertence ao personal
+            var routine = await _context.Routines
+                .Include(r => r.CustomerRoutines)
+                    .ThenInclude(cr => cr.Customer)
+                .FirstOrDefaultAsync(r => r.Id == routineId && r.PersonalId == personalId);
+
+            if (routine == null)
+                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão");
+
+            // Buscar todos os alunos vinculados ao personal (bonds ativos)
+            var bonds = await _context.CustomerProfessionalBonds
+                .Include(b => b.Customer)
+                .Where(b => b.ProfessionalId == personalId && b.Status == "A")
+                .ToListAsync();
+
+            // Alunos já atribuídos à rotina
+            var assignedCustomerIds = routine.CustomerRoutines
+                .Where(cr => cr.Status == "A")
+                .Select(cr => cr.CustomerId)
+                .ToHashSet();
+
+            var assignedCustomers = routine.CustomerRoutines
+                .Where(cr => cr.Status == "A")
+                .Select(cr => new CustomerBasicInfo
+                {
+                    Id = cr.Customer.Id,
+                    Name = cr.Customer.Name,
+                    Email = cr.Customer.Email,
+                    ImageUrl = cr.Customer.ImageUrl,
+                    AssignedAt = cr.CreatedAt
+                })
+                .OrderBy(c => c.Name)
+                .ToList();
+
+            // Alunos disponíveis (vinculados mas não atribuídos à rotina)
+            var availableCustomers = bonds
+                .Where(b => !assignedCustomerIds.Contains(b.CustomerId))
+                .Select(b => new CustomerBasicInfo
+                {
+                    Id = b.Customer.Id,
+                    Name = b.Customer.Name,
+                    Email = b.Customer.Email,
+                    ImageUrl = b.Customer.ImageUrl,
+                    AssignedAt = null
+                })
+                .OrderBy(c => c.Name)
+                .ToList();
+
+            var response = new RoutineCustomersResponse
+            {
+                AssignedCustomers = assignedCustomers,
+                AvailableCustomers = availableCustomers
+            };
+
+            return ApiResponse.CreateSuccess("Alunos carregados com sucesso", response);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse.CreateFailure($"Erro ao buscar alunos da rotina: {ex.Message}");
         }
     }
 }

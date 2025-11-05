@@ -2,15 +2,27 @@ import {
   BookText,
   Calendar,
   ChartColumnBig,
-  Copy,
   Send,
   Target,
+  Trash2,
 } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 import { getDifficultyLabel, getGoalLabel } from "@/constants/routine";
 import AssignRoutineDrawer from "./AssignRoutineDrawer";
+import { useDeleteRoutine } from "@/services/api/routine";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/contexts/ToastContext";
+import { Loader2 } from "lucide-react";
 
 interface RoutineCardProps {
   id: string;
@@ -29,6 +41,11 @@ export default function RoutineCard({
 }: RoutineCardProps) {
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  const deleteMutation = useDeleteRoutine();
 
   const handleDetails = () => {
     navigate(`/routines/${id}`);
@@ -36,6 +53,25 @@ export default function RoutineCard({
 
   const handleSend = () => {
     setIsDrawerOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteMutation.mutateAsync(id);
+
+      // Invalidar queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ["getMyRoutines"] });
+
+      toast.success(`Rotina "${title}" excluída com sucesso!`);
+      setIsDeleteDialogOpen(false);
+    } catch (error: any) {
+      console.error("Erro ao excluir rotina:", error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao excluir rotina.";
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -58,19 +94,25 @@ export default function RoutineCard({
           <p>{weeks} semanas</p>
         </section>
       </article>
-      <article className="flex justify-end gap-2 pt-3">
-        <Button className="bg-secondary">
-          <Copy />
-          Clonar
+      <article className="flex justify-between gap-2 pt-3">
+        <Button
+          variant="destructive"
+          className="bg-destructive"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
+          <Trash2 />
+          Excluir
         </Button>
-        <Button className="bg-secondary" onClick={handleDetails}>
-          <BookText />
-          Detalhes
-        </Button>
-        <Button onClick={handleSend}>
-          <Send />
-          Enviar
-        </Button>
+        <div className="space-x-2">
+          <Button className="bg-secondary" onClick={handleDetails}>
+            <BookText />
+            Detalhes
+          </Button>
+          <Button onClick={handleSend}>
+            <Send />
+            Atribuir
+          </Button>
+        </div>
       </article>
 
       <AssignRoutineDrawer
@@ -79,6 +121,46 @@ export default function RoutineCard({
         routineId={id}
         routineTitle={title}
       />
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Você tem certeza que deseja excluir a rotina{" "}
+              <strong>"{title}"</strong>?
+              <br />
+              <br />
+              Esta ação irá desativar a rotina e todas as suas atribuições,
+              treinos e sessões relacionadas.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                  Excluindo...
+                </>
+              ) : (
+                "Confirmar Exclusão"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,13 @@
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Upload, X, Loader2 } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import {
@@ -25,6 +33,7 @@ export function ExerciseMediaUploader({
   );
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
 
@@ -76,8 +85,6 @@ export function ExerciseMediaUploader({
   };
 
   const handleRemoveMedia = async () => {
-    if (!confirm("Deseja remover a mídia deste exercício?")) return;
-
     try {
       setIsDeleting(true);
       await deleteExerciseMedia(exerciseId);
@@ -94,6 +101,7 @@ export function ExerciseMediaUploader({
       toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -125,21 +133,12 @@ export function ExerciseMediaUploader({
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleRemoveMedia}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={disabled || isDeleting}
             className="w-full"
           >
-            {isDeleting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Removendo...
-              </>
-            ) : (
-              <>
-                <X className="mr-2 h-4 w-4" />
-                Remover Mídia
-              </>
-            )}
+            <X className="mr-2 h-4 w-4" />
+            Remover Mídia
           </Button>
         </div>
       ) : (
@@ -167,6 +166,42 @@ export function ExerciseMediaUploader({
       <p className="text-xs text-muted-foreground text-center">
         Formatos aceitos: JPG, PNG, WEBP, GIF • Máx: 5MB
       </p>
+
+      {/* Dialog de Confirmação de Remoção */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remover Mídia</DialogTitle>
+            <DialogDescription>
+              Deseja remover a mídia deste exercício? Esta ação não pode ser
+              desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemoveMedia}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                  Removendo...
+                </>
+              ) : (
+                "Remover"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

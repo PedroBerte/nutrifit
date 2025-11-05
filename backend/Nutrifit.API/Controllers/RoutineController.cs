@@ -156,7 +156,7 @@ public class RoutineController : ControllerBase
     }
 
     /// <summary>
-    /// Remove a atribuição de uma rotina de um cliente
+    /// Remove a atribuiï¿½ï¿½o de uma rotina de um cliente
     /// </summary>
     [HttpDelete("{routineId}/customer/{customerId}")]
     public async Task<IActionResult> UnassignRoutineFromCustomer(Guid routineId, Guid customerId)
@@ -173,12 +173,12 @@ public class RoutineController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao remover atribuição: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao remover atribuiï¿½ï¿½o: {ex.Message}" });
         }
     }
 
     /// <summary>
-    /// Lista todas as rotinas atribuídas ao cliente logado
+    /// Lista todas as rotinas atribuï¿½das ao cliente logado
     /// </summary>
     [HttpGet("my-assigned-routines")]
     public async Task<IActionResult> GetMyAssignedRoutines([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
@@ -200,7 +200,7 @@ public class RoutineController : ControllerBase
     }
 
     /// <summary>
-    /// Lista rotinas atribuídas a um cliente específico (para Personal)
+    /// Lista rotinas atribuï¿½das a um cliente especï¿½fico (para Personal)
     /// </summary>
     [HttpGet("customer/{customerId}")]
     public async Task<IActionResult> GetCustomerRoutines(Guid customerId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
@@ -217,6 +217,28 @@ public class RoutineController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = $"Erro ao buscar rotinas do cliente: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Busca alunos atribuÃ­dos e disponÃ­veis para uma rotina
+    /// </summary>
+    [HttpGet("{routineId}/customers")]
+    public async Task<IActionResult> GetRoutineCustomers(Guid routineId)
+    {
+        try
+        {
+            var userId = GetUserId();
+            var result = await _routineService.GetRoutineCustomersAsync(routineId, userId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao buscar alunos da rotina: {ex.Message}" });
         }
     }
 }
