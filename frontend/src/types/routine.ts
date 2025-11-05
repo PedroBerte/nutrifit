@@ -29,3 +29,16 @@ export interface RoutineType {
   updatedAt: string;
   personalId: string;
 }
+
+export interface CustomerBasicInfo {
+  id: string;
+  name: string;
+  email: string;
+  imageUrl?: string;
+  assignedAt?: string;
+}
+
+export interface RoutineCustomersResponse {
+  assignedCustomers: CustomerBasicInfo[];
+  availableCustomers: CustomerBasicInfo[];
+}

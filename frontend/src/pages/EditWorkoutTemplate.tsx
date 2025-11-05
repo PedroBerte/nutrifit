@@ -26,6 +26,14 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Form,
   FormControl,
   FormField,
@@ -80,6 +88,8 @@ export function EditWorkoutTemplate() {
     name: string;
   } | null>(null);
   const [editingExerciseTemplate, setEditingExerciseTemplate] =
+    useState<ExerciseTemplateResponse | null>(null);
+  const [exerciseToRemove, setExerciseToRemove] =
     useState<ExerciseTemplateResponse | null>(null);
 
   const { data: templateResponse, isLoading: loadingTemplate } =
@@ -206,14 +216,17 @@ export function EditWorkoutTemplate() {
     }
   };
 
-  const handleRemoveExercise = async (exerciseTemplateId: string) => {
-    if (!confirm("Deseja realmente remover este exercício?")) return;
+  const handleRemoveExercise = async () => {
+    if (!exerciseToRemove) return;
 
     try {
-      await removeExercise.mutateAsync(exerciseTemplateId);
+      await removeExercise.mutateAsync(exerciseToRemove.id);
+      toast.success("Exercício removido com sucesso");
     } catch (error) {
       console.error("Erro ao remover exercício:", error);
       toast.error("Erro ao remover exercício");
+    } finally {
+      setExerciseToRemove(null);
     }
   };
 
@@ -421,9 +434,7 @@ export function EditWorkoutTemplate() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() =>
-                          handleRemoveExercise(exerciseTemplate.id)
-                        }
+                        onClick={() => setExerciseToRemove(exerciseTemplate)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -649,6 +660,45 @@ export function EditWorkoutTemplate() {
           </div>
         </DrawerContent>
       </Drawer>
+
+      {/* Dialog de Confirmação de Remoção */}
+      <Dialog
+        open={!!exerciseToRemove}
+        onOpenChange={(open) => !open && setExerciseToRemove(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remover Exercício</DialogTitle>
+            <DialogDescription>
+              Deseja realmente remover o exercício{" "}
+              <strong>{exerciseToRemove?.exerciseName}</strong> do treino?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setExerciseToRemove(null)}
+              disabled={removeExercise.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemoveExercise}
+              disabled={removeExercise.isPending}
+            >
+              {removeExercise.isPending ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                  Removendo...
+                </>
+              ) : (
+                "Remover"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

@@ -18,6 +18,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ChevronLeft,
   Clock,
   Dumbbell,
@@ -49,6 +57,7 @@ export default function WorkoutSession() {
   const [currentExerciseId, setCurrentExerciseId] = useState<string | null>(
     null
   );
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Queries
   const { data: templateData } = useGetWorkoutTemplateById(templateId);
@@ -181,8 +190,6 @@ export default function WorkoutSession() {
   const handleCancelSession = async () => {
     if (!sessionId) return;
 
-    if (!confirm("Tem certeza que deseja cancelar este treino?")) return;
-
     try {
       await cancelSession.mutateAsync(sessionId);
       setIsWorkoutTimerRunning(false);
@@ -195,6 +202,8 @@ export default function WorkoutSession() {
         error?.message ||
         "Erro ao cancelar treino";
       toast.error(errorMessage);
+    } finally {
+      setShowCancelDialog(false);
     }
   };
 
@@ -363,13 +372,42 @@ export default function WorkoutSession() {
         <div className="pt-4">
           <Button
             variant="destructive"
-            onClick={handleCancelSession}
+            onClick={() => setShowCancelDialog(true)}
             className="w-full"
           >
             Cancelar Treino
           </Button>
         </div>
       </div>
+
+      {/* Dialog de Confirmação de Cancelamento */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar Treino</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja cancelar este treino? Todo o progresso será
+              perdido.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelDialog(false)}
+              disabled={cancelSession.isPending}
+            >
+              Não, continuar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelSession}
+              disabled={cancelSession.isPending}
+            >
+              Sim, cancelar treino
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
