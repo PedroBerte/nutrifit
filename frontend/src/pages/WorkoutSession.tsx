@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGetWorkoutTemplateById } from "@/services/api/workoutTemplate";
-import { useCompleteWorkoutSession } from "@/services/api/workoutSession";
+import {
+  useCompleteWorkoutSession,
+  type PreviousSetData,
+} from "@/services/api/workoutSession";
+import { api } from "@/lib/axios";
+import type { ApiResponse } from "@/types/api";
 import {
   getLocalWorkout,
   saveLocalWorkout,
@@ -10,6 +15,8 @@ import {
   updateExerciseNotes,
   calculateTotalVolume,
   getTotalSets,
+  initializeExerciseSets,
+  deleteSetFromExercise,
   type LocalWorkoutSession,
   type LocalExerciseSession,
   type LocalSetSession,
@@ -40,18 +47,22 @@ import {
   Circle,
   PlayCircle,
   AlertTriangle,
+  Edit2,
+  Trash2,
+  GripVertical,
 } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion, AnimatePresence } from "motion/react";
 
 export default function WorkoutSession() {
-  const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
   const toast = useToast();
 
+  const { templateId } = useParams<{ templateId: string }>();
   const [localWorkout, setLocalWorkout] = useState<LocalWorkoutSession | null>(
     null
   );
+  const [, forceUpdate] = useState(0); // Para forçar re-render
   const [workoutTimer, setWorkoutTimer] = useState(0);
   const [isWorkoutTimerRunning, setIsWorkoutTimerRunning] = useState(false);
   const [restTimer, setRestTimer] = useState<number | null>(null);
@@ -64,6 +75,10 @@ export default function WorkoutSession() {
   const [currentExerciseId, setCurrentExerciseId] = useState<string | null>(
     null
   );
+  const [showSwipeHint, setShowSwipeHint] = useState(() => {
+    // Mostra a dica apenas se nunca foi vista
+    return !localStorage.getItem("hasSeenSwipeHint");
+  });
 
   // Queries
   const { data: templateData } = useGetWorkoutTemplateById(templateId);
@@ -115,6 +130,58 @@ export default function WorkoutSession() {
     }
   }, [template]);
 
+  // Inicializa séries com histórico após criar o workout
+  useEffect(() => {
+    if (!localWorkout) return;
+
+    // Verifica se algum exercício ainda não tem séries inicializadas
+    const exercisesNeedingInit = localWorkout.exercises.filter(
+      (ex) => ex.sets.length === 0
+    );
+
+    if (exercisesNeedingInit.length === 0) return;
+
+    // Busca histórico e inicializa séries para cada exercício
+    const initializeAllExercises = async () => {
+      let updatedWorkout = localWorkout;
+
+      for (const exercise of exercisesNeedingInit) {
+        try {
+          // Busca histórico do exercício via API
+          const response = await api.get<ApiResponse<PreviousSetData[]>>(
+            `/workoutSession/exercise/${exercise.exerciseId}/previous`
+          );
+
+          const previousSets = response.data.data || [];
+
+          // Inicializa séries com histórico
+          updatedWorkout = initializeExerciseSets(
+            updatedWorkout,
+            exercise.id,
+            previousSets,
+            exercise.targetSets
+          );
+        } catch (error) {
+          console.error(
+            `Erro ao buscar histórico do exercício ${exercise.exerciseName}`,
+            error
+          );
+          // Em caso de erro, inicializa com targetSets
+          updatedWorkout = initializeExerciseSets(
+            updatedWorkout,
+            exercise.id,
+            [],
+            exercise.targetSets
+          );
+        }
+      }
+
+      setLocalWorkout(updatedWorkout);
+    };
+
+    initializeAllExercises();
+  }, [localWorkout?.workoutTemplateId]); // Só roda quando o workout é criado
+
   useEffect(() => {
     if (localWorkout?.exercises && expandedExerciseIds.size === 0) {
       const inProgressExercise = localWorkout.exercises.find(
@@ -162,6 +229,31 @@ export default function WorkoutSession() {
     }
     return () => clearInterval(interval);
   }, [isRestTimerRunning, restTimer]);
+
+  // Listener para mudanças no localStorage (quando SetRow atualiza)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedWorkout = getLocalWorkout();
+      if (updatedWorkout) {
+        setLocalWorkout(updatedWorkout);
+        forceUpdate((n) => n + 1);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  // Esconde a dica de swipe após 8 segundos
+  useEffect(() => {
+    if (showSwipeHint) {
+      const timer = setTimeout(() => {
+        setShowSwipeHint(false);
+        localStorage.setItem("hasSeenSwipeHint", "true");
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSwipeHint]);
 
   const handleCompleteSession = async () => {
     if (!localWorkout) return;
@@ -253,6 +345,20 @@ export default function WorkoutSession() {
     setLocalWorkout(updatedWorkout);
   };
 
+  const handleAddSet = (exerciseId: string, restSeconds?: number) => {
+    if (!localWorkout) return;
+
+    const updatedWorkout = addSetToExercise(localWorkout, exerciseId, {
+      load: undefined,
+      reps: undefined,
+      restSeconds,
+      completed: false, // NÃO completada
+      startedAt: new Date().toISOString(),
+    });
+
+    setLocalWorkout(updatedWorkout);
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -326,6 +432,36 @@ export default function WorkoutSession() {
             </Button>
           </div>
         )}
+
+        {/* Dica de swipe - aparece apenas na primeira vez */}
+        <AnimatePresence>
+          {showSwipeHint && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-center gap-3"
+            >
+              <GripVertical size={20} className="text-blue-500" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-500">
+                  Dica: Arraste as séries para a esquerda para deletá-las
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 text-xs"
+                onClick={() => {
+                  setShowSwipeHint(false);
+                  localStorage.setItem("hasSeenSwipeHint", "true");
+                }}
+              >
+                Entendi
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Lista de Exercícios */}
@@ -336,6 +472,7 @@ export default function WorkoutSession() {
             exercise={exercise}
             onRegisterSet={handleRegisterSet}
             onUpdateNotes={handleUpdateExerciseNotes}
+            onAddSet={handleAddSet}
           />
         ))}
 
@@ -393,20 +530,15 @@ interface ExerciseCardProps {
     restSeconds?: number
   ) => void;
   onUpdateNotes: (exerciseId: string, notes: string) => void;
+  onAddSet: (exerciseId: string, restSeconds?: number) => void;
 }
 
 function ExerciseCard({
   exercise,
   onRegisterSet,
   onUpdateNotes,
+  onAddSet,
 }: ExerciseCardProps) {
-  const [newSetData, setNewSetData] = useState<{
-    load?: number;
-    reps?: number;
-  }>({});
-
-  const nextSetNumber = exercise.sets.length + 1;
-
   return (
     <div className="bg-neutral-dark-03 rounded-lg p-4 space-y-4">
       {/* Cabeçalho do Exercício */}
@@ -440,64 +572,27 @@ function ExerciseCard({
           <span className="text-center">✓</span>
         </div>
 
-        {/* Séries já registradas */}
-        {exercise.sets.map((set) => (
-          <SetRow key={set.id} set={set} />
-        ))}
-
-        {/* Nova série */}
-        <div className="grid grid-cols-5 gap-2 items-center">
-          <span className="text-sm font-bold">{nextSetNumber}</span>
-          <span className="text-sm text-muted-foreground">
-            {exercise.suggestedLoad
-              ? `${exercise.suggestedLoad}kg x ${exercise.targetRepsMin || ""}`
-              : "-"}
-          </span>
-          <Input
-            type="number"
-            placeholder="kg"
-            className="h-8 text-sm"
-            value={newSetData.load || ""}
-            onChange={(e) =>
-              setNewSetData((prev) => ({
-                ...prev,
-                load: parseFloat(e.target.value) || undefined,
-              }))
-            }
-          />
-          <Input
-            type="number"
-            placeholder="reps"
-            className="h-8 text-sm"
-            value={newSetData.reps || ""}
-            onChange={(e) =>
-              setNewSetData((prev) => ({
-                ...prev,
-                reps: parseInt(e.target.value) || undefined,
-              }))
-            }
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-full p-0"
-            onClick={() => {
-              onRegisterSet(
-                exercise.id,
-                newSetData.load,
-                newSetData.reps,
-                exercise.restSeconds
-              );
-              setNewSetData({});
-            }}
-          >
-            <Check size={16} />
-          </Button>
-        </div>
+        {/* Séries (completadas e pendentes) */}
+        <AnimatePresence mode="popLayout">
+          {exercise.sets.map((set) => (
+            <SetRow
+              key={set.id}
+              set={set}
+              onRegisterSet={onRegisterSet}
+              exerciseId={exercise.id}
+              restSeconds={exercise.restSeconds}
+            />
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Botão Adicionar Série */}
-      <Button variant="outline" size="sm" className="w-full">
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => onAddSet(exercise.id, exercise.restSeconds)}
+      >
         <Plus size={16} className="mr-2" />
         Adicionar Série
       </Button>
@@ -508,22 +603,237 @@ function ExerciseCard({
 // Componente de Linha de Série
 interface SetRowProps {
   set: LocalSetSession;
+  exerciseId: string;
+  restSeconds?: number;
+  onRegisterSet: (
+    exerciseId: string,
+    load?: number,
+    reps?: number,
+    restSeconds?: number
+  ) => void;
 }
 
-function SetRow({ set }: SetRowProps) {
+function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
+  const [editData, setEditData] = useState<{
+    load?: number;
+    reps?: number;
+  }>({
+    load: set.load,
+    reps: set.reps,
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDelete = () => {
+    const updatedWorkout = getLocalWorkout();
+    if (!updatedWorkout) return;
+
+    const updatedWorkoutAfterDelete = deleteSetFromExercise(
+      updatedWorkout,
+      exerciseId,
+      set.id
+    );
+
+    saveLocalWorkout(updatedWorkoutAfterDelete);
+    window.dispatchEvent(new Event("storage"));
+  };
+
+  // Se a série já foi completada e não está em modo de edição, mostra os dados finais
+  if (set.completed && !isEditing) {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
+        drag="x"
+        dragConstraints={{ left: -100, right: 0 }}
+        dragElastic={0.2}
+        onDragStart={() => setIsDragging(true)}
+        onDragEnd={(_, info) => {
+          setIsDragging(false);
+          // Se arrastou mais de 80px para a esquerda, deleta
+          if (info.offset.x < -80) {
+            handleDelete();
+          }
+        }}
+        className="relative"
+      >
+        {/* Fundo vermelho com ícone de lixeira */}
+        <motion.div
+          className="absolute inset-0 bg-red-500/20 rounded flex items-center justify-end pr-4"
+          animate={
+            isDragging ? { backgroundColor: "rgba(239, 68, 68, 0.3)" } : {}
+          }
+        >
+          <motion.div
+            animate={
+              isDragging
+                ? {
+                    scale: [1, 1.2, 1],
+                    transition: { repeat: Infinity, duration: 0.6 },
+                  }
+                : {}
+            }
+          >
+            <Trash2 size={16} className="text-red-500" />
+          </motion.div>
+        </motion.div>
+
+        {/* Conteúdo da série */}
+        <motion.div
+          className="grid grid-cols-5 gap-2 items-center bg-neutral-dark-03 relative z-10"
+          whileTap={{ scale: 0.98 }}
+        >
+          <div className="flex items-center gap-1">
+            <GripVertical size={14} className="text-muted-foreground/30" />
+            <span className="text-sm font-bold">{set.setNumber}</span>
+          </div>
+          <span className="text-sm text-muted-foreground">
+            {set.previousLoad && set.previousReps
+              ? `${set.previousLoad}kg x ${set.previousReps}`
+              : "-"}
+          </span>
+          <span className="text-sm font-mono">{set.load || "-"}kg</span>
+          <span className="text-sm font-mono">{set.reps || "-"}</span>
+          <div className="flex justify-center gap-1">
+            <Check size={16} className="text-green-500" />
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={() => {
+                setEditData({ load: set.load, reps: set.reps });
+                setIsEditing(true);
+              }}
+            >
+              <Edit2 size={12} />
+            </Button>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  // Se não foi completada ou está em modo de edição, mostra inputs editáveis
   return (
-    <div className="grid grid-cols-5 gap-2 items-center">
-      <span className="text-sm font-bold">{set.setNumber}</span>
-      <span className="text-sm text-muted-foreground">-</span>
-      <span className="text-sm font-mono">{set.load || "-"}kg</span>
-      <span className="text-sm font-mono">{set.reps || "-"}</span>
-      <div className="flex justify-center">
-        {set.completed ? (
-          <Check size={16} className="text-green-500" />
-        ) : (
-          <span className="text-muted-foreground">-</span>
-        )}
-      </div>
-    </div>
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
+      drag="x"
+      dragConstraints={{ left: -100, right: 0 }}
+      dragElastic={0.2}
+      onDragStart={() => setIsDragging(true)}
+      onDragEnd={(_, info) => {
+        setIsDragging(false);
+        // Se arrastou mais de 80px para a esquerda, deleta
+        if (info.offset.x < -80) {
+          handleDelete();
+        }
+      }}
+      className="relative"
+    >
+      {/* Fundo vermelho com ícone de lixeira */}
+      <motion.div
+        className="absolute inset-0 bg-red-500/20 rounded flex items-center justify-end pr-4"
+        animate={
+          isDragging ? { backgroundColor: "rgba(239, 68, 68, 0.3)" } : {}
+        }
+      >
+        <motion.div
+          animate={
+            isDragging
+              ? {
+                  scale: [1, 1.2, 1],
+                  transition: { repeat: Infinity, duration: 0.6 },
+                }
+              : {}
+          }
+        >
+          <Trash2 size={16} className="text-red-500" />
+        </motion.div>
+      </motion.div>
+
+      {/* Conteúdo da série */}
+      <motion.div
+        className="grid grid-cols-5 gap-2 items-center bg-neutral-dark-03 relative z-10"
+        whileTap={{ scale: 0.98 }}
+      >
+        <div className="flex items-center gap-1">
+          <GripVertical size={14} className="text-muted-foreground/30" />
+          <span className="text-sm font-bold">{set.setNumber}</span>
+        </div>
+        <span className="text-sm text-muted-foreground">
+          {set.previousLoad && set.previousReps
+            ? `${set.previousLoad}kg x ${set.previousReps}`
+            : "-"}
+        </span>
+        <Input
+          type="number"
+          placeholder={set.previousLoad ? `${set.previousLoad}kg` : "kg"}
+          className="h-8 text-sm"
+          value={editData.load || ""}
+          onChange={(e) =>
+            setEditData((prev) => ({
+              ...prev,
+              load: parseFloat(e.target.value) || undefined,
+            }))
+          }
+        />
+        <Input
+          type="number"
+          placeholder={set.previousReps ? `${set.previousReps}` : "reps"}
+          className="h-8 text-sm"
+          value={editData.reps || ""}
+          onChange={(e) =>
+            setEditData((prev) => ({
+              ...prev,
+              reps: parseInt(e.target.value) || undefined,
+            }))
+          }
+        />
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-full p-0"
+          onClick={() => {
+            // Atualiza a série existente com os dados preenchidos
+            const updatedWorkout = getLocalWorkout();
+            if (!updatedWorkout) return;
+
+            const exerciseIndex = updatedWorkout.exercises.findIndex(
+              (ex) => ex.id === exerciseId
+            );
+            if (exerciseIndex === -1) return;
+
+            const setIndex = updatedWorkout.exercises[
+              exerciseIndex
+            ].sets.findIndex((s) => s.id === set.id);
+            if (setIndex === -1) return;
+
+            // Se ambos os campos estiverem vazios, usa os valores anteriores
+            const finalLoad = editData.load || set.previousLoad;
+            const finalReps = editData.reps || set.previousReps;
+
+            updatedWorkout.exercises[exerciseIndex].sets[setIndex] = {
+              ...set,
+              load: finalLoad,
+              reps: finalReps,
+              completed: true,
+              completedAt: new Date().toISOString(),
+            };
+
+            saveLocalWorkout(updatedWorkout);
+            setIsEditing(false); // Sai do modo de edição
+            // Força re-render do componente pai
+            window.dispatchEvent(new Event("storage"));
+          }}
+        >
+          <Check size={16} />
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 }

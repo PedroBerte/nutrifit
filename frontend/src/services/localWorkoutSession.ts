@@ -11,6 +11,8 @@ export interface LocalSetSession {
   notes?: string;
   startedAt?: string;
   completedAt?: string;
+  previousLoad?: number; // Peso da última execução (referência)
+  previousReps?: number; // Reps da última execução (referência)
 }
 
 export interface LocalExerciseSession {
@@ -229,4 +231,51 @@ export function getActiveWorkoutInfo() {
     totalVolume: calculateTotalVolume(workout),
     totalSets: getTotalSets(workout),
   };
+}
+
+export function initializeExerciseSets(
+  workout: LocalWorkoutSession,
+  exerciseId: string,
+  previousSets: Array<{ load?: number; reps?: number }>,
+  targetSets?: number
+): LocalWorkoutSession {
+  const updatedExercises = workout.exercises.map((exercise) => {
+    if (exercise.id === exerciseId && exercise.sets.length === 0) {
+      // Determina quantas séries criar
+      const numSetsToCreate = Math.max(
+        previousSets.length,
+        targetSets || 0,
+        1 // Pelo menos 1 série
+      );
+
+      // Cria as séries vazias com dados anteriores como referência
+      const initializedSets: LocalSetSession[] = Array.from(
+        { length: numSetsToCreate },
+        (_, index) => {
+          const previousSet = previousSets[index];
+          return {
+            id: crypto.randomUUID(),
+            setNumber: index + 1,
+            completed: false,
+            previousLoad: previousSet?.load,
+            previousReps: previousSet?.reps,
+          };
+        }
+      );
+
+      return {
+        ...exercise,
+        sets: initializedSets,
+      };
+    }
+    return exercise;
+  });
+
+  const updatedWorkout = {
+    ...workout,
+    exercises: updatedExercises,
+  };
+
+  saveLocalWorkout(updatedWorkout);
+  return updatedWorkout;
 }
