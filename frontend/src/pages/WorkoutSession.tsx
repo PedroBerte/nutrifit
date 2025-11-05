@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  useStartWorkoutSession,
-  useGetWorkoutSessionById,
-  useCompleteWorkoutSession,
-  useCancelWorkoutSession,
-  useStartExerciseSession,
-  useRegisterSet,
-  useUpdateSet,
-  useDeleteSet,
-  type ExerciseSessionResponse,
-  type SetSessionResponse,
-} from "@/services/api/workoutSession";
+import { useNavigate, useParams } from "react-router-dom";
 import { useGetWorkoutTemplateById } from "@/services/api/workoutTemplate";
+import { useCompleteWorkoutSession } from "@/services/api/workoutSession";
+import {
+  getLocalWorkout,
+  saveLocalWorkout,
+  clearLocalWorkout,
+  addSetToExercise,
+  updateExerciseNotes,
+  calculateTotalVolume,
+  getTotalSets,
+  type LocalWorkoutSession,
+  type LocalExerciseSession,
+  type LocalSetSession,
+} from "@/services/localWorkoutSession";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,7 +30,6 @@ import {
   Clock,
   Dumbbell,
   Plus,
-  Trash2,
   Check,
   Timer,
   Play,
@@ -41,61 +40,70 @@ import { motion } from "motion/react";
 
 export default function WorkoutSession() {
   const { templateId } = useParams<{ templateId: string }>();
-  const [searchParams] = useSearchParams();
-  const existingSessionId = searchParams.get("sessionId");
   const navigate = useNavigate();
-  const { user } = useAuth();
   const toast = useToast();
 
-  const [sessionId, setSessionId] = useState<string | null>(
-    existingSessionId || null
+  const [localWorkout, setLocalWorkout] = useState<LocalWorkoutSession | null>(
+    null
   );
   const [workoutTimer, setWorkoutTimer] = useState(0);
   const [isWorkoutTimerRunning, setIsWorkoutTimerRunning] = useState(false);
   const [restTimer, setRestTimer] = useState<number | null>(null);
   const [isRestTimerRunning, setIsRestTimerRunning] = useState(false);
-  const [currentExerciseId, setCurrentExerciseId] = useState<string | null>(
-    null
-  );
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Queries
   const { data: templateData } = useGetWorkoutTemplateById(templateId);
-  const { data: sessionData, refetch: refetchSession } =
-    useGetWorkoutSessionById(sessionId);
-
-  // Mutations
-  const startSession = useStartWorkoutSession();
   const completeSession = useCompleteWorkoutSession();
-  const cancelSession = useCancelWorkoutSession();
-  const startExercise = useStartExerciseSession();
-  const registerSet = useRegisterSet();
-  const updateSet = useUpdateSet();
-  const deleteSet = useDeleteSet();
 
   const template = templateData?.data;
-  const session = sessionData?.data;
 
-  // Inicializa ExerciseSessions quando sessão é criada
+  // Inicializa workout do localStorage ou cria novo
   useEffect(() => {
-    if (session && template && session.exerciseSessions?.length === 0) {
-      // Auto-inicializa todos os exercícios do template
-      const initExercises = async () => {
-        for (const exerciseTemplate of template.exerciseTemplates || []) {
-          try {
-            await startExercise.mutateAsync({
-              sessionId: session.id,
-              data: { exerciseTemplateId: exerciseTemplate.id },
-            });
-          } catch (error) {
-            console.error("Erro ao inicializar exercício", error);
-          }
-        }
-        refetchSession();
+    if (!template) return;
+
+    const existingWorkout = getLocalWorkout();
+
+    // Se já existe um workout no localStorage e é do mesmo template
+    if (
+      existingWorkout &&
+      existingWorkout.workoutTemplateId === template.id
+    ) {
+      setLocalWorkout(existingWorkout);
+      // Calcula tempo decorrido
+      const startedAt = new Date(existingWorkout.startedAt);
+      const elapsed = Math.floor((Date.now() - startedAt.getTime()) / 1000);
+      setWorkoutTimer(elapsed);
+      setIsWorkoutTimerRunning(true);
+    } else {
+      // Cria novo workout local
+      const newWorkout: LocalWorkoutSession = {
+        workoutTemplateId: template.id,
+        workoutTemplateTitle: template.title,
+        routineId: template.routineId,
+        startedAt: new Date().toISOString(),
+        exercises:
+          template.exerciseTemplates?.map((et) => ({
+            id: crypto.randomUUID(),
+            exerciseTemplateId: et.id,
+            exerciseId: et.exerciseId,
+            exerciseName: et.exerciseName,
+            order: et.order,
+            status: "IP",
+            sets: [],
+            targetSets: et.targetSets,
+            targetRepsMin: et.targetRepsMin,
+            targetRepsMax: et.targetRepsMax,
+            suggestedLoad: et.suggestedLoad,
+            restSeconds: et.restSeconds,
+          })) || [],
       };
-      initExercises();
+
+      saveLocalWorkout(newWorkout);
+      setLocalWorkout(newWorkout);
+      setIsWorkoutTimerRunning(true);
     }
-  }, [session?.id, template?.id]);
+  }, [template]);
 
   // Timer do treino
   useEffect(() => {
@@ -116,7 +124,6 @@ export default function WorkoutSession() {
         setRestTimer((prev) => {
           if (prev === null || prev <= 1) {
             setIsRestTimerRunning(false);
-            // Descanso finalizado
             return 0;
           }
           return prev - 1;
@@ -126,54 +133,43 @@ export default function WorkoutSession() {
     return () => clearInterval(interval);
   }, [isRestTimerRunning, restTimer]);
 
-  // Iniciar sessão de treino
-  useEffect(() => {
-    // Se já tem sessionId (vindo da URL), não tenta criar uma nova
-    if (existingSessionId) {
-      setIsWorkoutTimerRunning(true);
-      return;
-    }
-
-    // Só cria nova sessão se não existe
-    if (templateId && !sessionId) {
-      handleStartSession();
-    }
-  }, [templateId, existingSessionId]);
-
-  const handleStartSession = async () => {
-    if (!templateId) return;
-
-    try {
-      const response = await startSession.mutateAsync({
-        workoutTemplateId: templateId,
-      });
-      if (response.success && response.data) {
-        setSessionId(response.data.toString());
-        setIsWorkoutTimerRunning(true);
-      }
-    } catch (error: any) {
-      console.error("Erro ao iniciar treino", error);
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Erro ao iniciar treino";
-
-      // Em vez de mostrar erro e voltar, mostra toast informativo
-      toast.info("Este treino já foi iniciado anteriormente");
-
-      // Tenta buscar o treino ativo e redirecionar
-      navigate("/workout", { replace: true });
-    }
-  };
-
   const handleCompleteSession = async () => {
-    if (!sessionId) return;
+    if (!localWorkout) return;
 
     try {
-      await completeSession.mutateAsync({
-        sessionId,
-        data: {},
-      });
+      const completedAt = new Date().toISOString();
+      const durationMinutes = Math.floor(workoutTimer / 60);
+
+      // Prepara dados para enviar ao backend
+      const payload = {
+        workoutTemplateId: localWorkout.workoutTemplateId,
+        startedAt: localWorkout.startedAt,
+        completedAt,
+        durationMinutes,
+        notes: localWorkout.notes,
+        exerciseSessions: localWorkout.exercises.map((exercise) => ({
+          exerciseTemplateId: exercise.exerciseTemplateId,
+          exerciseId: exercise.exerciseId,
+          order: exercise.order,
+          startedAt: exercise.startedAt,
+          completedAt: exercise.completedAt || completedAt,
+          status: exercise.sets.length > 0 ? "C" : "SK", // Se tem séries, completou, senão pulou
+          notes: exercise.notes,
+          sets: exercise.sets.map((set) => ({
+            setNumber: set.setNumber,
+            load: set.load,
+            reps: set.reps,
+            restSeconds: set.restSeconds,
+            completed: set.completed,
+            notes: set.notes,
+            startedAt: set.startedAt,
+            completedAt: set.completedAt,
+          })),
+        })),
+      };
+
+      await completeSession.mutateAsync(payload);
+      clearLocalWorkout();
       setIsWorkoutTimerRunning(false);
       toast.success("Treino concluído com sucesso!");
       navigate("/workout");
@@ -187,72 +183,44 @@ export default function WorkoutSession() {
     }
   };
 
-  const handleCancelSession = async () => {
-    if (!sessionId) return;
-
-    try {
-      await cancelSession.mutateAsync(sessionId);
-      setIsWorkoutTimerRunning(false);
-      toast.info("Treino cancelado");
-      navigate("/workout");
-    } catch (error: any) {
-      console.error("Erro ao cancelar treino", error);
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Erro ao cancelar treino";
-      toast.error(errorMessage);
-    } finally {
-      setShowCancelDialog(false);
-    }
+  const handleCancelSession = () => {
+    clearLocalWorkout();
+    setIsWorkoutTimerRunning(false);
+    toast.info("Treino cancelado");
+    navigate("/workout");
+    setShowCancelDialog(false);
   };
 
-  const handleStartExercise = async (exerciseTemplateId: string) => {
-    if (!sessionId) return;
-
-    try {
-      const response = await startExercise.mutateAsync({
-        sessionId,
-        data: { exerciseTemplateId },
-      });
-      if (response.success && response.data) {
-        setCurrentExerciseId(response.data.toString());
-        refetchSession();
-      }
-    } catch (error) {
-      console.error("Erro ao iniciar exercício", error);
-    }
-  };
-
-  const handleRegisterSet = async (
-    exerciseSessionId: string,
-    setNumber: number,
+  const handleRegisterSet = (
+    exerciseId: string,
     load?: number,
     reps?: number,
     restSeconds?: number
   ) => {
-    try {
-      await registerSet.mutateAsync({
-        exerciseId: exerciseSessionId,
-        data: {
-          setNumber,
-          load,
-          reps,
-          restSeconds,
-          completed: true,
-        },
-      });
+    if (!localWorkout) return;
 
-      // Inicia timer de descanso se definido
-      if (restSeconds && restSeconds > 0) {
-        setRestTimer(restSeconds);
-        setIsRestTimerRunning(true);
-      }
+    const updatedWorkout = addSetToExercise(localWorkout, exerciseId, {
+      load,
+      reps,
+      restSeconds,
+      completed: true,
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+    });
 
-      refetchSession();
-    } catch (error) {
-      console.error("Erro ao registrar série", error);
+    setLocalWorkout(updatedWorkout);
+
+    // Inicia timer de descanso se definido
+    if (restSeconds && restSeconds > 0) {
+      setRestTimer(restSeconds);
+      setIsRestTimerRunning(true);
     }
+  };
+
+  const handleUpdateExerciseNotes = (exerciseId: string, notes: string) => {
+    if (!localWorkout) return;
+    const updatedWorkout = updateExerciseNotes(localWorkout, exerciseId, notes);
+    setLocalWorkout(updatedWorkout);
   };
 
   const formatTime = (seconds: number) => {
@@ -263,27 +231,7 @@ export default function WorkoutSession() {
       .padStart(2, "0")}`;
   };
 
-  const calculateTotalVolume = () => {
-    if (!session?.exerciseSessions) return 0;
-    return session.exerciseSessions.reduce((total, exercise) => {
-      const exerciseVolume =
-        exercise.setSessions?.reduce(
-          (sum, set) => sum + (set.load || 0) * (set.reps || 0),
-          0
-        ) || 0;
-      return total + exerciseVolume;
-    }, 0);
-  };
-
-  const getTotalSets = () => {
-    if (!session?.exerciseSessions) return 0;
-    return session.exerciseSessions.reduce(
-      (total, exercise) => total + (exercise.setSessions?.length || 0),
-      0
-    );
-  };
-
-  if (!template || !session) {
+  if (!template || !localWorkout) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p>Carregando treino...</p>
@@ -323,10 +271,10 @@ export default function WorkoutSession() {
           </div>
           <div className="flex items-center gap-2">
             <Dumbbell size={16} />
-            <span>{calculateTotalVolume().toFixed(1)} kg</span>
+            <span>{calculateTotalVolume(localWorkout).toFixed(1)} kg</span>
           </div>
           <div className="flex items-center gap-2">
-            <span>{getTotalSets()} séries</span>
+            <span>{getTotalSets(localWorkout)} séries</span>
           </div>
         </div>
 
@@ -352,21 +300,14 @@ export default function WorkoutSession() {
 
       {/* Lista de Exercícios */}
       <div className="flex-1 p-2 space-y-4">
-        {session.exerciseSessions && session.exerciseSessions.length > 0 ? (
-          session.exerciseSessions.map((exerciseSession, index) => (
-            <ExerciseCard
-              key={exerciseSession.id}
-              exerciseSession={exerciseSession}
-              onStartExercise={handleStartExercise}
-              onRegisterSet={handleRegisterSet}
-              isActive={currentExerciseId === exerciseSession.id}
-            />
-          ))
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Carregando exercícios...</p>
-          </div>
-        )}
+        {localWorkout.exercises.map((exercise) => (
+          <ExerciseCard
+            key={exercise.id}
+            exercise={exercise}
+            onRegisterSet={handleRegisterSet}
+            onUpdateNotes={handleUpdateExerciseNotes}
+          />
+        ))}
 
         {/* Botão Cancelar no final */}
         <div className="pt-4">
@@ -394,15 +335,10 @@ export default function WorkoutSession() {
             <Button
               variant="outline"
               onClick={() => setShowCancelDialog(false)}
-              disabled={cancelSession.isPending}
             >
               Não, continuar
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleCancelSession}
-              disabled={cancelSession.isPending}
-            >
+            <Button variant="destructive" onClick={handleCancelSession}>
               Sim, cancelar treino
             </Button>
           </DialogFooter>
@@ -414,62 +350,48 @@ export default function WorkoutSession() {
 
 // Componente do Card de Exercício
 interface ExerciseCardProps {
-  exerciseSession: ExerciseSessionResponse;
-  onStartExercise: (exerciseTemplateId: string) => void;
+  exercise: LocalExerciseSession;
   onRegisterSet: (
-    exerciseSessionId: string,
-    setNumber: number,
+    exerciseId: string,
     load?: number,
     reps?: number,
     restSeconds?: number
   ) => void;
-  isActive: boolean;
+  onUpdateNotes: (exerciseId: string, notes: string) => void;
 }
 
 function ExerciseCard({
-  exerciseSession,
-  onStartExercise,
+  exercise,
   onRegisterSet,
-  isActive,
+  onUpdateNotes,
 }: ExerciseCardProps) {
-  const [notes, setNotes] = useState(exerciseSession.notes || "");
   const [newSetData, setNewSetData] = useState<{
     load?: number;
     reps?: number;
   }>({});
 
-  const nextSetNumber = (exerciseSession.setSessions?.length || 0) + 1;
-  const restSeconds = exerciseSession.restSeconds;
+  const nextSetNumber = exercise.sets.length + 1;
 
   return (
-    <div
-      className={`bg-neutral-dark-03 rounded-lg p-4 space-y-4 ${
-        isActive ? "ring-2 ring-primary" : ""
-      }`}
-    >
+    <div className="bg-neutral-dark-03 rounded-lg p-4 space-y-4">
       {/* Cabeçalho do Exercício */}
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h3 className="font-bold text-lg">{exerciseSession.exerciseName}</h3>
-          {restSeconds && (
+          <h3 className="font-bold text-lg">{exercise.exerciseName}</h3>
+          {exercise.restSeconds && (
             <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
               <Timer size={14} />
-              Tempo de Descanso: {restSeconds}s
+              Tempo de Descanso: {exercise.restSeconds}s
             </p>
           )}
         </div>
-        {exerciseSession.status === "IP" && (
-          <span className="px-2 py-1 bg-primary/20 text-primary text-xs rounded">
-            Em andamento
-          </span>
-        )}
       </div>
 
       {/* Campo de Notas */}
       <Textarea
         placeholder="Adicionar notas aqui..."
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
+        value={exercise.notes || ""}
+        onChange={(e) => onUpdateNotes(exercise.id, e.target.value)}
         className="min-h-[60px]"
       />
 
@@ -484,90 +406,75 @@ function ExerciseCard({
         </div>
 
         {/* Séries já registradas */}
-        {exerciseSession.setSessions?.map((set) => (
+        {exercise.sets.map((set) => (
           <SetRow key={set.id} set={set} />
         ))}
 
         {/* Nova série */}
-        {exerciseSession.status === "IP" && (
-          <div className="grid grid-cols-5 gap-2 items-center">
-            <span className="text-sm font-bold">{nextSetNumber}</span>
-            <span className="text-sm text-muted-foreground">
-              {exerciseSession.suggestedLoad
-                ? `${exerciseSession.suggestedLoad}kg x ${
-                    exerciseSession.targetRepsMin || ""
-                  }`
-                : "-"}
-            </span>
-            <Input
-              type="number"
-              placeholder="kg"
-              className="h-8 text-sm"
-              value={newSetData.load || ""}
-              onChange={(e) =>
-                setNewSetData((prev) => ({
-                  ...prev,
-                  load: parseFloat(e.target.value) || undefined,
-                }))
-              }
-            />
-            <Input
-              type="number"
-              placeholder="reps"
-              className="h-8 text-sm"
-              value={newSetData.reps || ""}
-              onChange={(e) =>
-                setNewSetData((prev) => ({
-                  ...prev,
-                  reps: parseInt(e.target.value) || undefined,
-                }))
-              }
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-full p-0"
-              onClick={() => {
-                onRegisterSet(
-                  exerciseSession.id,
-                  nextSetNumber,
-                  newSetData.load,
-                  newSetData.reps,
-                  restSeconds
-                );
-                setNewSetData({});
-              }}
-            >
-              <Check size={16} />
-            </Button>
-          </div>
-        )}
+        <div className="grid grid-cols-5 gap-2 items-center">
+          <span className="text-sm font-bold">{nextSetNumber}</span>
+          <span className="text-sm text-muted-foreground">
+            {exercise.suggestedLoad
+              ? `${exercise.suggestedLoad}kg x ${
+                  exercise.targetRepsMin || ""
+                }`
+              : "-"}
+          </span>
+          <Input
+            type="number"
+            placeholder="kg"
+            className="h-8 text-sm"
+            value={newSetData.load || ""}
+            onChange={(e) =>
+              setNewSetData((prev) => ({
+                ...prev,
+                load: parseFloat(e.target.value) || undefined,
+              }))
+            }
+          />
+          <Input
+            type="number"
+            placeholder="reps"
+            className="h-8 text-sm"
+            value={newSetData.reps || ""}
+            onChange={(e) =>
+              setNewSetData((prev) => ({
+                ...prev,
+                reps: parseInt(e.target.value) || undefined,
+              }))
+            }
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-full p-0"
+            onClick={() => {
+              onRegisterSet(
+                exercise.id,
+                newSetData.load,
+                newSetData.reps,
+                exercise.restSeconds
+              );
+              setNewSetData({});
+            }}
+          >
+            <Check size={16} />
+          </Button>
+        </div>
       </div>
 
       {/* Botão Adicionar Série */}
-      {exerciseSession.status === "IP" && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => {
-            // Só inicia o exercício se ainda não foi iniciado
-            if (!isActive) {
-              onStartExercise(exerciseSession.exerciseTemplateId);
-            }
-          }}
-        >
-          <Plus size={16} className="mr-2" />
-          Adicionar Série
-        </Button>
-      )}
+      <Button variant="outline" size="sm" className="w-full">
+        <Plus size={16} className="mr-2" />
+        Adicionar Série
+      </Button>
     </div>
   );
 }
 
 // Componente de Linha de Série
 interface SetRowProps {
-  set: SetSessionResponse;
+  set: LocalSetSession;
 }
 
 function SetRow({ set }: SetRowProps) {

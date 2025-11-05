@@ -11,10 +11,10 @@ import {
 } from "./ui/sheet";
 import { useNavigate } from "react-router-dom";
 import {
-  useGetActiveWorkoutSession,
-  useCancelWorkoutSession,
-} from "@/services/api/workoutSession";
-import { useState } from "react";
+  getActiveWorkoutInfo,
+  clearLocalWorkout,
+} from "@/services/localWorkoutSession";
+import { useState, useEffect } from "react";
 import { useToast } from "@/contexts/ToastContext";
 
 interface WorkoutItemCardProps {
@@ -24,13 +24,17 @@ interface WorkoutItemCardProps {
 export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
   const navigate = useNavigate();
   const toast = useToast();
-  const { data: activeSessionResponse } = useGetActiveWorkoutSession();
-  const cancelSession = useCancelWorkoutSession();
 
+  const [activeWorkoutInfo, setActiveWorkoutInfo] =
+    useState<ReturnType<typeof getActiveWorkoutInfo>>(null);
   const [showDiscardSheet, setShowDiscardSheet] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
 
-  const activeSession = activeSessionResponse?.data;
+  // Verifica localStorage a cada render
+  useEffect(() => {
+    setActiveWorkoutInfo(getActiveWorkoutInfo());
+  }, []);
+
   const totalExercises = workout.exerciseTemplates?.length || 0;
 
   const formatDuration = (minutes?: number) => {
@@ -43,14 +47,17 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
 
   const handleViewClick = () => {
     // Se tem treino ativo e não é o mesmo template
-    if (activeSession && activeSession.workoutTemplateId !== workout.id) {
+    if (
+      activeWorkoutInfo &&
+      activeWorkoutInfo.workoutTemplateId !== workout.id
+    ) {
       setShowDiscardSheet(true);
     } else if (
-      activeSession &&
-      activeSession.workoutTemplateId === workout.id
+      activeWorkoutInfo &&
+      activeWorkoutInfo.workoutTemplateId === workout.id
     ) {
       // É o mesmo treino ativo, continua
-      navigate(`/workout/session/${workout.id}?sessionId=${activeSession.id}`);
+      navigate(`/workout/session/${workout.id}`);
     } else {
       // Sem treino ativo, inicia novo
       navigate(`/workout/session/${workout.id}`);
@@ -58,11 +65,11 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
   };
 
   const handleDiscardAndStart = async () => {
-    if (!activeSession) return;
+    if (!activeWorkoutInfo) return;
 
     setIsCanceling(true);
     try {
-      await cancelSession.mutateAsync(activeSession.id);
+      clearLocalWorkout();
       toast.info("Treino anterior cancelado");
       setShowDiscardSheet(false);
       // Inicia novo treino
@@ -76,11 +83,9 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
   };
 
   const handleContinueCurrent = () => {
-    if (!activeSession) return;
+    if (!activeWorkoutInfo) return;
     setShowDiscardSheet(false);
-    navigate(
-      `/workout/session/${activeSession.workoutTemplateId}?sessionId=${activeSession.id}`
-    );
+    navigate(`/workout/session/${activeWorkoutInfo.workoutTemplateId}`);
   };
 
   return (
@@ -134,7 +139,7 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
             </div>
             <SheetDescription>
               Você já tem um treino em andamento:{" "}
-              <strong>{activeSession?.workoutTemplateTitle}</strong>
+              <strong>{activeWorkoutInfo?.workoutTemplateTitle}</strong>
               <br />
               <br />O que você deseja fazer?
             </SheetDescription>

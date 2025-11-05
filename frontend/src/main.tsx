@@ -23,17 +23,17 @@ registerSW({
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <PersistGate persistor={persistor}>
-        <Provider store={store}>
-          <AuthProvider>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </AuthProvider>
-        </Provider>
-      </PersistGate>
-    </QueryClientProvider>
-  </StrictMode>
+  // <StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <PersistGate persistor={persistor}>
+      <Provider store={store}>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </Provider>
+    </PersistGate>
+  </QueryClientProvider>
+  // </StrictMode>
 );

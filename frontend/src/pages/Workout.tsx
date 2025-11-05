@@ -4,13 +4,14 @@ import ActiveWorkoutAlert from "@/components/ActiveWorkoutAlert";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById } from "@/services/api/user";
 import { useGetMyAssignedRoutines } from "@/services/api/routine";
-import { useGetActiveWorkoutSession } from "@/services/api/workoutSession";
+import { getActiveWorkoutInfo } from "@/services/localWorkoutSession";
 import { UserProfiles } from "@/types/user";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { useGetBondAsCustomer } from "@/services/api/bond";
+import { useState, useEffect } from "react";
 
 export default function Workout() {
   const navigate = useNavigate();
@@ -20,10 +21,23 @@ export default function Workout() {
     useGetBondAsCustomer();
   const { data: routinesResponse, isLoading: isLoadingRoutines } =
     useGetMyAssignedRoutines();
-  const { data: activeSessionResponse } = useGetActiveWorkoutSession();
+
+  const [activeWorkoutInfo, setActiveWorkoutInfo] =
+    useState<ReturnType<typeof getActiveWorkoutInfo>>(null);
+
+  // Verifica localStorage periodicamente
+  useEffect(() => {
+    const checkActiveWorkout = () => {
+      setActiveWorkoutInfo(getActiveWorkoutInfo());
+    };
+
+    checkActiveWorkout();
+    const interval = setInterval(checkActiveWorkout, 1000); // Atualiza a cada segundo
+
+    return () => clearInterval(interval);
+  }, []);
 
   const routines = routinesResponse?.data?.items || [];
-  const activeSession = activeSessionResponse?.data;
 
   function getBondStatus() {
     if (isLoadingUser || isLoadingBonds) return null;
@@ -102,14 +116,14 @@ export default function Workout() {
       )}
 
       {/* Alerta de treino ativo */}
-      {activeSession && (
+      {activeWorkoutInfo && (
         <motion.section
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           className="py-2"
         >
-          <ActiveWorkoutAlert session={activeSession} />
+          <ActiveWorkoutAlert workoutInfo={activeWorkoutInfo} />
         </motion.section>
       )}
 
