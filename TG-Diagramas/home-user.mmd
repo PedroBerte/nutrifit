@@ -1,0 +1,109 @@
+---
+config:
+  theme: redux
+  fontSize: 24
+---
+sequenceDiagram
+    participant U as Cliente
+    participant F as Frontend
+    participant FC as FilterComponent
+    participant API as Backend API
+    participant US as UserService
+    participant PS as ProfessionalService
+    participant DB as Database
+    participant GS as GeolocationService
+
+    Note over U, GS: Busca e Filtro de Profissionais
+
+    %% Fase 1: Carregamento inicial da home
+    U->>F: Acessa página inicial
+    F->>F: Verifica perfil do usuário (Student)
+    F->>F: Renderiza StudentHome component
+    
+    F->>API: GET /user?professionals=true
+    API->>US: GetAllAsync com <br>filtro de profissionais
+    US->>DB: SELECT users WHERE<br>profile IN (nutritionist, personal)
+    DB->>US: Retorna lista de profissionais
+    US->>API: Lista de profissionais básica
+    API->>F: 200 OK com profissionais
+    
+    F->>U: Exibe lista inicial<br>de profissionais
+    Note over F, U: Lista ordenada por avaliação padrão
+
+    %% Fase 2: Aplicação de filtros
+    U->>FC: Abre painel de filtros
+    FC->>U: Exibe opções de filtro
+    
+    U->>FC: Define localização desejada
+    FC->>GS: Obtém coordenadas da localização
+    GS->>FC: Retorna latitude/longitude
+    
+    U->>FC: Seleciona modalidade<br>(Online/Presencial/Ambos)
+    U->>FC: Escolhe especialização
+    Note over U, FC: Ex: Emagrecimento, Hipertrofia, Performance
+    
+    U->>FC: Define raio de distância
+    U->>FC: Clica "Aplicar Filtros"
+
+    %% Fase 3: Busca com filtros aplicados
+    FC->>F: Emite evento com filtros selecionados
+    F->>API: GET /professionals/search com parâmetros
+    Note over F, API: Query params:<br>lat, lng, radius, modality, specialization, orderBy
+    
+    API->>PS: SearchProfessionalsAsync(filters)
+    PS->>DB: Query complexa com filtros
+    Note over PS, DB: JOIN com addresses, credentials, feedbacks
+    
+    alt Filtro por localização ativo
+        PS->>DB: Calcula distância geográfica
+        Note over PS, DB: Fórmula Haversine para distância
+        DB->>PS: Profissionais dentro do raio
+    end
+    
+    alt Filtro por modalidade ativo
+        PS->>DB: Filtra por tipo de atendimento
+        DB->>PS: Profissionais com modalidade compatível
+    end
+    
+    alt Filtro por especialização ativo
+        PS->>DB: Filtra por área de atuação
+        DB->>PS: Profissionais especializados
+    end
+    
+    PS->>DB: Calcula avaliação média e contagem
+    DB->>PS: Rating e número de avaliações
+    
+    PS->>PS: Ordena resultados
+    Note over PS: Por avaliação DESC, distância ASC
+    
+    PS->>API: Lista filtrada e ordenada
+    API->>F: 200 OK com resultados
+    
+    F->>F: Atualiza estado dos profissionais
+    F->>U: Exibe lista filtrada
+
+    %% Fase 4: Interação com resultados
+    U->>F: Visualiza card do profissional
+    F->>U: Exibe informações detalhadas
+    Note over F, U: Nome, especialização,<br>avaliação, distância, modalidade
+    
+    U->>F: Clica "Ver Perfil"
+    F->>API: GET /professionals/{id}/details
+    API->>PS: GetProfessionalDetailsAsync(id)
+    PS->>DB: Busca dados completos do profissional
+    DB->>PS: Perfil, credenciais, avaliações, horários
+    PS->>API: Dados detalhados
+    API->>F: 200 OK com perfil completo
+    F->>U: Navega para perfil do profissional
+
+    %% Fase 5: Atualização de filtros em tempo real
+    Note over U, DB: Filtros dinâmicos
+    U->>FC: Modifica filtro de especialização
+    FC->>F: Atualiza filtros automaticamente
+    F->>API: Nova busca com filtros atualizados
+    API->>PS: SearchProfessionalsAsync(newFilters)
+    PS->>DB: Nova query com filtros
+    DB->>PS: Resultados atualizados
+    PS->>API: Lista atualizada
+    API->>F: Novos resultados
+    F->>U: Atualiza lista em tempo real

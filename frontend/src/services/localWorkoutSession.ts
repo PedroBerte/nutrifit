@@ -24,7 +24,6 @@ export interface LocalExerciseSession {
   status: "IP" | "C" | "SK"; // In Progress, Completed, Skipped
   notes?: string;
   sets: LocalSetSession[];
-  // Dados do template para referência
   targetSets?: number;
   targetRepsMin?: number;
   targetRepsMax?: number;

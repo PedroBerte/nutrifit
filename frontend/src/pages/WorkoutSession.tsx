@@ -18,13 +18,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   ChevronLeft,
   Clock,
@@ -34,9 +34,15 @@ import {
   Timer,
   Play,
   Pause,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  Circle,
+  PlayCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function WorkoutSession() {
   const { templateId } = useParams<{ templateId: string }>();
@@ -51,6 +57,13 @@ export default function WorkoutSession() {
   const [restTimer, setRestTimer] = useState<number | null>(null);
   const [isRestTimerRunning, setIsRestTimerRunning] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
+    new Set<string>()
+  );
+  const [currentExerciseId, setCurrentExerciseId] = useState<string | null>(
+    null
+  );
 
   // Queries
   const { data: templateData } = useGetWorkoutTemplateById(templateId);
@@ -65,10 +78,7 @@ export default function WorkoutSession() {
     const existingWorkout = getLocalWorkout();
 
     // Se já existe um workout no localStorage e é do mesmo template
-    if (
-      existingWorkout &&
-      existingWorkout.workoutTemplateId === template.id
-    ) {
+    if (existingWorkout && existingWorkout.workoutTemplateId === template.id) {
       setLocalWorkout(existingWorkout);
       // Calcula tempo decorrido
       const startedAt = new Date(existingWorkout.startedAt);
@@ -104,6 +114,26 @@ export default function WorkoutSession() {
       setIsWorkoutTimerRunning(true);
     }
   }, [template]);
+
+  useEffect(() => {
+    if (localWorkout?.exercises && expandedExerciseIds.size === 0) {
+      const inProgressExercise = localWorkout.exercises.find(
+        (ex) => ex.status === "IP"
+      );
+
+      if (inProgressExercise) {
+        setExpandedExerciseIds(new Set([inProgressExercise.id]));
+        setCurrentExerciseId(inProgressExercise.id);
+      } else {
+        const notStartedExercise = localWorkout.exercises.find(
+          (ex) => ex.status === "SK"
+        );
+        if (notStartedExercise) {
+          setExpandedExerciseIds(new Set([notStartedExercise.id]));
+        }
+      }
+    }
+  }, [localWorkout?.exercises]);
 
   // Timer do treino
   useEffect(() => {
@@ -313,7 +343,7 @@ export default function WorkoutSession() {
         <div className="pt-4">
           <Button
             variant="destructive"
-            onClick={() => setShowCancelDialog(true)}
+            onClick={() => setShowCancelConfirm(true)}
             className="w-full"
           >
             Cancelar Treino
@@ -321,29 +351,34 @@ export default function WorkoutSession() {
         </div>
       </div>
 
-      {/* Dialog de Confirmação de Cancelamento */}
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancelar Treino</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja cancelar este treino? Todo o progresso será
-              perdido.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+      {/* Sheet de confirmação de cancelamento */}
+      <Sheet open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <SheetContent side="bottom" className="max-h-[80vh]">
+          <SheetHeader>
+            <div className="flex items-center gap-2 text-yellow-500 mb-2">
+              <AlertTriangle size={24} />
+              <SheetTitle>Cancelar Treino?</SheetTitle>
+            </div>
+            <SheetDescription>
+              Tem certeza que deseja cancelar este treino?
+              <br />
+              Todo o progresso será perdido.
+            </SheetDescription>
+          </SheetHeader>
+
+          <SheetFooter className="gap-2 sm:gap-2 mt-4">
             <Button
               variant="outline"
               onClick={() => setShowCancelDialog(false)}
             >
-              Não, continuar
+              Continuar Treino
             </Button>
             <Button variant="destructive" onClick={handleCancelSession}>
               Sim, cancelar treino
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </motion.div>
   );
 }
@@ -415,9 +450,7 @@ function ExerciseCard({
           <span className="text-sm font-bold">{nextSetNumber}</span>
           <span className="text-sm text-muted-foreground">
             {exercise.suggestedLoad
-              ? `${exercise.suggestedLoad}kg x ${
-                  exercise.targetRepsMin || ""
-                }`
+              ? `${exercise.suggestedLoad}kg x ${exercise.targetRepsMin || ""}`
               : "-"}
           </span>
           <Input

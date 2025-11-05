@@ -1,0 +1,130 @@
+---
+config:
+  theme: redux
+  fontSize: 24
+---
+
+classDiagram
+    class UserEntity {
+        +Guid Id
+        +Guid AddressId
+        +Guid ProfileId
+        +string Name
+        +string Email
+        +string ImageUrl
+        +string Password
+        +string Sex
+        +DateTime CreatedAt
+        +DateTime UpdatedAt
+        +string Status
+        +bool IsAdmin
+        +DateTime DateOfBirth
+        +string PhoneNumber
+    }
+
+    class ProfileEntity {
+        +Guid Id
+        +string Name
+        +DateTime CreatedAt
+        +DateTime UpdatedAt
+        +string Status
+    }
+
+    class AddressEntity {
+        +Guid Id
+        +string AddressLine
+        +string Number
+        +string City
+        +string State
+        +string ZipCode
+        +string Country
+        +int AddressType
+        +DateTime CreatedAt
+        +DateTime UpdatedAt
+        +string Status
+    }
+
+    class CustomerProfessionalBondEntity {
+        +Guid Id
+        +Guid CustomerId
+        +Guid ProfessionalId
+        +Guid SenderId
+        +DateTime CreatedAt
+        +DateTime UpdatedAt
+        +string Status
+    }
+
+    class ProfessionalCredentialEntity {
+        +Guid Id
+        +Guid ProfessionalId
+        +DateTime CreatedAt
+        +DateTime UpdatedAt
+        +string Status
+        +string Type
+        +string CredentialId
+        +string Biography
+    }
+
+    class AppointmentEntity {
+        +Guid Id
+        +Guid CustomerProfessionalBondId
+        +DateTime Date
+        +int Type
+        +string Location
+        +DateTime CreatedAt
+        +DateTime UpdatedAt
+        +string Status
+    }
+
+    class CustomerFeedbackEntity {
+        +Guid Id
+        +Guid ProfessionalId
+        +Guid CustomerId
+        +DateTime CreatedAt
+        +string Testimony
+        +DateTime UpdatedAt
+        +int Rate
+        +int Type
+        +string Status
+    }
+
+    class ProfessionalFeedbackEntity {
+        +Guid Id
+        +Guid ProfessionalId
+        +Guid CustomerId
+        +DateTime CreatedAt
+        +string Testimony
+        +DateTime UpdatedAt
+        +int Rate
+        +int Type
+        +string Status
+    }
+
+    class PushSubscriptionEntity {
+        +Guid Id
+        +Guid UserId
+        +string Endpoint
+        +string P256dh
+        +string Auth
+        +DateTimeOffset ExpirationTime
+        +string UserAgent
+        +DateTimeOffset CreatedAt
+        +bool IsActive
+    }
+
+    %% Relacionamentos principais
+    UserEntity "1" --> "1" ProfileEntity
+    UserEntity "1" --> "0..1" AddressEntity
+    UserEntity "1" --> "0..1" ProfessionalCredentialEntity
+    UserEntity "1" --> "*" CustomerProfessionalBondEntity
+    UserEntity "1" --> "*" CustomerFeedbackEntity
+    UserEntity "1" --> "*" ProfessionalFeedbackEntity
+    UserEntity "1" --> "*" PushSubscriptionEntity
+    
+    CustomerProfessionalBondEntity "1" --> "*" AppointmentEntity
+    
+    %% Estilos das classes
+    classDef entityClass fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef coreClass fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    classDef relationClass fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef supportClass fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px

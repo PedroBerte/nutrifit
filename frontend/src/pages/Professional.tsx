@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById } from "@/services/api/user";
 import { useNavigate, useParams } from "react-router-dom";
@@ -29,9 +29,16 @@ export default function Professional() {
 
   if (!id) navigate("/home");
 
-  let alreadySentProposal = bondsSent
+  const initialAlreadySent = bondsSent
     ? bondsSent?.some((bond) => bond.professionalId === id) ?? false
     : false;
+
+  const [alreadySentProposal, setAlreadySentProposal] = useState(initialAlreadySent);
+  const [isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    setAlreadySentProposal(initialAlreadySent);
+  }, [initialAlreadySent]);
 
   const { data: userData, isLoading, error } = useGetUserById(id);
 
@@ -110,6 +117,10 @@ export default function Professional() {
   };
 
   const sendProposal = async (professionalId: string) => {
+    if (isSending || alreadySentProposal) return;
+    
+    setIsSending(true);
+    
     var newProposal: CustomerProfessionalBondType = {
       id: null,
       customerId: user?.id || "",
@@ -124,8 +135,15 @@ export default function Professional() {
       appointments: null,
     };
 
-    await createProposal(newProposal);
-    alreadySentProposal = true;
+    createProposal(newProposal, {
+      onSuccess: () => {
+        setAlreadySentProposal(true);
+        setIsSending(false);
+      },
+      onError: () => {
+        setIsSending(false);
+      },
+    });
   };
 
   return (
@@ -295,7 +313,7 @@ export default function Professional() {
 
         <Button
           onClick={() => id && sendProposal(id)}
-          disabled={alreadySentProposal}
+          disabled={alreadySentProposal || isSending}
         >
           {alreadySentProposal ? "Proposta Enviada" : "Enviar Proposta"}
         </Button>

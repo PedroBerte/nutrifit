@@ -22,7 +22,11 @@ namespace Nutrifit.Services.Services
 
             try
             {
+                Console.WriteLine($"[DEBUG] Nenhuma sessão ativa encontrada, criando nova sessão");
+
                 var template = await _context.WorkoutTemplates
+                    .Include(wt => wt.ExerciseTemplates)
+                    .ThenInclude(et => et.Exercise)
                     .FirstOrDefaultAsync(wt => wt.Id == request.WorkoutTemplateId && wt.Status == "A");
 
                 if (template == null)

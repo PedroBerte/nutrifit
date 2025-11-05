@@ -12,7 +12,7 @@ namespace Nutrifit.Services.ViewModel.Response
         public string CustomerName { get; set; } = string.Empty;
         public Guid RoutineId { get; set; }
         public string RoutineTitle { get; set; } = string.Empty;
-        public DateTime StartedAt { get; set; }
+        public DateTime? StartedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public int? DurationMinutes { get; set; }
         public decimal? TotalVolume { get; set; }
@@ -33,7 +33,7 @@ namespace Nutrifit.Services.ViewModel.Response
         public string ExerciseName { get; set; } = string.Empty;
         public string? ExerciseUrl { get; set; }
         public int Order { get; set; }
-        public DateTime StartedAt { get; set; }
+        public DateTime? StartedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public string Status { get; set; } = string.Empty;
         public string? Notes { get; set; }
