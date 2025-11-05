@@ -4,23 +4,20 @@ import ActiveWorkoutAlert from "@/components/ActiveWorkoutAlert";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById } from "@/services/api/user";
 import { useGetMyAssignedRoutines } from "@/services/api/routine";
-import { useGetAllBonds } from "@/services/api/bond";
 import { useGetActiveWorkoutSession } from "@/services/api/workoutSession";
 import { UserProfiles } from "@/types/user";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
+import { useGetBondAsCustomer } from "@/services/api/bond";
 
 export default function Workout() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: userData, isLoading: isLoadingUser } = useGetUserById(user?.id);
-  const { data: bonds, isLoading: isLoadingBonds } = useGetAllBonds(
-    user?.id,
-    null,
-    false
-  );
+  const { data: studentBond, isLoading: isLoadingBonds } =
+    useGetBondAsCustomer();
   const { data: routinesResponse, isLoading: isLoadingRoutines } =
     useGetMyAssignedRoutines();
   const { data: activeSessionResponse } = useGetActiveWorkoutSession();
@@ -28,12 +25,10 @@ export default function Workout() {
   const routines = routinesResponse?.data?.items || [];
   const activeSession = activeSessionResponse?.data;
 
-  // Verifica se usuário tem vínculo com personal
   function getBondStatus() {
     if (isLoadingUser || isLoadingBonds) return null;
 
-    // Sem vínculos como cliente
-    if (!bonds || bonds.length === 0) {
+    if (!studentBond) {
       return (
         <InformationCard
           title="Nenhum personal encontrado!"
@@ -52,12 +47,7 @@ export default function Workout() {
       );
     }
 
-    // Verifica se tem solicitação pendente
-    const hasPendingBond = bonds.some(
-      (bond) =>
-        bond.professional?.profileId === UserProfiles.PERSONAL &&
-        bond.status === "P"
-    );
+    const hasPendingBond = studentBond.status === "P";
 
     if (hasPendingBond) {
       return (
@@ -68,12 +58,7 @@ export default function Workout() {
       );
     }
 
-    // Tem vínculo ativo
-    const hasActiveBond = bonds.some(
-      (bond) =>
-        bond.professional?.profileId === UserProfiles.PERSONAL &&
-        bond.status === "A"
-    );
+    const hasActiveBond = studentBond.status === "A";
 
     if (!hasActiveBond) {
       return (
@@ -89,9 +74,32 @@ export default function Workout() {
 
   const bondWarning = getBondStatus();
 
+  function getInitials(name?: string) {
+    if (!name) return "";
+    const parts = name.trim().split(/\s+/);
+    return parts
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("");
+  }
+
   return (
     <div className="flex flex-1 py-4 flex-col gap-4">
       <p className="font-bold text-2xl">Meus Treinos</p>
+
+      {studentBond && (
+        <div className="flex gap-2 mt-2">
+          <div className="bg-primary text-white rounded-full h-12 w-12 flex items-center justify-center font-semibold">
+            {getInitials(studentBond.professional?.name)}
+          </div>
+          <div>
+            <p className="font-bold text-md">Personal Responsável:</p>
+            <p className="text-sm text-muted-foreground">
+              {studentBond.professional?.name}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Alerta de treino ativo */}
       {activeSession && (

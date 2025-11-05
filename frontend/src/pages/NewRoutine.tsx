@@ -32,6 +32,7 @@ import {
 import { Calendar } from "lucide-react";
 import { GOAL_OPTIONS, DIFFICULTY_OPTIONS } from "@/constants/routine";
 import { useToast } from "@/contexts/ToastContext";
+import { motion } from "motion/react";
 
 const WEEK_OPTIONS = [
   { value: 4, label: "4 semanas (1 mês)" },
@@ -103,7 +104,12 @@ export default function NewRoutine() {
   )?.label;
 
   return (
-    <div className="flex h-full items-center">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex h-full items-center"
+    >
       <section className="bg-neutral-dark-01 w-full">
         <div className="mx-auto w-full bg-neutral-dark-03 p-3 rounded-sm mt-5">
           {/* Header */}
@@ -267,6 +273,6 @@ export default function NewRoutine() {
           </Form>
         </div>
       </section>
-    </div>
+    </motion.div>
   );
 }

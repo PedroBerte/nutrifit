@@ -29,6 +29,7 @@ import {
   Pause,
 } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
+import { motion } from "motion/react";
 
 export default function WorkoutSession() {
   const { templateId } = useParams<{ templateId: string }>();
@@ -282,9 +283,14 @@ export default function WorkoutSession() {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-1 flex-col"
+    >
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-neutral-dark-01 border-b border-neutral-dark-02 p-4">
+      <div className="sticky top-0 z-10 bg-background border-b border-neutral-dark-02 p-4">
         <div className="flex items-center justify-between mb-3">
           <button
             onClick={() => navigate(-1)}
@@ -364,7 +370,7 @@ export default function WorkoutSession() {
           </Button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

@@ -17,6 +17,9 @@ namespace Nutrifit.Repository.Entities
         public int? RestSeconds { get; set; }
         public string? Notes { get; set; }
 
+        // Status: A = Ativo, I = Inativo (soft delete)
+        public string Status { get; set; } = "A";
+
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 

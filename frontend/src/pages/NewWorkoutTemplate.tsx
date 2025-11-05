@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/card";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
+import { motion } from "motion/react";
 
 const createTemplateSchema = z.object({
   title: z.string().min(3, "Título deve ter no mínimo 3 caracteres"),
@@ -193,7 +194,12 @@ export function NewWorkoutTemplate() {
   };
 
   return (
-    <div className="container mx-auto p-3 max-w-4xl">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="container mx-auto p-3 max-w-4xl"
+    >
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Novo Treino</h1>
         <p className="text-muted-foreground">
@@ -535,6 +541,6 @@ export function NewWorkoutTemplate() {
           </div>
         </DrawerContent>
       </Drawer>
-    </div>
+    </motion.div>
   );
 }

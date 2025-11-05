@@ -1,12 +1,12 @@
 import { useState } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "./ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "./ui/drawer";
 import { Button } from "./ui/button";
 import { useGetAllBonds } from "@/services/api/bond";
 import { useAssignRoutine } from "@/services/api/routine";
@@ -93,16 +93,16 @@ export default function AssignRoutineDrawer({
   );
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[80vh]">
-        <SheetHeader>
-          <SheetTitle>Enviar Rotina para Alunos</SheetTitle>
-          <SheetDescription>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>Enviar Rotina para Alunos</DrawerTitle>
+          <DrawerDescription>
             Selecione os alunos que receberão a rotina "{routineTitle}"
-          </SheetDescription>
-        </SheetHeader>
+          </DrawerDescription>
+        </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto py-4 space-y-3">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 max-h-[60vh]">
           {isLoading && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="animate-spin" />
@@ -154,33 +154,37 @@ export default function AssignRoutineDrawer({
             })}
         </div>
 
-        <SheetFooter className="border-t pt-4">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setSelectedCustomers([]);
-              onOpenChange(false);
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleAssign}
-            disabled={
-              selectedCustomers.length === 0 || assignMutation.isPending
-            }
-          >
-            {assignMutation.isPending ? (
-              <>
-                <Loader2 className="animate-spin mr-2" size={16} />
-                Enviando...
-              </>
-            ) : (
-              <>Enviar para {selectedCustomers.length} aluno(s)</>
-            )}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        <DrawerFooter className="border-t pt-4">
+          <div className="flex gap-3 w-full">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSelectedCustomers([]);
+                onOpenChange(false);
+              }}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAssign}
+              disabled={
+                selectedCustomers.length === 0 || assignMutation.isPending
+              }
+              className="flex-1"
+            >
+              {assignMutation.isPending ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                  Enviando...
+                </>
+              ) : (
+                <>Enviar para {selectedCustomers.length} aluno(s)</>
+              )}
+            </Button>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

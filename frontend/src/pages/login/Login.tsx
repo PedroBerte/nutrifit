@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { useSendAccessEmail } from "@/services/api/auth";
+import { motion } from "motion/react";
 
 const loginSchema = z.object({
   email: z.email("E-mail inválido"),
@@ -34,11 +35,16 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center flex-col">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-1 items-center justify-center flex-col"
+    >
       <Form {...loginForm}>
         <form
           onSubmit={loginForm.handleSubmit(onSubmit)}
-          className="flex gap-4 flex-col w-full max-w-sm"
+          className="flex gap-2 flex-col w-full max-w-sm"
         >
           <div className="flex items-center flex-col">
             <img src={Logo} alt="Logo" className="w-40 h-40" />
@@ -80,6 +86,6 @@ export default function Login() {
           )}
         </form>
       </Form>
-    </div>
+    </motion.div>
   );
 }

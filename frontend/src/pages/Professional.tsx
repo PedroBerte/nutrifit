@@ -29,7 +29,7 @@ export default function Professional() {
 
   if (!id) navigate("/home");
 
-  const alreadySentProposal = bondsSent
+  let alreadySentProposal = bondsSent
     ? bondsSent?.some((bond) => bond.professionalId === id) ?? false
     : false;
 
@@ -125,6 +125,7 @@ export default function Professional() {
     };
 
     await createProposal(newProposal);
+    alreadySentProposal = true;
   };
 
   return (

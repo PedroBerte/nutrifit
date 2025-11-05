@@ -97,7 +97,7 @@ namespace Nutrifit.Services.Services
                 if (sessions == null)
                     return ApiResponse.CreateFailure("Sessão não encontrada.");
 
-                foreach(var session in sessions)
+                foreach (var session in sessions)
                 {
                     session.Status = "CA";
                     session.UpdatedAt = DateTime.UtcNow;
@@ -294,7 +294,7 @@ namespace Nutrifit.Services.Services
                     return ApiResponse.CreateFailure("Sessão não encontrada ou não está em andamento.");
 
                 var exerciseTemplate = await _context.ExerciseTemplates
-                    .FirstOrDefaultAsync(et => et.Id == request.ExerciseTemplateId);
+                    .FirstOrDefaultAsync(et => et.Id == request.ExerciseTemplateId && et.Status == "A");
 
                 if (exerciseTemplate == null)
                     return ApiResponse.CreateFailure("Template de exercício não encontrado.");

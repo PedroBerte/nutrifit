@@ -6,6 +6,7 @@ import { BounceLoader } from "react-spinners";
 import { decodeAndNormalizeJwt } from "@/lib/jwt";
 import { signInFromJwt } from "@/store/authSlice";
 import { UserProfiles } from "@/types/user";
+import { motion } from "motion/react";
 
 export default function Callback() {
   const [sp] = useSearchParams();
@@ -60,9 +61,14 @@ export default function Callback() {
   }
 
   return (
-    <div className="flex flex-col gap-5 items-center justify-center flex-1">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-col gap-5 items-center justify-center flex-1"
+    >
       <p className="text-sm text-neutral-white-02">Validando acesso…</p>
       <BounceLoader color="#21A15D" />
-    </div>
+    </motion.div>
   );
 }
