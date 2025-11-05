@@ -56,6 +56,7 @@ namespace Nutrifit.Services.Services
                             SuggestedLoad = exerciseReq.SuggestedLoad,
                             RestSeconds = exerciseReq.RestSeconds,
                             Notes = exerciseReq.Notes,
+                            Status = "A",
                             CreatedAt = DateTime.UtcNow
                         };
 
@@ -137,7 +138,7 @@ namespace Nutrifit.Services.Services
             try
             {
                 var template = await _context.WorkoutTemplates
-                    .Include(wt => wt.ExerciseTemplates)
+                    .Include(wt => wt.ExerciseTemplates.Where(et => et.Status == "A"))
                         .ThenInclude(et => et.Exercise)
                     .FirstOrDefaultAsync(wt => wt.Id == templateId && wt.Status == "A");
 
@@ -188,7 +189,7 @@ namespace Nutrifit.Services.Services
             try
             {
                 var templates = await _context.WorkoutTemplates
-                    .Include(wt => wt.ExerciseTemplates)
+                    .Include(wt => wt.ExerciseTemplates.Where(et => et.Status == "A"))
                         .ThenInclude(et => et.Exercise)
                     .Where(wt => wt.RoutineId == routineId && wt.Status == "A")
                     .OrderBy(wt => wt.Order)
@@ -256,6 +257,7 @@ namespace Nutrifit.Services.Services
                     SuggestedLoad = request.SuggestedLoad,
                     RestSeconds = request.RestSeconds,
                     Notes = request.Notes,
+                    Status = "A",
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -327,7 +329,10 @@ namespace Nutrifit.Services.Services
                 if (exerciseTemplate == null || exerciseTemplate.WorkoutTemplate.Routine.PersonalId != personalId)
                     return ApiResponse.CreateFailure("Exercício não encontrado ou você não tem permissão.");
 
-                _context.ExerciseTemplates.Remove(exerciseTemplate);
+                // Soft delete: marca como inativo ao invés de deletar
+                exerciseTemplate.Status = "I";
+                exerciseTemplate.UpdatedAt = DateTime.UtcNow;
+
                 await _context.SaveChangesAsync();
 
                 return ApiResponse.CreateSuccess("Exercício removido do template!");

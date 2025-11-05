@@ -44,7 +44,7 @@ export default function Login() {
       <Form {...loginForm}>
         <form
           onSubmit={loginForm.handleSubmit(onSubmit)}
-          className="flex gap-4 flex-col w-full max-w-sm"
+          className="flex gap-2 flex-col w-full max-w-sm"
         >
           <div className="flex items-center flex-col">
             <img src={Logo} alt="Logo" className="w-40 h-40" />

@@ -3,10 +3,22 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Calendar, CalendarX2, Check, Dumbbell, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import { useGetMyRoutines } from "@/services/api/routine";
+import type { RoutineType } from "@/types/routine";
 
 export default function PersonalHome() {
   const { user } = useAuth();
+  const { data: routines } = useGetMyRoutines(1, 5);
   const navigate = useNavigate();
+  console.log(routines);
+
+  const getRoutineDueDate = (routine: RoutineType): Date => {
+    const createdAt = new Date(routine.createdAt);
+    const weeks = routine.weeks || 0;
+    const expiryDate = new Date(createdAt);
+    expiryDate.setDate(createdAt.getDate() + weeks * 7);
+    return expiryDate;
+  };
 
   return (
     <div className="flex flex-1 py-2 flex-col gap-4">
@@ -67,9 +79,44 @@ export default function PersonalHome() {
         className="space-y-2"
       >
         <p className="font-bold">Treinos próximos da validade:</p>
-        <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center py-5 gap-2">
-          <CalendarX2 color="green" />
-          <div>Nenhum treino próximo da validade.</div>
+        <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center">
+          {routines?.data && routines.data.items.length > 0 ? (
+            routines.data.items.map((routine) => {
+              return (
+                <div
+                  key={routine.id}
+                  className="flex flex-col w-full bg-neutral-dark-03 rounded-sm p-4 gap-2"
+                >
+                  <p>
+                    Vence em{" "}
+                    {Math.max(
+                      0,
+                      Math.ceil(
+                        (getRoutineDueDate(routine).getTime() - Date.now()) /
+                          (1000 * 60 * 60 * 24)
+                      )
+                    )}{" "}
+                    dias
+                  </p>
+                  <div className="border border-border w-full rounded-sm p-3">
+                    <strong>{routine.title}</strong>
+                    <p>
+                      Criado em:{" "}
+                      {new Date(routine.createdAt).toLocaleDateString("pt-br")}{" "}
+                      - Vence em:{" "}
+                      {getRoutineDueDate(routine).toLocaleDateString("pt-br")}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="py-5 space-y-2">
+              <CalendarX2 color="green" />
+              <div>Nenhum treino próximo da validade.</div>
+            </div>
+          )}
+          <div></div>
         </div>
       </motion.section>
     </div>
