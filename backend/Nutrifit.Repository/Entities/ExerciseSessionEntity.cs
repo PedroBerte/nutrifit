@@ -10,9 +10,9 @@ namespace Nutrifit.Repository.Entities
         public Guid ExerciseId { get; set; }
         public int Order { get; set; }
 
-        public DateTime StartedAt { get; set; }
+        public DateTime? StartedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
-        public string Status { get; set; } = "IP"; // IP=Em progresso, C=Completo, SK=Pulado
+        public string Status { get; set; } = "NS"; // NS=Não iniciado, IP=Em progresso, C=Completo, SK=Pulado
         public string? Notes { get; set; }
 
         public DateTime CreatedAt { get; set; }

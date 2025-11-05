@@ -1,4 +1,4 @@
-import { Clock, Dumbbell, AlertTriangle } from "lucide-react";
+import { Clock, Dumbbell, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import type { WorkoutTemplateResponse } from "@/services/api/workoutTemplate";
 import { Button } from "./ui/button";
 import {
@@ -10,12 +10,11 @@ import {
   SheetTitle,
 } from "./ui/sheet";
 import { useNavigate } from "react-router-dom";
-import {
-  useGetActiveWorkoutSession,
-  useCancelWorkoutSession,
-} from "@/services/api/workoutSession";
+import { useCancelWorkoutSession } from "@/services/api/workoutSession";
+import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
 import { useState } from "react";
 import { useToast } from "@/contexts/ToastContext";
+import { motion, AnimatePresence } from "motion/react";
 
 interface WorkoutItemCardProps {
   workout: WorkoutTemplateResponse;
@@ -24,13 +23,12 @@ interface WorkoutItemCardProps {
 export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
   const navigate = useNavigate();
   const toast = useToast();
-  const { data: activeSessionResponse } = useGetActiveWorkoutSession();
+  const { activeSession, cancelWorkout } = useActiveWorkout();
   const cancelSession = useCancelWorkoutSession();
 
   const [showDiscardSheet, setShowDiscardSheet] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
-
-  const activeSession = activeSessionResponse?.data;
+  const [isExpanded, setIsExpanded] = useState(false);
   const totalExercises = workout.exerciseTemplates?.length || 0;
 
   const formatDuration = (minutes?: number) => {
@@ -41,7 +39,11 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
     return `${hours}h${mins > 0 ? ` ${mins}min` : ""}`;
   };
 
-  const handleViewClick = () => {
+  const handleCardClick = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  const handleStartWorkout = () => {
     // Se tem treino ativo e não é o mesmo template
     if (activeSession && activeSession.workoutTemplateId !== workout.id) {
       setShowDiscardSheet(true);
@@ -63,10 +65,15 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
     setIsCanceling(true);
     try {
       await cancelSession.mutateAsync(activeSession.id);
+      // Força limpeza via contexto também
+      cancelWorkout();
       toast.info("Treino anterior cancelado");
       setShowDiscardSheet(false);
-      // Inicia novo treino
-      navigate(`/workout/session/${workout.id}`);
+      
+      // Aguarda um pouco para garantir que o estado foi limpo
+      setTimeout(() => {
+        navigate(`/workout/session/${workout.id}`);
+      }, 100);
     } catch (error: any) {
       console.error("Erro ao cancelar treino", error);
       toast.error("Erro ao cancelar treino anterior");
@@ -85,43 +92,122 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
 
   return (
     <>
-      <div className="flex items-center justify-between p-3 rounded-lg border border-neutral-dark-02 hover:border-primary/30 transition-all">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{workout.title}</p>
-            {workout.description && (
-              <p className="text-xs text-muted-foreground truncate">
-                {workout.description}
-              </p>
-            )}
+      <div className="rounded-lg border border-neutral-dark-02 hover:border-primary/30 transition-all overflow-hidden">
+        <div 
+          className="flex items-center justify-between p-3 cursor-pointer"
+          onClick={handleCardClick}
+        >
+          <div className="flex items-center gap-3 flex-1">
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate">{workout.title}</p>
+              {workout.description && !isExpanded && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {workout.description}
+                </p>
+              )}
 
-            <div className="flex gap-4 mt-1">
-              {workout.estimatedDurationMinutes && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock size={12} />
-                  <span>
-                    {formatDuration(workout.estimatedDurationMinutes)}
-                  </span>
-                </div>
-              )}
-              {totalExercises > 0 && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Dumbbell size={12} />
-                  <span>{totalExercises} exercícios</span>
-                </div>
-              )}
+              <div className="flex gap-4 mt-1">
+                {workout.estimatedDurationMinutes && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock size={12} />
+                    <span>
+                      {formatDuration(workout.estimatedDurationMinutes)}
+                    </span>
+                  </div>
+                )}
+                {totalExercises > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Dumbbell size={12} />
+                    <span>{totalExercises} exercícios</span>
+                  </div>
+                )}
+              </div>
             </div>
+          </div>
+
+          <div className="ml-2 text-muted-foreground">
+            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </div>
         </div>
 
-        <Button
-          size="sm"
-          variant="default"
-          onClick={handleViewClick}
-          className="ml-2"
-        >
-          Ver
-        </Button>
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="border-t border-neutral-dark-02"
+            >
+              <div className="p-3 space-y-3">
+                {workout.description && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">
+                      Descrição
+                    </p>
+                    <p className="text-sm text-neutral-white-01">
+                      {workout.description}
+                    </p>
+                  </div>
+                )}
+
+                {workout.exerciseTemplates && workout.exerciseTemplates.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">
+                      Exercícios ({workout.exerciseTemplates.length})
+                    </p>
+                    <div className="space-y-2">
+                      {workout.exerciseTemplates.map((exercise, index) => (
+                        <div
+                          key={exercise.id || index}
+                          className="flex items-start gap-2 text-sm bg-neutral-dark-03 p-2 rounded"
+                        >
+                          <span className="text-primary font-semibold min-w-[20px]">
+                            {index + 1}.
+                          </span>
+                          <div className="flex-1">
+                            <p className="font-medium">
+                              {exercise.exerciseName || "Exercício"}
+                            </p>
+                            {(exercise.targetSets || exercise.targetRepsMin || exercise.restSeconds) && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {exercise.targetSets && `${exercise.targetSets} séries`}
+                                {exercise.targetSets && (exercise.targetRepsMin || exercise.targetRepsMax) && " • "}
+                                {(exercise.targetRepsMin || exercise.targetRepsMax) && (
+                                  <>
+                                    {exercise.targetRepsMin}
+                                    {exercise.targetRepsMax && exercise.targetRepsMin !== exercise.targetRepsMax && `-${exercise.targetRepsMax}`}
+                                    {" reps"}
+                                  </>
+                                )}
+                                {(exercise.targetSets || exercise.targetRepsMin) && exercise.restSeconds && " • "}
+                                {exercise.restSeconds && `${exercise.restSeconds}s descanso`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  size="default"
+                  variant="default"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStartWorkout();
+                  }}
+                  className="w-full"
+                >
+                  {activeSession && activeSession.workoutTemplateId === workout.id
+                    ? "Continuar Treino"
+                    : "Iniciar Treino"}
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Sheet de confirmação */}

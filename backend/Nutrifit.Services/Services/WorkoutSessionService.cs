@@ -20,13 +20,22 @@ namespace Nutrifit.Services.Services
         {
             try
             {
+                Console.WriteLine($"[DEBUG] Iniciando treino para cliente {customerId}, template {request.WorkoutTemplateId}");
+                
                 var activeSession = await _context.WorkoutSessions
                     .FirstOrDefaultAsync(ws => ws.CustomerId == customerId && ws.Status == "IP");
 
                 if (activeSession != null)
+                {
+                    Console.WriteLine($"[DEBUG] Cliente já tem sessão ativa: ID={activeSession.Id}, StartedAt={activeSession.StartedAt}");
                     return ApiResponse.CreateFailure("Você já tem um treino em andamento!");
+                }
+
+                Console.WriteLine($"[DEBUG] Nenhuma sessão ativa encontrada, criando nova sessão");
 
                 var template = await _context.WorkoutTemplates
+                    .Include(wt => wt.ExerciseTemplates)
+                    .ThenInclude(et => et.Exercise)
                     .FirstOrDefaultAsync(wt => wt.Id == request.WorkoutTemplateId && wt.Status == "A");
 
                 if (template == null)
@@ -45,6 +54,24 @@ namespace Nutrifit.Services.Services
                 };
 
                 _context.WorkoutSessions.Add(session);
+
+                // Cria todos os ExerciseSessions com status "NS" (Not Started)
+                foreach (var exerciseTemplate in template.ExerciseTemplates.Where(et => et.Status == "A").OrderBy(et => et.Order))
+                {
+                    var exerciseSession = new ExerciseSessionEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        WorkoutSessionId = session.Id,
+                        ExerciseTemplateId = exerciseTemplate.Id,
+                        ExerciseId = exerciseTemplate.ExerciseId,
+                        Order = exerciseTemplate.Order,
+                        Status = "NS", // Not Started
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.ExerciseSessions.Add(exerciseSession);
+                }
+
                 await _context.SaveChangesAsync();
 
                 return ApiResponse.CreateSuccess("Treino iniciado com sucesso!", session.Id);
@@ -90,25 +117,36 @@ namespace Nutrifit.Services.Services
         {
             try
             {
+                Console.WriteLine($"[DEBUG] Tentando cancelar sessão: ID={sessionId}, Cliente={customerId}");
+                
                 var sessions = await _context.WorkoutSessions
                     .Where(ws => ws.Id == sessionId && ws.CustomerId == customerId)
                     .ToListAsync();
 
-                if (sessions == null)
+                Console.WriteLine($"[DEBUG] Encontradas {sessions.Count} sessões para cancelar");
+
+                if (sessions == null || sessions.Count == 0)
+                {
+                    Console.WriteLine($"[DEBUG] Nenhuma sessão encontrada para cancelar");
                     return ApiResponse.CreateFailure("Sessão não encontrada.");
+                }
 
                 foreach (var session in sessions)
                 {
+                    Console.WriteLine($"[DEBUG] Cancelando sessão: ID={session.Id}, Status atual={session.Status}");
                     session.Status = "CA";
                     session.UpdatedAt = DateTime.UtcNow;
+                    Console.WriteLine($"[DEBUG] Sessão atualizada: ID={session.Id}, Novo status={session.Status}");
                 }
 
                 await _context.SaveChangesAsync();
+                Console.WriteLine($"[DEBUG] Salvou mudanças no banco - {sessions.Count} sessões canceladas");
 
                 return ApiResponse.CreateSuccess("Treino cancelado.");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[DEBUG] Erro ao cancelar: {ex.Message}");
                 return ApiResponse.CreateFailure($"Erro ao cancelar treino: {ex.Message}");
             }
         }
@@ -219,6 +257,18 @@ namespace Nutrifit.Services.Services
         {
             try
             {
+                // DEBUG: Contar quantas sessões ativas existem
+                var allActiveSessions = await _context.WorkoutSessions
+                    .Where(ws => ws.CustomerId == customerId && ws.Status == "IP")
+                    .ToListAsync();
+                
+                Console.WriteLine($"[DEBUG] Cliente {customerId} tem {allActiveSessions.Count} sessões ativas (IP)");
+                
+                foreach (var activeSession in allActiveSessions)
+                {
+                    Console.WriteLine($"[DEBUG] Sessão ativa: ID={activeSession.Id}, StartedAt={activeSession.StartedAt}, Template={activeSession.WorkoutTemplateId}");
+                }
+
                 var session = await _context.WorkoutSessions
                     .Include(ws => ws.WorkoutTemplate)
                     .Include(ws => ws.ExerciseSessions).ThenInclude(es => es.Exercise)
@@ -288,11 +338,31 @@ namespace Nutrifit.Services.Services
             try
             {
                 var session = await _context.WorkoutSessions
+                    .Include(ws => ws.ExerciseSessions)
                     .FirstOrDefaultAsync(ws => ws.Id == sessionId && ws.CustomerId == customerId);
 
                 if (session == null || session.Status != "IP")
                     return ApiResponse.CreateFailure("Sessão não encontrada ou não está em andamento.");
 
+                // Primeiro, verifica se o ExerciseSession já existe
+                var existingExerciseSession = session.ExerciseSessions
+                    .FirstOrDefault(es => es.ExerciseTemplateId == request.ExerciseTemplateId);
+
+                if (existingExerciseSession != null)
+                {
+                    // Se já existe, apenas atualiza o status para "IP" se ainda não foi iniciado
+                    if (existingExerciseSession.Status == "NS")
+                    {
+                        existingExerciseSession.Status = "IP";
+                        existingExerciseSession.StartedAt = DateTime.UtcNow;
+                        existingExerciseSession.UpdatedAt = DateTime.UtcNow;
+                        await _context.SaveChangesAsync();
+                        return ApiResponse.CreateSuccess("Exercício iniciado!", existingExerciseSession.Id);
+                    }
+                    return ApiResponse.CreateSuccess("Exercício já foi iniciado.", existingExerciseSession.Id);
+                }
+
+                // Se não existe, cria um novo com status "IP"
                 var exerciseTemplate = await _context.ExerciseTemplates
                     .FirstOrDefaultAsync(et => et.Id == request.ExerciseTemplateId && et.Status == "A");
 
