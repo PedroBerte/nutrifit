@@ -2,14 +2,19 @@ import { useNavigate } from "react-router-dom";
 import { Clock, Dumbbell, Play } from "lucide-react";
 import { Button } from "./ui/button";
 import { motion } from "motion/react";
-import type { WorkoutSessionResponse } from "@/services/api/workoutSession";
 
 interface ActiveWorkoutAlertProps {
-  session: WorkoutSessionResponse;
+  workoutInfo: {
+    workoutTemplateId: string;
+    workoutTemplateTitle: string;
+    startedAt: string;
+    totalVolume: number;
+    totalSets: number;
+  };
 }
 
 export default function ActiveWorkoutAlert({
-  session,
+  workoutInfo,
 }: ActiveWorkoutAlertProps) {
   const navigate = useNavigate();
 
@@ -36,21 +41,21 @@ export default function ActiveWorkoutAlert({
           <p className="font-bold text-sm">Treino em Andamento</p>
         </div>
         <span className="text-xs text-muted-foreground">
-          {formatTime(session.startedAt)} atrás
+          {formatTime(workoutInfo.startedAt)} atrás
         </span>
       </div>
 
       <div>
-        <p className="font-semibold">{session.workoutTemplateTitle}</p>
+        <p className="font-semibold">{workoutInfo.workoutTemplateTitle}</p>
         <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock size={14} />
             <span>Em progresso</span>
           </div>
-          {session.totalVolume && session.totalVolume > 0 && (
+          {workoutInfo.totalVolume > 0 && (
             <div className="flex items-center gap-1">
               <Dumbbell size={14} />
-              <span>{session.totalVolume.toFixed(0)} kg</span>
+              <span>{workoutInfo.totalVolume.toFixed(0)} kg</span>
             </div>
           )}
         </div>
@@ -58,9 +63,7 @@ export default function ActiveWorkoutAlert({
 
       <Button
         onClick={() =>
-          navigate(
-            `/workout/session/${session.workoutTemplateId}?sessionId=${session.id}`
-          )
+          navigate(`/workout/session/${workoutInfo.workoutTemplateId}`)
         }
         className="w-full"
         size="sm"

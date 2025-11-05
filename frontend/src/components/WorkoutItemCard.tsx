@@ -1,4 +1,10 @@
-import { Clock, Dumbbell, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Clock,
+  Dumbbell,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import type { WorkoutTemplateResponse } from "@/services/api/workoutTemplate";
 import { Button } from "./ui/button";
 import {
@@ -10,9 +16,11 @@ import {
   SheetTitle,
 } from "./ui/sheet";
 import { useNavigate } from "react-router-dom";
-import { useCancelWorkoutSession } from "@/services/api/workoutSession";
-import { useActiveWorkout } from "@/contexts/ActiveWorkoutContext";
-import { useState } from "react";
+import {
+  getActiveWorkoutInfo,
+  clearLocalWorkout,
+} from "@/services/localWorkoutSession";
+import { useState, useEffect } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -23,12 +31,19 @@ interface WorkoutItemCardProps {
 export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
   const navigate = useNavigate();
   const toast = useToast();
-  const { activeSession, cancelWorkout } = useActiveWorkout();
-  const cancelSession = useCancelWorkoutSession();
 
+  const [activeWorkoutInfo, setActiveWorkoutInfo] =
+    useState<ReturnType<typeof getActiveWorkoutInfo>>(null);
   const [showDiscardSheet, setShowDiscardSheet] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Verifica localStorage a cada render
+  useEffect(() => {
+    setActiveWorkoutInfo(getActiveWorkoutInfo());
+  }, []);
+
   const totalExercises = workout.exerciseTemplates?.length || 0;
 
   const formatDuration = (minutes?: number) => {
@@ -45,14 +60,17 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
 
   const handleStartWorkout = () => {
     // Se tem treino ativo e não é o mesmo template
-    if (activeSession && activeSession.workoutTemplateId !== workout.id) {
+    if (
+      activeWorkoutInfo &&
+      activeWorkoutInfo.workoutTemplateId !== workout.id
+    ) {
       setShowDiscardSheet(true);
     } else if (
-      activeSession &&
-      activeSession.workoutTemplateId === workout.id
+      activeWorkoutInfo &&
+      activeWorkoutInfo.workoutTemplateId === workout.id
     ) {
       // É o mesmo treino ativo, continua
-      navigate(`/workout/session/${workout.id}?sessionId=${activeSession.id}`);
+      navigate(`/workout/session/${workout.id}`);
     } else {
       // Sem treino ativo, inicia novo
       navigate(`/workout/session/${workout.id}`);
@@ -60,16 +78,14 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
   };
 
   const handleDiscardAndStart = async () => {
-    if (!activeSession) return;
+    if (!activeWorkoutInfo) return;
 
     setIsCanceling(true);
     try {
-      await cancelSession.mutateAsync(activeSession.id);
-      // Força limpeza via contexto também
-      cancelWorkout();
+      clearLocalWorkout();
       toast.info("Treino anterior cancelado");
       setShowDiscardSheet(false);
-      
+
       // Aguarda um pouco para garantir que o estado foi limpo
       setTimeout(() => {
         navigate(`/workout/session/${workout.id}`);
@@ -83,17 +99,15 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
   };
 
   const handleContinueCurrent = () => {
-    if (!activeSession) return;
+    if (!activeWorkoutInfo) return;
     setShowDiscardSheet(false);
-    navigate(
-      `/workout/session/${activeSession.workoutTemplateId}?sessionId=${activeSession.id}`
-    );
+    navigate(`/workout/session/${activeWorkoutInfo.workoutTemplateId}`);
   };
 
   return (
     <>
       <div className="rounded-lg border border-neutral-dark-02 hover:border-primary/30 transition-all overflow-hidden">
-        <div 
+        <div
           className="flex items-center justify-between p-3 cursor-pointer"
           onClick={handleCardClick}
         >
@@ -151,45 +165,60 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
                   </div>
                 )}
 
-                {workout.exerciseTemplates && workout.exerciseTemplates.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-2">
-                      Exercícios ({workout.exerciseTemplates.length})
-                    </p>
-                    <div className="space-y-2">
-                      {workout.exerciseTemplates.map((exercise, index) => (
-                        <div
-                          key={exercise.id || index}
-                          className="flex items-start gap-2 text-sm bg-neutral-dark-03 p-2 rounded"
-                        >
-                          <span className="text-primary font-semibold min-w-[20px]">
-                            {index + 1}.
-                          </span>
-                          <div className="flex-1">
-                            <p className="font-medium">
-                              {exercise.exerciseName || "Exercício"}
-                            </p>
-                            {(exercise.targetSets || exercise.targetRepsMin || exercise.restSeconds) && (
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {exercise.targetSets && `${exercise.targetSets} séries`}
-                                {exercise.targetSets && (exercise.targetRepsMin || exercise.targetRepsMax) && " • "}
-                                {(exercise.targetRepsMin || exercise.targetRepsMax) && (
-                                  <>
-                                    {exercise.targetRepsMin}
-                                    {exercise.targetRepsMax && exercise.targetRepsMin !== exercise.targetRepsMax && `-${exercise.targetRepsMax}`}
-                                    {" reps"}
-                                  </>
-                                )}
-                                {(exercise.targetSets || exercise.targetRepsMin) && exercise.restSeconds && " • "}
-                                {exercise.restSeconds && `${exercise.restSeconds}s descanso`}
+                {workout.exerciseTemplates &&
+                  workout.exerciseTemplates.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">
+                        Exercícios ({workout.exerciseTemplates.length})
+                      </p>
+                      <div className="space-y-2">
+                        {workout.exerciseTemplates.map((exercise, index) => (
+                          <div
+                            key={exercise.id || index}
+                            className="flex items-start gap-2 text-sm bg-neutral-dark-03 p-2 rounded"
+                          >
+                            <span className="text-primary font-semibold min-w-[20px]">
+                              {index + 1}.
+                            </span>
+                            <div className="flex-1">
+                              <p className="font-medium">
+                                {exercise.exerciseName || "Exercício"}
                               </p>
-                            )}
+                              {(exercise.targetSets ||
+                                exercise.targetRepsMin ||
+                                exercise.restSeconds) && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {exercise.targetSets &&
+                                    `${exercise.targetSets} séries`}
+                                  {exercise.targetSets &&
+                                    (exercise.targetRepsMin ||
+                                      exercise.targetRepsMax) &&
+                                    " • "}
+                                  {(exercise.targetRepsMin ||
+                                    exercise.targetRepsMax) && (
+                                    <>
+                                      {exercise.targetRepsMin}
+                                      {exercise.targetRepsMax &&
+                                        exercise.targetRepsMin !==
+                                          exercise.targetRepsMax &&
+                                        `-${exercise.targetRepsMax}`}
+                                      {" reps"}
+                                    </>
+                                  )}
+                                  {(exercise.targetSets ||
+                                    exercise.targetRepsMin) &&
+                                    exercise.restSeconds &&
+                                    " • "}
+                                  {exercise.restSeconds &&
+                                    `${exercise.restSeconds}s descanso`}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 <Button
                   size="default"
@@ -200,7 +229,8 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
                   }}
                   className="w-full"
                 >
-                  {activeSession && activeSession.workoutTemplateId === workout.id
+                  {activeWorkoutInfo &&
+                  activeWorkoutInfo.workoutTemplateId === workout.id
                     ? "Continuar Treino"
                     : "Iniciar Treino"}
                 </Button>
@@ -220,7 +250,7 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
             </div>
             <SheetDescription>
               Você já tem um treino em andamento:{" "}
-              <strong>{activeSession?.workoutTemplateTitle}</strong>
+              <strong>{activeWorkoutInfo?.workoutTemplateTitle}</strong>
               <br />
               <br />O que você deseja fazer?
             </SheetDescription>
