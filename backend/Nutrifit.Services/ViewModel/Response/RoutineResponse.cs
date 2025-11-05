@@ -40,3 +40,18 @@ public class AssignedCustomerResponse
     public string? CustomerImageUrl { get; set; }
     public DateTime AssignedAt { get; set; }
 }
+
+public class RoutineCustomersResponse
+{
+    public List<CustomerBasicInfo> AssignedCustomers { get; set; } = new();
+    public List<CustomerBasicInfo> AvailableCustomers { get; set; } = new();
+}
+
+public class CustomerBasicInfo
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public DateTime? AssignedAt { get; set; }
+}

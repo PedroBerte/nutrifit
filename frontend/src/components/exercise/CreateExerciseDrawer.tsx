@@ -20,6 +20,14 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Form,
   FormControl,
   FormField,
@@ -37,7 +45,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/contexts/ToastContext";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ExerciseMediaUploader } from "./ExerciseMediaUploader";
 
@@ -70,6 +78,7 @@ export function CreateExerciseDrawer({
 }: CreateExerciseDrawerProps) {
   const toast = useToast();
   const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: categories } = useGetExerciseCategories();
   const { data: muscleGroups } = useGetMuscleGroups();
@@ -163,8 +172,6 @@ export function CreateExerciseDrawer({
   const handleDelete = async () => {
     if (!exerciseToEdit?.id) return;
 
-    if (!confirm("Tem certeza que deseja deletar este exercício?")) return;
-
     try {
       await deleteExercise.mutateAsync(exerciseToEdit.id);
       toast.success("Exercício deletado com sucesso!");
@@ -177,6 +184,8 @@ export function CreateExerciseDrawer({
         error?.message ||
         "Erro ao deletar exercício";
       toast.error(errorMessage);
+    } finally {
+      setShowDeleteDialog(false);
     }
   };
 
@@ -394,7 +403,7 @@ export function CreateExerciseDrawer({
                   <Button
                     type="button"
                     variant="destructive"
-                    onClick={handleDelete}
+                    onClick={() => setShowDeleteDialog(true)}
                     disabled={deleteExercise.isPending}
                     className="flex-1"
                   >
@@ -428,6 +437,37 @@ export function CreateExerciseDrawer({
           </Form>
         </div>
       </DrawerContent>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja deletar o exercício "{exerciseToEdit?.name}
+              "? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={deleteExercise.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteExercise.isPending}
+            >
+              {deleteExercise.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Deletar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Drawer>
   );
 }

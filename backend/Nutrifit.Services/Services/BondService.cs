@@ -65,6 +65,11 @@ public class BondService : IBondService
     {
         try
         {
+
+            var validation = await _context.CustomerProfessionalBonds.FirstOrDefaultAsync(x => x.CustomerId == bond.CustomerId && x.ProfessionalId == bond.ProfessionalId);
+            if (validation is not null)
+                throw new InvalidDataException("Já existe uma solicitação/vínculo entre os associados.");
+
             bond.Id = Guid.NewGuid();
             bond.CreatedAt = DateTime.UtcNow;
             bond.Status = "P";

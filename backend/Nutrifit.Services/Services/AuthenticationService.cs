@@ -54,19 +54,149 @@ namespace Nutrifit.Services.Services
 
             await _mux.GetDatabase().StringSetAsync($"ml:{Sha256Hex(token)}", val, ttl, When.NotExists);
 
+            var html = GetMagicLinkEmailHtml(url, ttl.TotalMinutes);
+            var text = $"Olá! Use o link para acessar a NutriFit: {url}\nO link expira em {ttl.TotalMinutes:0} minutos.";
+
             await _mailService.SendAsync(new MailMessageDTO(
                 To: email,
                 Subject: "Seu acesso à NutriFit",
-                HtmlBody: $@"
-                    <p>Olá! Clique para acessar:</p>
-                    <p><a href=""{url}"">Entrar na NutriFit</a></p>
-                    <p>O link expira em {ttl.TotalMinutes} minutos.</p>",
-                TextBody: null,
+                HtmlBody: html,
+                TextBody: text,
                 Attachments: null,
                 Cc: null,
                 Bcc: null
             ));
         }
+
+        private static string GetMagicLinkEmailHtml(string url, double expiresInMinutes)
+        {
+            const string brand = "#16a34a";
+            const string brandDark = "#15803d"; 
+            const string bg = "#0b0f0d";
+            const string lightBg = "#f6f8f7";
+            const string text = "#1f2937";
+
+            return $@"
+                <!doctype html>
+                <html lang=""pt-BR"">
+                  <head>
+                    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0""/>
+                    <meta http-equiv=""Content-Type"" content=""text/html; charset=UTF-8""/>
+                    <title>Seu acesso à NutriFit</title>
+                    <style>
+                      /* Reset básico */
+                      html, body {{ margin:0; padding:0; }}
+                      img {{ border:0; outline:none; text-decoration:none; max-width:100%; height:auto; display:block; }}
+                      table {{ border-collapse:collapse; }}
+                      a {{ color:{brand}; }}
+                      /* Dark mode (clientes compatíveis) */
+                      @media (prefers-color-scheme: dark) {{
+                        .wrapper {{ background:{bg} !important; }}
+                        .card {{ background:#111716 !important; border-color:#233128 !important; }}
+                        .text {{ color:#e5e7eb !important; }}
+                        .muted {{ color:#9ca3af !important; }}
+                        .link {{ color:#34d399 !important; }}
+                      }}
+                      /* Responsivo */
+                      @media only screen and (max-width:600px) {{
+                        .container {{ width:100% !important; }}
+                        .px {{ padding-left:20px !important; padding-right:20px !important; }}
+                      }}
+                    </style>
+                  </head>
+                  <body style=""background:{lightBg}; margin:0; padding:0;"">
+                    <span style=""display:none;font-size:1px;color:#f6f8f7;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;"">
+                      Seu link mágico para entrar na NutriFit. Expira em {expiresInMinutes:0} minutos.
+                    </span>
+                
+                    <table role=""presentation"" class=""wrapper"" width=""100%"" bgcolor=""{lightBg}"" style=""background:{lightBg};"">
+                      <tr>
+                        <td align=""center"" style=""padding:32px 16px;"">
+                          <table role=""presentation"" class=""container"" width=""600"" style=""width:600px; max-width:100%;"">
+                            <!-- Card -->
+                            <tr>
+                              <td class=""px"" style=""padding:0 24px 24px 24px;"">
+                                <table role=""presentation"" width=""100%"" class=""card"" style=""background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;"">
+                                  <tr>
+                                    <td style=""padding:28px 24px 8px 24px;"">
+                                      <h1 class=""text"" style=""margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:1.35;color:{text};"">
+                                        Acesse sua conta
+                                      </h1>
+                                      <p class=""text"" style=""margin:0 0 18px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:{text};"">
+                                        Olá! Clique no botão abaixo para entrar na <strong>NutriFit</strong>.
+                                      </p>
+                                    </td>
+                                  </tr>
+                
+                                  <!-- Botão bulletproof -->
+                                  <tr>
+                                    <td align=""center"" style=""padding:0 24px 8px 24px;"">
+                                      <!--[if mso]>
+                                        <v:roundrect xmlns:v=""urn:schemas-microsoft-com:vml"" xmlns:w=""urn:schemas-microsoft-com:office:word"" href=""{url}""
+                                          style=""height:48px;v-text-anchor:middle;width:280px;"" arcsize=""12%"" stroke=""f"" fillcolor=""{brand}"">
+                                          <w:anchorlock/>
+                                          <center style=""color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;"">
+                                            Entrar na NutriFit
+                                          </center>
+                                        </v:roundrect>
+                                      <![endif]-->
+                                      <!--[if !mso]><!-- -->
+                                      <a href=""{url}"" target=""_blank""
+                                        style=""display:inline-block;background:{brand};border-radius:8px;text-decoration:none;
+                                               font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:16px;
+                                               line-height:48px;height:48px;padding:0 28px;color:#ffffff;min-width:220px;text-align:center;""
+                                        >
+                                        Entrar na NutriFit
+                                      </a>
+                                      <!--<![endif]-->
+                                    </td>
+                                  </tr>
+                
+                                  <tr>
+                                    <td style=""padding:0 24px 24px 24px;"">
+                                      <p class=""muted"" style=""margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;
+                                        font-size:13px;line-height:1.6;color:#6b7280;"">
+                                        O link expira em <strong>{expiresInMinutes:0} minutos</strong>. Se você não solicitou este acesso, ignore este e-mail.
+                                      </p>
+                                    </td>
+                                  </tr>
+                
+                                  <!-- Fallback do link -->
+                                  <tr>
+                                    <td style=""padding:14px 24px 22px 24px;border-top:1px solid #eef2f1;"">
+                                      <p class=""muted"" style=""margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;
+                                        font-size:12px;line-height:1.6;color:#6b7280;"">
+                                        Problemas com o botão? Copie e cole este link no navegador:
+                                      </p>
+                                      <p class=""link"" style=""margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;word-break:break-all;"">
+                                        <a href=""{url}"" style=""text-decoration:underline;color:{brand};"">{url}</a>
+                                      </p>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                
+                            <!-- Rodapé -->
+                            <tr>
+                              <td class=""px"" align=""center"" style=""padding:8px 24px 0 24px;"">
+                                <p class=""muted"" style=""margin:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9ca3af;"">
+                                  © {DateTime.UtcNow.Year} NutriFit — Treinos, saúde e performance.
+                                </p>
+                                <p class=""muted"" style=""margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9ca3af;"">
+                                  Este e-mail foi enviado para confirmar seu acesso.
+                                </p>
+                              </td>
+                            </tr>
+                
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </body>
+                </html>";
+        }
+
 
         public async Task<string> ValidateSession(string token)
         {
