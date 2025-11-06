@@ -45,4 +45,8 @@
     <ProjectReference Include="..\Nutrifit.Services\Nutrifit.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="backend\Nutrifit.API\Configuration\" />
+  </ItemGroup>
+
 </Project>

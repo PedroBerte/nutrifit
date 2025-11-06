@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGetUserById } from "@/services/api/user";
+import { useGetBondByStudentId, useUpdateBond } from "@/services/api/bond";
+import {
+  useGetAppointmentsByBondId,
+  useUpdateAppointment,
+} from "@/services/api/appointment";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,16 +15,40 @@ import {
   User,
   VenusAndMars,
   ArrowLeft,
-  Users,
+  Plus,
+  MapPin,
+  Video,
+  X,
+  Clock,
 } from "lucide-react";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import CreateAppointmentDrawer from "@/components/CreateAppointmentDrawer";
 import genericPerson from "@/assets/generic-person.svg";
+import { useToast } from "@/contexts/ToastContext";
 
 export default function StudentDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState("info");
+  const [showUnbondDrawer, setShowUnbondDrawer] = useState(false);
+  const [showCreateAppointmentDrawer, setShowCreateAppointmentDrawer] =
+    useState(false);
 
   const { data: userData, isLoading, error } = useGetUserById(id);
+  const { data: bond } = useGetBondByStudentId(id || "");
+  const { data: appointments, isLoading: loadingAppointments } =
+    useGetAppointmentsByBondId(bond?.id || "");
+  const { mutate: updateBond } = useUpdateBond();
+  const { mutate: updateAppointment } = useUpdateAppointment();
 
   if (!id) {
     navigate("/students");
@@ -73,6 +102,71 @@ export default function StudentDetails() {
         return "Outro";
       default:
         return "Não informado";
+    }
+  };
+
+  const handleUnbond = () => {
+    if (!bond) return;
+
+    updateBond(
+      { ...bond, status: "C" },
+      {
+        onSuccess: () => {
+          toast.success("Aluno desvinculado com sucesso!");
+          setShowUnbondDrawer(false);
+          setTimeout(() => navigate("/students"), 1000);
+        },
+        onError: () => {
+          toast.error("Erro ao desvincular aluno. Tente novamente.");
+        },
+      }
+    );
+  };
+
+  const handleCancelAppointment = (appointmentId: string) => {
+    updateAppointment(
+      {
+        id: appointmentId,
+        data: { status: "C" },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Consulta cancelada com sucesso!");
+        },
+        onError: () => {
+          toast.error("Erro ao cancelar consulta. Tente novamente.");
+        },
+      }
+    );
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "P":
+        return "Pendente";
+      case "A":
+        return "Aceita";
+      case "R":
+        return "Rejeitada";
+      case "C":
+        return "Cancelada";
+      default:
+        return status;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "P":
+        return "bg-yellow-500/20 text-yellow-500";
+      case "A":
+        return "bg-green-500/20 text-green-500";
+      case "R":
+        return "bg-red-500/20 text-red-500";
+      case "C":
+        return "bg-gray-500/20 text-gray-500";
+      default:
+        return "bg-neutral-dark-02 text-neutral-white-02";
     }
   };
 
@@ -225,6 +319,13 @@ export default function StudentDetails() {
               <div className="text-xs text-neutral-white-02 text-center">
                 Conta criada em {formatDate(userData.createdAt)}
               </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowUnbondDrawer(true)}
+              >
+                Desvincular
+              </Button>
             </motion.div>
           )}
 
@@ -235,16 +336,140 @@ export default function StudentDetails() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="flex flex-col items-center justify-center h-full"
+              className="flex flex-col gap-3 h-full"
             >
-              <Users size={48} className="text-neutral-white-02 mb-4" />
-              <p className="text-neutral-white-02 text-center">
-                Funcionalidade de encontros em breve
-              </p>
+              <Button
+                onClick={() => setShowCreateAppointmentDrawer(true)}
+                className="w-full"
+                disabled={!bond}
+              >
+                <Plus size={16} className="mr-2" />
+                Nova Consulta
+              </Button>
+
+              {loadingAppointments ? (
+                <div className="flex items-center justify-center h-32">
+                  <p className="text-neutral-white-02">Carregando...</p>
+                </div>
+              ) : !appointments || appointments.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32">
+                  <Calendar size={48} className="text-neutral-white-02 mb-4" />
+                  <p className="text-neutral-white-02 text-center">
+                    Nenhuma consulta agendada
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {appointments.map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className="bg-neutral-dark-03 rounded-lg p-4 space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {appointment.type === "PR" ? (
+                            <MapPin
+                              size={20}
+                              className="text-primary flex-shrink-0"
+                            />
+                          ) : (
+                            <Video
+                              size={20}
+                              className="text-primary flex-shrink-0"
+                            />
+                          )}
+                          <div>
+                            <p className="font-semibold text-sm">
+                              {appointment.type === "PR"
+                                ? "Presencial"
+                                : "Online"}
+                            </p>
+                            <p className="text-xs text-neutral-white-02">
+                              {new Date(appointment.scheduledAt).toLocaleString(
+                                "pt-BR",
+                                {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                }
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
+                              appointment.status
+                            )}`}
+                          >
+                            {getStatusLabel(appointment.status)}
+                          </span>
+                          {appointment.status === "P" && (
+                            <button
+                              onClick={() =>
+                                handleCancelAppointment(appointment.id)
+                              }
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <X size={18} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {appointment.type === "PR" && appointment.address && (
+                        <div className="text-xs text-neutral-white-02 pt-2 border-t border-neutral-dark-02">
+                          <p>
+                            {appointment.address.addressLine},{" "}
+                            {appointment.address.number}
+                          </p>
+                          <p>
+                            {appointment.address.city} -{" "}
+                            {appointment.address.state}
+                          </p>
+                          <p>CEP: {appointment.address.zipCode}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Drawer: Desvincular */}
+      <Drawer open={showUnbondDrawer} onOpenChange={setShowUnbondDrawer}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Desvincular Aluno</DrawerTitle>
+            <DrawerDescription>
+              Tem certeza que deseja desvincular{" "}
+              <strong>{userData?.name}</strong>?
+              <br />
+              Esta ação removerá todas as rotinas ativas deste aluno.
+            </DrawerDescription>
+          </DrawerHeader>
+          <DrawerFooter>
+            <Button variant="destructive" onClick={handleUnbond}>
+              Sim, desvincular
+            </Button>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Drawer: Criar Consulta */}
+      {bond && (
+        <CreateAppointmentDrawer
+          open={showCreateAppointmentDrawer}
+          onOpenChange={setShowCreateAppointmentDrawer}
+          bondId={bond.id || ""}
+        />
+      )}
     </div>
   );
 }

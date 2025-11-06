@@ -100,17 +100,34 @@ public class BondService : IBondService
         {
             var existing = await _context.CustomerProfessionalBonds.FindAsync(bond.Id);
             if (existing == null)
-                throw new InvalidOperationException("V�nculo cliente-profissional n�o encontrado para atualiza��o.");
+                throw new InvalidOperationException("Vínculo cliente-profissional não encontrado para atualização.");
 
             _context.Entry(existing).CurrentValues.SetValues(bond);
             existing.UpdatedAt = DateTime.UtcNow;
+
+            // Se o vínculo foi cancelado (C) ou rejeitado (R), remover as rotinas associadas
+            if (bond.Status == "C" || bond.Status == "R")
+            {
+                var customerRoutines = await _context.CustomerRoutines
+                    .Include(cr => cr.Routine)
+                    .Where(cr => cr.CustomerId == existing.CustomerId
+                              && cr.Routine.PersonalId == existing.ProfessionalId
+                              && cr.Status == "A")
+                    .ToListAsync();
+
+                foreach (var routine in customerRoutines)
+                {
+                    routine.Status = "I"; // Inativar as rotinas
+                    routine.UpdatedAt = DateTime.UtcNow;
+                }
+            }
 
             await _context.SaveChangesAsync();
             return existing;
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao atualizar v�nculo cliente-profissional.", ex);
+            throw new Exception("Erro ao atualizar vínculo cliente-profissional.", ex);
         }
     }
 

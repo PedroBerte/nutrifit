@@ -165,3 +165,20 @@ export function useGetActiveStudents(
     retry: 1,
   });
 }
+
+export function useGetBondByStudentId(studentId: string) {
+  return useQuery({
+    queryKey: ["getBondByStudentId", studentId],
+    queryFn: async () => {
+      const request = await api.get<CustomerProfessionalBondType[]>(`/bond`);
+      const bonds = request.data;
+      console.log("Bonds fetched:", bonds);
+      // Encontrar o bond ativo entre o professional logado e este student
+      return bonds.find(
+        (bond) => bond.customerId === studentId && bond.status === "A"
+      );
+    },
+    enabled: !!studentId,
+    retry: 1,
+  });
+}

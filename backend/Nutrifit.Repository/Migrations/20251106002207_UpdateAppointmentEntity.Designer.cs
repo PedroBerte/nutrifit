@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrifit.Repository;
@@ -11,9 +12,11 @@ using Nutrifit.Repository;
 namespace Nutrifit.Repository.Migrations
 {
     [DbContext(typeof(NutrifitContext))]
-    partial class NutrifitContextModelSnapshot : ModelSnapshot
+    [Migration("20251106002207_UpdateAppointmentEntity")]
+    partial class UpdateAppointmentEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -84,9 +87,6 @@ namespace Nutrifit.Repository.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("timezone('utc', now())");
 
-                    b.Property<Guid?>("CustomerProfessionalBondEntityId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("CustomerProfessionalBondId")
                         .HasColumnType("uuid");
 
@@ -108,7 +108,7 @@ namespace Nutrifit.Repository.Migrations
 
                     b.HasIndex("AddressId");
 
-                    b.HasIndex("CustomerProfessionalBondEntityId");
+                    b.HasIndex("CustomerProfessionalBondId");
 
                     b.ToTable("Appointments", (string)null);
                 });
@@ -1750,11 +1750,15 @@ namespace Nutrifit.Repository.Migrations
                         .HasForeignKey("AddressId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", null)
+                    b.HasOne("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", "CustomerProfessionalBond")
                         .WithMany("Appointments")
-                        .HasForeignKey("CustomerProfessionalBondEntityId");
+                        .HasForeignKey("CustomerProfessionalBondId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Address");
+
+                    b.Navigation("CustomerProfessionalBond");
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerFeedbackEntity", b =>
