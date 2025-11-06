@@ -33,7 +33,17 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import {
   ChevronLeft,
+  ChevronRight,
   Clock,
   Dumbbell,
   Plus,
@@ -50,6 +60,7 @@ import {
   Edit2,
   Trash2,
   GripVertical,
+  HelpCircle,
 } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion, AnimatePresence } from "motion/react";
@@ -79,6 +90,9 @@ export default function WorkoutSession() {
     // Mostra a dica apenas se nunca foi vista
     return !localStorage.getItem("hasSeenSwipeHint");
   });
+  const [showEditSwipeHint, setShowEditSwipeHint] = useState(false);
+  const [showHelpSheet, setShowHelpSheet] = useState(false);
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
 
   // Queries
   const { data: templateData } = useGetWorkoutTemplateById(templateId);
@@ -184,19 +198,33 @@ export default function WorkoutSession() {
 
   useEffect(() => {
     if (localWorkout?.exercises && expandedExerciseIds.size === 0) {
-      const inProgressExercise = localWorkout.exercises.find(
-        (ex) => ex.status === "IP"
-      );
+      // Encontra o último exercício com todas as séries completadas
+      let lastCompletedIndex = -1;
 
-      if (inProgressExercise) {
-        setExpandedExerciseIds(new Set([inProgressExercise.id]));
-        setCurrentExerciseId(inProgressExercise.id);
+      for (let i = 0; i < localWorkout.exercises.length; i++) {
+        const exercise = localWorkout.exercises[i];
+        const allSetsCompleted = exercise.sets.length > 0 &&
+          exercise.sets.every(set => set.completed);
+
+        if (allSetsCompleted) {
+          lastCompletedIndex = i;
+        }
+      }
+
+      // O exercício atual é o próximo após o último completado
+      const currentExerciseIndex = lastCompletedIndex + 1;
+
+      // Se o índice é válido, expande esse exercício
+      if (currentExerciseIndex < localWorkout.exercises.length) {
+        const currentExercise = localWorkout.exercises[currentExerciseIndex];
+        setExpandedExerciseIds(new Set([currentExercise.id]));
+        setCurrentExerciseId(currentExercise.id);
       } else {
-        const notStartedExercise = localWorkout.exercises.find(
-          (ex) => ex.status === "SK"
-        );
-        if (notStartedExercise) {
-          setExpandedExerciseIds(new Set([notStartedExercise.id]));
+        // Se todos estão completos, expande o primeiro
+        const firstExercise = localWorkout.exercises[0];
+        if (firstExercise) {
+          setExpandedExerciseIds(new Set([firstExercise.id]));
+          setCurrentExerciseId(firstExercise.id);
         }
       }
     }
@@ -254,6 +282,37 @@ export default function WorkoutSession() {
       return () => clearTimeout(timer);
     }
   }, [showSwipeHint]);
+
+  // Esconde a dica de edição após 10 segundos
+  useEffect(() => {
+    if (showEditSwipeHint) {
+      const timer = setTimeout(() => {
+        setShowEditSwipeHint(false);
+        localStorage.setItem("hasSeenEditSwipeHint", "true");
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [showEditSwipeHint]);
+
+  // Monitora quando uma série é completada pela primeira vez
+  useEffect(() => {
+    if (!localWorkout) return;
+
+    const hasCompletedSet = localWorkout.exercises.some(exercise =>
+      exercise.sets.some(set => set.completed)
+    );
+
+    const hasSeenEditHint = localStorage.getItem("hasSeenEditSwipeHint");
+
+    // Se tem pelo menos uma série completada e nunca viu a dica de edição
+    if (hasCompletedSet && !hasSeenEditHint && !showEditSwipeHint) {
+      // Espera 1 segundo após completar para mostrar a dica
+      const timer = setTimeout(() => {
+        setShowEditSwipeHint(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [localWorkout]);
 
   const handleCompleteSession = async () => {
     if (!localWorkout) return;
@@ -380,43 +439,116 @@ export default function WorkoutSession() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="flex flex-1 flex-col"
+      className="flex flex-1 flex-col mt-4"
     >
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-neutral-dark-02 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-neutral-dark-02 rounded-full"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <h1 className="text-xl font-bold">{template.title}</h1>
-          <Button onClick={handleCompleteSession} size="sm">
-            Concluir
-          </Button>
+      <div className="sticky rounded-lg top-0 z-10 bg-primary/30 backdrop-blur-sm border-b border-neutral-dark-02/30">
+        {/* Header principal - clicável */}
+        <div
+          className="px-4 pt-3 pb-3 cursor-pointer hover:bg-neutral-dark-02/30 transition-colors"
+          onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
+        >
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold">{template.title}</h1>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowHelpSheet(true);
+                }}
+                variant="ghost"
+                size='sm'
+              >
+                <HelpCircle className="size-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Indicador sutil de expansão */}
+          <div className="flex justify-center mt-3">
+            <motion.div
+              animate={{
+                opacity: isHeaderExpanded ? 0 : 0.5,
+              }}
+              transition={{
+                duration: 0.3,
+              }}
+              className="flex gap-1"
+            >
+              <div className="h-1 w-1 bg-muted-foreground rounded-full" />
+              <div className="h-1 w-1 bg-muted-foreground rounded-full" />
+              <div className="h-1 w-1 bg-muted-foreground rounded-full" />
+            </motion.div>
+          </div>
         </div>
 
-        {/* Timer e Resumo */}
-        <div className="flex items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <Clock size={16} />
-            <span className="font-mono font-bold">
-              {formatTime(workoutTimer)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Dumbbell size={16} />
-            <span>{calculateTotalVolume(localWorkout).toFixed(1)} kg</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>{getTotalSets(localWorkout)} séries</span>
-          </div>
-        </div>
+        {/* Conteúdo expandido */}
+        <AnimatePresence initial={false}>
+          {isHeaderExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden border-t border-neutral-dark-02/30"
+            >
+              <div className="px-4 py-4 space-y-3">
+                {/* Estatísticas detalhadas */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-neutral-dark-03 backdrop-blur-sm rounded-lg p-3 border border-primary/20">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Clock size={14} />
+                      <span className="text-xs font-medium">Tempo Total</span>
+                    </div>
+                    <p className="text-lg font-bold font-mono text-foreground">{formatTime(workoutTimer)}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {Math.floor(workoutTimer / 60)} minutos
+                    </p>
+                  </div>
+
+                  <div className="bg-neutral-dark-03 backdrop-blur-sm rounded-lg p-3 border border-primary/20">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Dumbbell size={14} />
+                      <span className="text-xs font-medium">Carga Total</span>
+                    </div>
+                    <p className="text-lg font-bold text-foreground">{calculateTotalVolume(localWorkout).toFixed(1)} kg</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Volume levantado
+                    </p>
+                  </div>
+
+                  <div className="bg-neutral-dark-03 backdrop-blur-sm rounded-lg p-3 border border-primary/20">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <CheckCircle2 size={14} />
+                      <span className="text-xs font-medium">Séries Totais</span>
+                    </div>
+                    <p className="text-lg font-bold text-foreground">{getTotalSets(localWorkout)}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Séries completadas
+                    </p>
+                  </div>
+
+                  <div className="bg-neutral-dark-03 backdrop-blur-sm rounded-lg p-3 border border-primary/20">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Dumbbell size={14} />
+                      <span className="text-xs font-medium">Exercícios</span>
+                    </div>
+                    <p className="text-lg font-bold text-foreground">
+                      {localWorkout.exercises.filter(ex => ex.sets.some(s => s.completed)).length}/{localWorkout.exercises.length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Exercícios iniciados
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Timer de descanso */}
         {restTimer !== null && restTimer > 0 && (
-          <div className="mt-3 p-3 bg-primary/10 rounded-lg flex items-center justify-between">
+          <div className="mx-4 mb-3 p-3 bg-primary/10 rounded-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Timer size={20} className="text-primary" />
               <span className="font-bold text-lg">{formatTime(restTimer)}</span>
@@ -440,32 +572,83 @@ export default function WorkoutSession() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-center gap-3"
+              className="mx-4 mb-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg"
             >
-              <GripVertical size={20} className="text-blue-500" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-blue-500">
-                  Dica: Arraste as séries para a esquerda para deletá-las
-                </p>
+              <div className="flex items-start gap-3 mb-2">
+                <GripVertical size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-blue-500 mb-1">
+                    Dica: Use gestos nas séries
+                  </p>
+                  <div className="space-y-1 text-xs text-blue-400">
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-400">→</span>
+                      <span>Arraste para direita para confirmar série</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-red-400">←</span>
+                      <span>Arraste para esquerda para deletar</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-400">→</span>
+                      <span>Série completa? Arraste direita para editar</span>
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 text-xs flex-shrink-0"
+                  onClick={() => {
+                    setShowSwipeHint(false);
+                    localStorage.setItem("hasSeenSwipeHint", "true");
+                  }}
+                >
+                  Entendi
+                </Button>
               </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 text-xs"
-                onClick={() => {
-                  setShowSwipeHint(false);
-                  localStorage.setItem("hasSeenSwipeHint", "true");
-                }}
-              >
-                Entendi
-              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Dica de edição - aparece após completar a primeira série */}
+        <AnimatePresence>
+          {showEditSwipeHint && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mx-4 mb-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
+            >
+              <div className="flex items-start gap-3">
+                <Check size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-green-500 mb-1">
+                    Boa! Série concluída ✓
+                  </p>
+                  <p className="text-xs text-green-400">
+                    Precisa editar? Arraste a série completada para a direita (→) e ela voltará ao modo editável!
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 text-xs flex-shrink-0"
+                  onClick={() => {
+                    setShowEditSwipeHint(false);
+                    localStorage.setItem("hasSeenEditSwipeHint", "true");
+                  }}
+                >
+                  OK
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Lista de Exercícios */}
-      <div className="flex-1 p-2 space-y-4">
+      <div className="flex-1 py-4 gap-4 flex flex-col">
         {localWorkout.exercises.map((exercise) => (
           <ExerciseCard
             key={exercise.id}
@@ -473,17 +656,21 @@ export default function WorkoutSession() {
             onRegisterSet={handleRegisterSet}
             onUpdateNotes={handleUpdateExerciseNotes}
             onAddSet={handleAddSet}
+            isExpanded={expandedExerciseIds.has(exercise.id)}
           />
         ))}
 
         {/* Botão Cancelar no final */}
-        <div className="pt-4">
+        <div className="flex w-full pt-2 gap-4 justify-between items-center ">
           <Button
-            variant="destructive"
+            variant="outline"
             onClick={() => setShowCancelConfirm(true)}
-            className="w-full"
+            className="flex-1"
           >
-            Cancelar Treino
+            Cancelar
+          </Button>
+          <Button onClick={handleCompleteSession} className="flex-1">
+            Concluir
           </Button>
         </div>
       </div>
@@ -516,6 +703,90 @@ export default function WorkoutSession() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {/* Drawer de Ajuda */}
+      <Drawer open={showHelpSheet} onOpenChange={setShowHelpSheet}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Como usar os gestos</DrawerTitle>
+            <DrawerDescription>
+              Aprenda a usar os gestos para gerenciar suas séries
+            </DrawerDescription>
+          </DrawerHeader>
+
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 max-h-[60vh]">
+            {/* Confirmar Série */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                <Check size={24} className="text-green-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-green-500 mb-1">
+                  Confirmar Série →
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Preencha kg e reps, depois arraste a série para a{" "}
+                  <span className="font-bold text-green-400">direita</span> para
+                  confirmar e completar.
+                </p>
+              </div>
+            </div>
+
+            {/* Editar Série */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
+                <Edit2 size={24} className="text-blue-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-blue-500 mb-1">
+                  Editar Série Completa →
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Série já confirmada? Arraste para a{" "}
+                  <span className="font-bold text-blue-400">direita</span> novamente
+                  para voltar ao modo de edição.
+                </p>
+              </div>
+            </div>
+
+            {/* Deletar Série */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+                <Trash2 size={24} className="text-red-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-red-500 mb-1">Deletar Série ←</h3>
+                <p className="text-sm text-muted-foreground">
+                  Arraste a série para a{" "}
+                  <span className="font-bold text-red-400">esquerda</span> para
+                  removê-la permanentemente.
+                </p>
+              </div>
+            </div>
+
+            {/* Dica Visual */}
+            <div className="p-4 bg-neutral-dark-02 rounded-lg border border-neutral-dark-03">
+              <div className="flex items-center gap-2 mb-2">
+                <GripVertical size={18} className="text-muted-foreground" />
+                <p className="text-sm font-bold">Dica Visual</p>
+              </div>
+              <p className="text-sm text-foreground leading-relaxed">
+                Ao arrastar, você verá fundos coloridos aparecerem indicando a ação
+                que será executada. Solte quando o fundo estiver visível!
+              </p>
+            </div>
+          </div>
+
+          <DrawerFooter className="border-t pt-4">
+            <Button
+              onClick={() => setShowHelpSheet(false)}
+              className="w-full"
+            >
+              Entendi, vamos treinar!
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </motion.div>
   );
 }
@@ -531,6 +802,7 @@ interface ExerciseCardProps {
   ) => void;
   onUpdateNotes: (exerciseId: string, notes: string) => void;
   onAddSet: (exerciseId: string, restSeconds?: number) => void;
+  isExpanded: boolean;
 }
 
 function ExerciseCard({
@@ -538,64 +810,200 @@ function ExerciseCard({
   onRegisterSet,
   onUpdateNotes,
   onAddSet,
+  isExpanded,
 }: ExerciseCardProps) {
+  const [exerciseRestTimer, setExerciseRestTimer] = useState(0);
+  const [isExerciseRestRunning, setIsExerciseRestRunning] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(!isExpanded);
+
+  // Timer de descanso do exercício
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isExerciseRestRunning && exerciseRestTimer > 0) {
+      interval = setInterval(() => {
+        setExerciseRestTimer((prev) => {
+          if (prev <= 1) {
+            setIsExerciseRestRunning(false);
+            // Vibra quando o timer termina
+            if (navigator.vibrate) {
+              navigator.vibrate([200, 100, 200]); // Padrão de vibração: vibra-pausa-vibra
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isExerciseRestRunning, exerciseRestTimer]);
+
+  // Listener para iniciar o timer de descanso automaticamente
+  useEffect(() => {
+    const handleStartRestTimer = (event: CustomEvent) => {
+      if (event.detail.exerciseId === exercise.id) {
+        startRestTimer();
+      }
+    };
+
+    window.addEventListener("startRestTimer", handleStartRestTimer as EventListener);
+    return () => window.removeEventListener("startRestTimer", handleStartRestTimer as EventListener);
+  }, [exercise.id, exercise.restSeconds]);
+
+  const startRestTimer = () => {
+    if (exercise.restSeconds) {
+      setExerciseRestTimer(exercise.restSeconds);
+      setIsExerciseRestRunning(true);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Verifica se todas as séries foram completadas
+  const allSetsCompleted = exercise.sets.length > 0 && exercise.sets.every(set => set.completed);
+  const completedSetsCount = exercise.sets.filter(set => set.completed).length;
+
   return (
-    <div className="bg-neutral-dark-03 rounded-lg p-4 space-y-4">
-      {/* Cabeçalho do Exercício */}
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <h3 className="font-bold text-lg">{exercise.exerciseName}</h3>
-          {exercise.restSeconds && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-              <Timer size={14} />
-              Tempo de Descanso: {exercise.restSeconds}s
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Campo de Notas */}
-      <Textarea
-        placeholder="Adicionar notas aqui..."
-        value={exercise.notes || ""}
-        onChange={(e) => onUpdateNotes(exercise.id, e.target.value)}
-        className="min-h-[60px]"
-      />
-
-      {/* Tabela de Séries */}
-      <div className="space-y-2">
-        <div className="grid grid-cols-5 gap-2 text-xs font-bold text-muted-foreground">
-          <span>SÉRIE</span>
-          <span>ANTERIOR</span>
-          <span>KG</span>
-          <span>REPS</span>
-          <span className="text-center">✓</span>
-        </div>
-
-        {/* Séries (completadas e pendentes) */}
-        <AnimatePresence mode="popLayout">
-          {exercise.sets.map((set) => (
-            <SetRow
-              key={set.id}
-              set={set}
-              onRegisterSet={onRegisterSet}
-              exerciseId={exercise.id}
-              restSeconds={exercise.restSeconds}
-            />
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {/* Botão Adicionar Série */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full"
-        onClick={() => onAddSet(exercise.id, exercise.restSeconds)}
+    <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
+      {/* Cabeçalho do Exercício - Clicável para colapsar */}
+      <div
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-neutral-dark-02/50 transition-colors"
+        onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        <Plus size={16} className="mr-2" />
-        Adicionar Série
-      </Button>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <motion.div
+            animate={{ rotate: isCollapsed ? 0 : 90 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
+          </motion.div>
+
+          <div className="flex-1 min-w-0">
+            <h3 className={`font-bold text-lg ${isCollapsed ? 'truncate' : ''}`} title={exercise.exerciseName}>
+              {exercise.exerciseName}
+            </h3>
+            {isCollapsed && (
+              <p className="text-xs text-muted-foreground">
+                {completedSetsCount}/{exercise.sets.length} séries
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Timer de descanso - Retângulo com tempo - Apenas quando expandido */}
+        {!isCollapsed && exercise.restSeconds && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className={`h-auto px-3 py-1.5 rounded border transition-all flex-shrink-0 ${exerciseRestTimer > 0
+              ? 'bg-primary/10 border-primary hover:bg-primary/20'
+              : 'bg-neutral-dark-01 border-neutral-dark-03'
+              }`}
+            onClick={(e) => {
+              e.stopPropagation(); // Previne colapsar ao clicar no timer
+              if (exerciseRestTimer > 0) {
+                setExerciseRestTimer(0);
+                setIsExerciseRestRunning(false);
+              } else {
+                startRestTimer();
+              }
+            }}
+          >
+            <span className={`text-sm font-mono font-bold ${exerciseRestTimer > 0 ? 'text-primary' : 'text-muted-foreground'
+              }`}>
+              {exerciseRestTimer > 0 ? formatTime(exerciseRestTimer) : `${exercise.restSeconds}s`}
+            </span>
+            <span className="ml-2">
+              {exerciseRestTimer > 0 ? <Trash2 size={14} /> : <Play size={14} />}
+            </span>
+          </Button>
+        )}
+      </div>
+
+      {/* Conteúdo colapsável */}
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 space-y-4">
+              {/* Tabela de Séries */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-4 gap-2 text-xs font-bold text-muted-foreground">
+                  <span>SÉRIE</span>
+                  <span>ANTERIOR</span>
+                  <span className="text-center">KG</span>
+                  <span className="text-center">REPS</span>
+                </div>
+
+                {/* Séries (completadas e pendentes) */}
+                <AnimatePresence mode="popLayout">
+                  {exercise.sets.map((set) => (
+                    <SetRow
+                      key={set.id}
+                      set={set}
+                      onRegisterSet={onRegisterSet}
+                      exerciseId={exercise.id}
+                      restSeconds={exercise.restSeconds}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              {/* Botões de ação */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => onAddSet(exercise.id, exercise.restSeconds)}
+                >
+                  <Plus size={16} className="mr-2" />
+                  Adicionar Série
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-shrink-0 px-3"
+                  onClick={() => setShowNotes(!showNotes)}
+                >
+                  <Edit2 size={16} />
+                  <span>
+                    Notas
+                  </span>
+                </Button>
+              </div>
+
+              {/* Campo de Notas - Animado */}
+              <AnimatePresence>
+                {showNotes && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Textarea
+                      placeholder="Adicionar notas aqui..."
+                      value={exercise.notes || ""}
+                      onChange={(e) => onUpdateNotes(exercise.id, e.target.value)}
+                      className="min-h-[60px]"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -623,6 +1031,7 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
 
   const handleDelete = () => {
     const updatedWorkout = getLocalWorkout();
@@ -646,47 +1055,55 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
-        drag="x"
-        dragConstraints={{ left: -100, right: 0 }}
-        dragElastic={0.2}
-        onDragStart={() => setIsDragging(true)}
-        onDragEnd={(_, info) => {
-          setIsDragging(false);
-          // Se arrastou mais de 80px para a esquerda, deleta
-          if (info.offset.x < -80) {
-            handleDelete();
-          }
-        }}
-        className="relative"
+        className="relative overflow-hidden isolate"
       >
-        {/* Fundo vermelho com ícone de lixeira */}
+        {/* Fundo vermelho (esquerda) - deletar */}
         <motion.div
-          className="absolute inset-0 bg-red-500/20 rounded flex items-center justify-end pr-4"
-          animate={
-            isDragging ? { backgroundColor: "rgba(239, 68, 68, 0.3)" } : {}
-          }
+          className="absolute inset-0 bg-red-500/20 rounded flex items-center justify-end pr-4 pointer-events-none -z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isDragging && dragOffset < -20 ? 1 : 0 }}
+          transition={{ duration: 0.2 }}
         >
-          <motion.div
-            animate={
-              isDragging
-                ? {
-                    scale: [1, 1.2, 1],
-                    transition: { repeat: Infinity, duration: 0.6 },
-                  }
-                : {}
-            }
-          >
-            <Trash2 size={16} className="text-red-500" />
-          </motion.div>
+          <Trash2 size={16} className="text-red-500" />
+        </motion.div>
+
+        {/* Fundo azul (direita) - editar */}
+        <motion.div
+          className="absolute inset-0 bg-blue-500/20 rounded flex items-center justify-start pl-4 pointer-events-none -z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isDragging && dragOffset > 20 ? 1 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Edit2 size={16} className="text-blue-500" />
         </motion.div>
 
         {/* Conteúdo da série */}
         <motion.div
-          className="grid grid-cols-5 gap-2 items-center bg-neutral-dark-03 relative z-10"
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragStart={() => setIsDragging(true)}
+          onDrag={(_, info) => setDragOffset(info.offset.x)}
+          onDragEnd={(_, info) => {
+            setIsDragging(false);
+            setDragOffset(0);
+            // Se arrastou mais de 80px para a esquerda, deleta
+            if (info.offset.x < -80) {
+              handleDelete();
+            }
+            // Se arrastou mais de 80px para a direita, volta para modo editável
+            else if (info.offset.x > 80) {
+              setEditData({ load: set.load, reps: set.reps });
+              setIsEditing(true);
+            }
+          }}
+          animate={{ x: 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          className="grid grid-cols-4 gap-2 items-center bg-neutral-dark-03 relative z-10 py-4"
           whileTap={{ scale: 0.98 }}
         >
-          <div className="flex items-center gap-1">
-            <GripVertical size={14} className="text-muted-foreground/30" />
+          <div className="flex items-center gap-1.5">
+            <GripVertical size={18} className="text-muted-foreground/60" />
             <span className="text-sm font-bold">{set.setNumber}</span>
           </div>
           <span className="text-sm text-muted-foreground">
@@ -694,22 +1111,8 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
               ? `${set.previousLoad}kg x ${set.previousReps}`
               : "-"}
           </span>
-          <span className="text-sm font-mono">{set.load || "-"}kg</span>
-          <span className="text-sm font-mono">{set.reps || "-"}</span>
-          <div className="flex justify-center gap-1">
-            <Check size={16} className="text-green-500" />
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              onClick={() => {
-                setEditData({ load: set.load, reps: set.reps });
-                setIsEditing(true);
-              }}
-            >
-              <Edit2 size={12} />
-            </Button>
-          </div>
+          <span className="text-sm font-mono font-bold text-green-500 text-center">{set.load || "-"}kg</span>
+          <span className="text-sm font-mono font-bold text-green-500 text-center">{set.reps || "-"}</span>
         </motion.div>
       </motion.div>
     );
@@ -722,84 +1125,45 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
-      drag="x"
-      dragConstraints={{ left: -100, right: 0 }}
-      dragElastic={0.2}
-      onDragStart={() => setIsDragging(true)}
-      onDragEnd={(_, info) => {
-        setIsDragging(false);
-        // Se arrastou mais de 80px para a esquerda, deleta
-        if (info.offset.x < -80) {
-          handleDelete();
-        }
-      }}
-      className="relative"
+      className="relative overflow-hidden isolate"
     >
-      {/* Fundo vermelho com ícone de lixeira */}
+      {/* Fundo vermelho (esquerda) com ícone de lixeira */}
       <motion.div
-        className="absolute inset-0 bg-red-500/20 rounded flex items-center justify-end pr-4"
-        animate={
-          isDragging ? { backgroundColor: "rgba(239, 68, 68, 0.3)" } : {}
-        }
+        className="absolute inset-0 bg-red-500/20 rounded flex items-center justify-end pr-4 pointer-events-none -z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isDragging && dragOffset < -20 ? 1 : 0 }}
+        transition={{ duration: 0.2 }}
       >
-        <motion.div
-          animate={
-            isDragging
-              ? {
-                  scale: [1, 1.2, 1],
-                  transition: { repeat: Infinity, duration: 0.6 },
-                }
-              : {}
-          }
-        >
-          <Trash2 size={16} className="text-red-500" />
-        </motion.div>
+        <Trash2 size={16} className="text-red-500" />
+      </motion.div>
+
+      {/* Fundo verde (direita) com ícone de check */}
+      <motion.div
+        className="absolute inset-0 bg-green-500/20 rounded flex items-center justify-start pl-4 pointer-events-none -z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isDragging && dragOffset > 20 ? 1 : 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Check size={20} className="text-green-500" />
       </motion.div>
 
       {/* Conteúdo da série */}
       <motion.div
-        className="grid grid-cols-5 gap-2 items-center bg-neutral-dark-03 relative z-10"
-        whileTap={{ scale: 0.98 }}
-      >
-        <div className="flex items-center gap-1">
-          <GripVertical size={14} className="text-muted-foreground/30" />
-          <span className="text-sm font-bold">{set.setNumber}</span>
-        </div>
-        <span className="text-sm text-muted-foreground">
-          {set.previousLoad && set.previousReps
-            ? `${set.previousLoad}kg x ${set.previousReps}`
-            : "-"}
-        </span>
-        <Input
-          type="number"
-          placeholder={set.previousLoad ? `${set.previousLoad}kg` : "kg"}
-          className="h-8 text-sm"
-          value={editData.load || ""}
-          onChange={(e) =>
-            setEditData((prev) => ({
-              ...prev,
-              load: parseFloat(e.target.value) || undefined,
-            }))
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragStart={() => setIsDragging(true)}
+        onDrag={(_, info) => setDragOffset(info.offset.x)}
+        onDragEnd={(_, info) => {
+          setIsDragging(false);
+          setDragOffset(0);
+          // Se arrastou mais de 80px para a esquerda, deleta
+          if (info.offset.x < -80) {
+            handleDelete();
           }
-        />
-        <Input
-          type="number"
-          placeholder={set.previousReps ? `${set.previousReps}` : "reps"}
-          className="h-8 text-sm"
-          value={editData.reps || ""}
-          onChange={(e) =>
-            setEditData((prev) => ({
-              ...prev,
-              reps: parseInt(e.target.value) || undefined,
-            }))
-          }
-        />
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-8 w-full p-0"
-          onClick={() => {
-            // Atualiza a série existente com os dados preenchidos
+          // Se arrastou mais de 80px para a direita, completa
+          else if (info.offset.x > 80) {
+            // Atualiza a série com os dados preenchidos e marca como completa
             const updatedWorkout = getLocalWorkout();
             if (!updatedWorkout) return;
 
@@ -817,6 +1181,9 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
             const finalLoad = editData.load || set.previousLoad;
             const finalReps = editData.reps || set.previousReps;
 
+            // Verifica se já estava completada (vindo de edição)
+            const wasAlreadyCompleted = set.completed;
+
             updatedWorkout.exercises[exerciseIndex].sets[setIndex] = {
               ...set,
               load: finalLoad,
@@ -826,13 +1193,55 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
             };
 
             saveLocalWorkout(updatedWorkout);
-            setIsEditing(false); // Sai do modo de edição
-            // Força re-render do componente pai
+            setIsEditing(false);
             window.dispatchEvent(new Event("storage"));
-          }}
-        >
-          <Check size={16} />
-        </Button>
+
+            // Inicia o timer de descanso automaticamente apenas se for nova conclusão
+            if (!wasAlreadyCompleted && restSeconds && restSeconds > 0) {
+              window.dispatchEvent(new CustomEvent("startRestTimer", {
+                detail: { exerciseId }
+              }));
+            }
+          }
+        }}
+        animate={{ x: 0 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        className="grid grid-cols-4 gap-2 items-center bg-neutral-dark-03 relative z-10 py-4"
+        whileTap={{ scale: 0.98 }}
+      >
+        <div className="flex items-center gap-1.5">
+          <GripVertical size={18} className="text-muted-foreground/60" />
+          <span className="text-sm font-bold">{set.setNumber}</span>
+        </div>
+        <span className="text-sm text-muted-foreground">
+          {set.previousLoad && set.previousReps
+            ? `${set.previousLoad}kg x ${set.previousReps}`
+            : "-"}
+        </span>
+        <Input
+          type="number"
+          placeholder={set.previousLoad ? `${set.previousLoad}kg` : "kg"}
+          className="h-8 text-sm text-center"
+          value={editData.load || ""}
+          onChange={(e) =>
+            setEditData((prev) => ({
+              ...prev,
+              load: parseFloat(e.target.value) || undefined,
+            }))
+          }
+        />
+        <Input
+          type="number"
+          placeholder={set.previousReps ? `${set.previousReps}` : "reps"}
+          className="h-8 text-sm text-center"
+          value={editData.reps || ""}
+          onChange={(e) =>
+            setEditData((prev) => ({
+              ...prev,
+              reps: parseInt(e.target.value) || undefined,
+            }))
+          }
+        />
       </motion.div>
     </motion.div>
   );
