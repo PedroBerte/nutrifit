@@ -65,6 +65,8 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IBondService, BondService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IStorageService, StorageService>();

@@ -148,11 +148,6 @@ namespace Nutrifit.Repository
                 e.Property(x => x.CreatedAt)
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
-
-                e.HasMany(x => x.Appointments)
-                    .WithOne(a => a.CustomerProfessionalBond)
-                    .HasForeignKey(a => a.CustomerProfessionalBondId)
-                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             b.Entity<AppointmentEntity>(e =>
@@ -164,6 +159,17 @@ namespace Nutrifit.Repository
                 e.Property(x => x.CreatedAt)
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
+
+                e.Property(x => x.ScheduledAt)
+                    .HasColumnType("timestamp without time zone");
+
+                e.Property(x => x.UpdatedAt)
+                    .HasColumnType("timestamp without time zone");
+
+                e.HasOne(x => x.Address)
+                    .WithMany()
+                    .HasForeignKey(x => x.AddressId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             b.Entity<CustomerFeedbackEntity>(e =>

@@ -11,6 +11,7 @@ import Profile from "@/pages/Profile";
 import Professional from "@/pages/Professional";
 import Workout from "@/pages/Workout";
 import Students from "@/pages/Students";
+import StudentDetails from "@/pages/StudentDetails";
 import Diet from "@/pages/Diet";
 import Bond from "@/pages/Bond";
 import RoutinesList from "@/pages/RoutinesList";
@@ -47,6 +48,7 @@ export function AppRoutes() {
             <Route path="professionalsList" element={<ProfessionalsList />} />
             <Route path="professional/:id" element={<Professional />} />
             <Route path="students" element={<Students />} />
+            <Route path="students/:id" element={<StudentDetails />} />
             <Route path="diet" element={<Diet />} />
             <Route path="bond" element={<Bond />} />
             <Route path="routines" element={<RoutinesList />} />

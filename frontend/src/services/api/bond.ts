@@ -1,6 +1,19 @@
 import { api } from "@/lib/axios";
 import type { CustomerProfessionalBondType } from "@/types/professional";
+import type { ApiResponse, PaginatedResponse } from "@/types/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
+
+export interface ActiveStudentResponse {
+  bondId: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  studentPhone?: string;
+  studentDateOfBirth?: string;
+  studentSex?: string;
+  bondCreatedAt: string;
+  bondStatus: string;
+}
 
 export function useCreateBond() {
   return useMutation({
@@ -129,5 +142,43 @@ export function useDeleteBond() {
       console.error("Erro ao deletar vínculo", e);
       throw e;
     },
+  });
+}
+
+export function useGetActiveStudents(
+  page: number = 1,
+  pageSize: number = 10,
+  search: string = ""
+) {
+  return useQuery({
+    queryKey: ["getActiveStudents", page, pageSize, search],
+    queryFn: async () => {
+      const request = await api.get<
+        ApiResponse<PaginatedResponse<ActiveStudentResponse>>
+      >(
+        `/bond/active-students?page=${page}&pageSize=${pageSize}${
+          search ? `&search=${encodeURIComponent(search)}` : ""
+        }`
+      );
+      return request.data;
+    },
+    retry: 1,
+  });
+}
+
+export function useGetBondByStudentId(studentId: string) {
+  return useQuery({
+    queryKey: ["getBondByStudentId", studentId],
+    queryFn: async () => {
+      const request = await api.get<CustomerProfessionalBondType[]>(`/bond`);
+      const bonds = request.data;
+      console.log("Bonds fetched:", bonds);
+      // Encontrar o bond ativo entre o professional logado e este student
+      return bonds.find(
+        (bond) => bond.customerId === studentId && bond.status === "A"
+      );
+    },
+    enabled: !!studentId,
+    retry: 1,
   });
 }
