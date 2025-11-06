@@ -210,7 +210,7 @@ export function calculateTotalVolume(workout: LocalWorkoutSession): number {
 
 export function getTotalSets(workout: LocalWorkoutSession): number {
   return workout.exercises.reduce(
-    (total, exercise) => total + exercise.sets.length,
+    (total, exercise) => total + exercise.sets.filter(set => set.completed).length,
     0
   );
 }
