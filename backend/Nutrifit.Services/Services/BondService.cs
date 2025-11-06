@@ -2,6 +2,7 @@ using Nutrifit.Repository;
 using Nutrifit.Repository.Entities;
 using Microsoft.EntityFrameworkCore;
 using Nutrifit.Services.Services.Interfaces;
+using Nutrifit.Services.ViewModel.Response;
 
 namespace Nutrifit.Services.Services;
 
@@ -9,7 +10,7 @@ public class BondService : IBondService
 {
     private readonly NutrifitContext _context;
     private readonly IPushService _pushService;
-    
+
     public BondService(NutrifitContext context, IPushService pushService)
     {
         _context = context;
@@ -32,7 +33,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar vínculos cliente-profissional.", ex);
+            throw new Exception("Erro ao buscar vï¿½nculos cliente-profissional.", ex);
         }
     }
 
@@ -49,15 +50,15 @@ public class BondService : IBondService
                     .ThenInclude(s => s.Profile)
                 .Include(x => x.Appointments)
                 .FirstOrDefaultAsync(x => x.Id == id);
-                
+
             if (bond is null)
-                throw new InvalidOperationException("Vínculo cliente-profissional não encontrado.");
-                
+                throw new InvalidOperationException("Vï¿½nculo cliente-profissional nï¿½o encontrado.");
+
             return bond;
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar vínculo cliente-profissional.", ex);
+            throw new Exception("Erro ao buscar vï¿½nculo cliente-profissional.", ex);
         }
     }
 
@@ -68,28 +69,28 @@ public class BondService : IBondService
 
             var validation = await _context.CustomerProfessionalBonds.FirstOrDefaultAsync(x => x.CustomerId == bond.CustomerId && x.ProfessionalId == bond.ProfessionalId);
             if (validation is not null)
-                throw new InvalidDataException("Já existe uma solicitação/vínculo entre os associados.");
+                throw new InvalidDataException("Jï¿½ existe uma solicitaï¿½ï¿½o/vï¿½nculo entre os associados.");
 
             bond.Id = Guid.NewGuid();
             bond.CreatedAt = DateTime.UtcNow;
             bond.Status = "P";
-            
+
             _context.CustomerProfessionalBonds.Add(bond);
             await _context.SaveChangesAsync();
 
             var pushMessage = new
             {
-                title = "Nova solicitação!",
-                body = $"Você tem uma nova proposta!"
+                title = "Nova solicitaï¿½ï¿½o!",
+                body = $"Vocï¿½ tem uma nova proposta!"
             };
 
             await _pushService.SendToUserAsync(bond.ProfessionalId, pushMessage);
-            
+
             return bond;
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao criar vínculo cliente-profissional.", ex);
+            throw new Exception("Erro ao criar vï¿½nculo cliente-profissional.", ex);
         }
     }
 
@@ -99,17 +100,17 @@ public class BondService : IBondService
         {
             var existing = await _context.CustomerProfessionalBonds.FindAsync(bond.Id);
             if (existing == null)
-                throw new InvalidOperationException("Vínculo cliente-profissional não encontrado para atualização.");
-                
+                throw new InvalidOperationException("Vï¿½nculo cliente-profissional nï¿½o encontrado para atualizaï¿½ï¿½o.");
+
             _context.Entry(existing).CurrentValues.SetValues(bond);
             existing.UpdatedAt = DateTime.UtcNow;
-            
+
             await _context.SaveChangesAsync();
             return existing;
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao atualizar vínculo cliente-profissional.", ex);
+            throw new Exception("Erro ao atualizar vï¿½nculo cliente-profissional.", ex);
         }
     }
 
@@ -119,14 +120,14 @@ public class BondService : IBondService
         {
             var bond = await _context.CustomerProfessionalBonds.FindAsync(id);
             if (bond == null)
-                throw new InvalidOperationException("Vínculo cliente-profissional não encontrado para exclusão.");
-                
+                throw new InvalidOperationException("Vï¿½nculo cliente-profissional nï¿½o encontrado para exclusï¿½o.");
+
             _context.CustomerProfessionalBonds.Remove(bond);
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao excluir vínculo cliente-profissional.", ex);
+            throw new Exception("Erro ao excluir vï¿½nculo cliente-profissional.", ex);
         }
     }
 
@@ -148,7 +149,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar vínculos enviados pelo usuário.", ex);
+            throw new Exception("Erro ao buscar vï¿½nculos enviados pelo usuï¿½rio.", ex);
         }
     }
 
@@ -170,7 +171,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar vínculos do cliente.", ex);
+            throw new Exception("Erro ao buscar vï¿½nculos do cliente.", ex);
         }
     }
 
@@ -192,7 +193,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar vínculos do profissional.", ex);
+            throw new Exception("Erro ao buscar vï¿½nculos do profissional.", ex);
         }
     }
 
@@ -214,7 +215,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar vínculos do usuário.", ex);
+            throw new Exception("Erro ao buscar vï¿½nculos do usuï¿½rio.", ex);
         }
     }
 
@@ -236,7 +237,73 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar vínculos recebidos pelo usuário.", ex);
+            throw new Exception("Erro ao buscar vï¿½nculos recebidos pelo usuï¿½rio.", ex);
+        }
+    }
+
+    public async Task<ApiResponse> GetActiveStudentsAsync(Guid professionalId, int page, int pageSize, string? searchTerm)
+    {
+        try
+        {
+            // Query base: vÃ­nculos ativos onde o usuÃ¡rio Ã© o profissional
+            var query = _context.CustomerProfessionalBonds
+                .Include(x => x.Customer)
+                    .ThenInclude(c => c.Profile)
+                .Include(x => x.Customer.Address)
+                .Where(x => x.ProfessionalId == professionalId && x.Status == "A");
+
+            // Aplicar busca por nome, email ou telefone
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var searchLower = searchTerm.ToLower();
+                query = query.Where(x =>
+                    x.Customer.Name.ToLower().Contains(searchLower) ||
+                    x.Customer.Email.ToLower().Contains(searchLower) ||
+                    (x.Customer.PhoneNumber != null && x.Customer.PhoneNumber.Contains(searchTerm))
+                );
+            }
+
+            // Contar total de itens
+            var totalItems = await query.CountAsync();
+
+            // Aplicar paginaÃ§Ã£o
+            var bonds = await query
+                .OrderBy(x => x.Customer.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Mapear para DTO simplificado focado no aluno
+            var students = bonds.Select(b => new
+            {
+                bondId = b.Id,
+                studentId = b.CustomerId,
+                studentName = b.Customer.Name,
+                studentEmail = b.Customer.Email,
+                studentPhone = b.Customer.PhoneNumber,
+                studentDateOfBirth = b.Customer.DateOfBirth,
+                studentSex = b.Customer.Sex,
+                bondCreatedAt = b.CreatedAt,
+                bondStatus = b.Status
+            }).ToList();
+
+            var response = new
+            {
+                items = students,
+                pagination = new
+                {
+                    currentPage = page,
+                    pageSize = pageSize,
+                    totalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                    totalCount = totalItems
+                }
+            };
+
+            return ApiResponse.CreateSuccess("Alunos encontrados.", response);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse.CreateFailure($"Erro ao buscar alunos: {ex.Message}");
         }
     }
 }

@@ -26,7 +26,7 @@ public class BondController : ControllerBase
         {
             var bonds = await _service.GetAllAsync();
             if (bonds == null)
-                return StatusCode(500, "Erro ao buscar vínculos cliente-profissional.");
+                return StatusCode(500, "Erro ao buscar vï¿½nculos cliente-profissional.");
 
             if (bonds.Count == 0)
                 return NoContent();
@@ -40,7 +40,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna os vínculos enviados pelo usuário autenticado
+    /// Retorna os vï¿½nculos enviados pelo usuï¿½rio autenticado
     /// </summary>
     [HttpGet("sent")]
     public async Task<ActionResult<List<BondDto>>> GetSent()
@@ -49,7 +49,7 @@ public class BondController : ControllerBase
         {
             var userId = Guid.Parse(User.FindFirst("id")!.Value);
             var bonds = await _service.GetBySenderIdAsync(userId);
-            
+
             if (bonds.Count == 0)
                 return NoContent();
 
@@ -62,7 +62,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna os vínculos recebidos pelo usuário autenticado (onde ele não é o sender)
+    /// Retorna os vï¿½nculos recebidos pelo usuï¿½rio autenticado (onde ele nï¿½o ï¿½ o sender)
     /// </summary>
     [HttpGet("received")]
     public async Task<ActionResult<List<BondDto>>> GetReceived()
@@ -71,7 +71,7 @@ public class BondController : ControllerBase
         {
             var userId = Guid.Parse(User.FindFirst("id")!.Value);
             var bonds = await _service.GetReceivedByUserIdAsync(userId);
-            
+
             if (bonds.Count == 0)
                 return NoContent();
 
@@ -84,7 +84,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna os vínculos onde o usuário autenticado é o cliente
+    /// Retorna os vï¿½nculos onde o usuï¿½rio autenticado ï¿½ o cliente
     /// </summary>
     [HttpGet("as-customer")]
     public async Task<ActionResult<List<BondDto>>> GetAsCustomer()
@@ -93,7 +93,7 @@ public class BondController : ControllerBase
         {
             var userId = Guid.Parse(User.FindFirst("id")!.Value);
             var bonds = await _service.GetByCustomerIdAsync(userId);
-            
+
             if (bonds.Count == 0)
                 return NoContent();
 
@@ -106,7 +106,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna os vínculos onde o usuário autenticado é o profissional
+    /// Retorna os vï¿½nculos onde o usuï¿½rio autenticado ï¿½ o profissional
     /// </summary>
     [HttpGet("as-professional")]
     public async Task<ActionResult<List<BondDto>>> GetAsProfessional()
@@ -115,7 +115,7 @@ public class BondController : ControllerBase
         {
             var userId = Guid.Parse(User.FindFirst("id")!.Value);
             var bonds = await _service.GetByProfessionalIdAsync(userId);
-            
+
             if (bonds.Count == 0)
                 return NoContent();
 
@@ -128,7 +128,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna todos os vínculos do usuário autenticado (como cliente ou profissional)
+    /// Retorna todos os vï¿½nculos do usuï¿½rio autenticado (como cliente ou profissional)
     /// </summary>
     [HttpGet("my-bonds")]
     public async Task<ActionResult<List<BondDto>>> GetMyBonds()
@@ -137,11 +137,33 @@ public class BondController : ControllerBase
         {
             var userId = Guid.Parse(User.FindFirst("id")!.Value);
             var bonds = await _service.GetByUserIdAsync(userId);
-            
+
             if (bonds.Count == 0)
                 return NoContent();
 
             return Ok(bonds.Adapt<List<BondDto>>());
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Retorna os alunos ativos do profissional autenticado com paginaÃ§Ã£o e busca
+    /// </summary>
+    [HttpGet("active-students")]
+    public async Task<IActionResult> GetActiveStudents([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
+    {
+        try
+        {
+            var professionalId = Guid.Parse(User.FindFirst("id")!.Value);
+            var response = await _service.GetActiveStudentsAsync(professionalId, page, pageSize, search);
+
+            if (!response.Success)
+                return BadRequest(response);
+
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -175,7 +197,7 @@ public class BondController : ControllerBase
     public async Task<ActionResult<BondDto>> Create([FromBody] BondDto bondDto)
     {
         if (bondDto == null)
-            return BadRequest("Vínculo cliente-profissional inválido.");
+            return BadRequest("Vï¿½nculo cliente-profissional invï¿½lido.");
 
         try
         {
@@ -193,7 +215,7 @@ public class BondController : ControllerBase
     public async Task<ActionResult<BondDto>> Update(Guid id, [FromBody] BondDto bondDto)
     {
         if (bondDto == null || id != bondDto.Id)
-            return BadRequest("Id do vínculo cliente-profissional não corresponde ao parâmetro.");
+            return BadRequest("Id do vï¿½nculo cliente-profissional nï¿½o corresponde ao parï¿½metro.");
 
         try
         {
