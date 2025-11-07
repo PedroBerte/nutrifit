@@ -30,7 +30,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Calendar, Plus, Edit, Settings, FileX2 } from "lucide-react";
+import { Calendar, Plus, Edit, Settings, FileX2, Check, Loader2 } from "lucide-react";
 import { GOAL_OPTIONS, DIFFICULTY_OPTIONS } from "@/constants/routine";
 import { Spinner } from "@/components/ui/spinner";
 import { motion } from "motion/react";
@@ -65,6 +65,8 @@ export default function RoutineDetails() {
     useGetWorkoutTemplatesByRoutine(routineId);
   const updateRoutine = useUpdateRoutine();
   const [isWeeksDrawerOpen, setIsWeeksDrawerOpen] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalData, setOriginalData] = useState<UpdateRoutineFormData | null>(null);
   const toast = useToast();
 
   const form = useForm<UpdateRoutineFormData>({
@@ -80,6 +82,8 @@ export default function RoutineDetails() {
         weeks: routine.data.weeks || undefined,
       };
       form.reset(formData, { keepDefaultValues: false });
+      setOriginalData(formData); // Guarda os dados originais
+      setHasChanges(false); // Reseta o estado de mudanças
 
       const goal = routine.data.goal || "";
       const difficulty = routine.data.difficulty || "";
@@ -89,6 +93,23 @@ export default function RoutineDetails() {
       }, 0);
     }
   }, [routine?.data]);
+
+  // Observa mudanças no formulário
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      if (!originalData) return;
+      
+      // Compara se há diferenças entre os valores atuais e os originais
+      const isDifferent = 
+        values.title !== originalData.title ||
+        values.goal !== originalData.goal ||
+        values.difficulty !== originalData.difficulty ||
+        values.weeks !== originalData.weeks;
+      
+      setHasChanges(isDifferent);
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch, originalData]);
 
   const handleSubmit = async (data: UpdateRoutineFormData) => {
     if (!routineId) return;
@@ -105,22 +126,28 @@ export default function RoutineDetails() {
       });
 
       if (response.success) {
-        toast.success("Rotina atualizada com sucesso!");
-        navigate("/routines");
+        // Atualiza os dados originais após salvar
+        setOriginalData(data);
+        setHasChanges(false);
+        toast.success("Alterações salvas com sucesso!");
       } else {
-        toast.error(response.message || "Erro ao atualizar rotina");
+        toast.error(response.message || "Erro ao salvar alterações");
       }
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
-        "Erro ao atualizar rotina";
+        "Erro ao salvar alterações";
       toast.error(errorMessage);
     }
   };
 
   const handleCancel = () => {
-    navigate(-1);
+    if (originalData) {
+      // Restaura os valores originais
+      form.reset(originalData);
+      setHasChanges(false);
+    }
   };
 
   const handleNewWorkout = () => {
@@ -333,24 +360,39 @@ export default function RoutineDetails() {
                   )}
                 />
 
-                {/* Botões de ação */}
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    type="button"
-                    className="flex-1 bg-primary-green-01 hover:bg-primary-green-02"
-                    onClick={handleCancel}
-                    disabled={updateRoutine.isPending}
+                {/* Botões aparecem apenas quando há mudanças */}
+                {hasChanges && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex gap-3 pt-4"
                   >
-                    Cancelar
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={updateRoutine.isPending}
-                    className="flex-1"
-                  >
-                    {updateRoutine.isPending ? "Salvando..." : "Salvar"}
-                  </Button>
-                </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancel}
+                      disabled={updateRoutine.isPending}
+                      className="flex-1"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={updateRoutine.isPending}
+                      className="flex-1"
+                    >
+                      {updateRoutine.isPending ? (
+                        <>
+                          <Loader2 className="animate-spin mr-2" size={16} />
+                          Salvando...
+                        </>
+                      ) : (
+                        "Salvar"
+                      )}
+                    </Button>
+                  </motion.div>
+                )}
               </form>
             </Form>
           </div>

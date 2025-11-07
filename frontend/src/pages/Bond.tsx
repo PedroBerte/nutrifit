@@ -19,6 +19,9 @@ import React, { useState } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion } from "motion/react";
 
+import PersonalSemVinculo from "@/assets/personal/PersonalSemVinculo.png";
+
+
 export default function Bond() {
   const { data, isLoading, refetch } = useGetAllBonds();
   const { mutate: updateBond } = useUpdateBond();
@@ -94,7 +97,7 @@ export default function Bond() {
       className="flex flex-1 py-4 flex-col gap-3"
     >
       <p className="font-bold text-2xl">Vínculos</p>
-      <p className="font-bold">Vínculos ativos:</p>
+      <p className="font-bold">Vínculos ativos</p>
       <section className="bg-neutral-dark-03 rounded-sm p-4 space-y-3">
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
@@ -127,7 +130,7 @@ export default function Bond() {
           <div>Nenhum vínculo ativo.</div>
         )}
       </section>
-      <p className="font-bold">Vínculos solicitados:</p>
+      <p className="font-bold">Vínculos solicitados</p>
 
       <section className="bg-neutral-dark-03 rounded-sm p-4 space-y-3">
         {isLoading ? (
@@ -164,7 +167,14 @@ export default function Bond() {
               )
           )
         ) : (
-          <div>Nenhum vínculo solicitado.</div>
+          <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center py-5 gap-2">
+            <div>Nenhum vínculo solicitado.</div>
+            <img
+              src={PersonalSemVinculo}
+              alt="Nenhum vínculo encontrado"
+              className="w-64 object-contain"
+            />
+          </div>
         )}
       </section>
 
