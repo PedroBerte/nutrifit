@@ -14,7 +14,8 @@ export default function BottomBar() {
       className="fixed inset-x-0 bottom-0 z-50 flex justify-center pb-[calc(env(safe-area-inset-bottom)+1rem)]"
       aria-label="Navegação principal"
     >
-      <div className="flex w-2/4 max-w-md mx-auto items-center justify-between bg-neutral-dark-02/90 backdrop-blur rounded-4xl px-4 py-2 shadow-lg">
+      {/* <div className="flex w-1/4 max-w-md mx-auto items-center justify-between bg-neutral-dark-02/90 backdrop-blur rounded-4xl px-4 py-2 shadow-lg"> */}
+      <div className="flex gap-2 max-w-md mx-auto items-center justify-between bg-neutral-dark-02/90 backdrop-blur rounded-4xl px-4 py-2 shadow-lg">
         <button
           onClick={() => navigate("/workout")}
           className={`flex flex-col items-center justify-center p-3 rounded-full transition-all ${
@@ -27,7 +28,7 @@ export default function BottomBar() {
           <Dumbbell size={32} />
         </button>
 
-        <button
+        {/* <button
           onClick={() => navigate("/diet")}
           className={`flex flex-col items-center justify-center p-3 rounded-full transition-all ${
             pathname.startsWith("/diet")
@@ -37,7 +38,7 @@ export default function BottomBar() {
           aria-label="Nutrição"
         >
           <Apple size={32} />
-        </button>
+        </button> */}
 
         <button
           onClick={() => navigate("/profile")}
