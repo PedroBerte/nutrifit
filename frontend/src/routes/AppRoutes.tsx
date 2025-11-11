@@ -20,6 +20,7 @@ import RoutineDetails from "@/pages/RoutineDetails";
 import { NewWorkoutTemplate } from "@/pages/NewWorkoutTemplate";
 import { EditWorkoutTemplate } from "@/pages/EditWorkoutTemplate";
 import WorkoutSession from "@/pages/WorkoutSession";
+import WorkoutSessionDetails from "@/pages/WorkoutSessionDetails";
 import ProfessionalsList from "@/pages/ProfessionalsList";
 import PersonalHome from "@/pages/PersonalHome";
 
@@ -49,6 +50,10 @@ export function AppRoutes() {
             <Route path="professional/:id" element={<Professional />} />
             <Route path="students" element={<Students />} />
             <Route path="students/:id" element={<StudentDetails />} />
+            <Route
+              path="students/:id/workouts/:sessionId"
+              element={<WorkoutSessionDetails />}
+            />
             <Route path="diet" element={<Diet />} />
             <Route path="bond" element={<Bond />} />
             <Route path="routines" element={<RoutinesList />} />

@@ -6,6 +6,7 @@ import {
   useGetAppointmentsByBondId,
   useUpdateAppointment,
 } from "@/services/api/appointment";
+import { useGetCustomerWorkoutHistory } from "@/services/api/workoutSession";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,8 @@ import {
   Video,
   X,
   Clock,
+  Dumbbell,
+  TrendingUp,
 } from "lucide-react";
 import {
   Drawer,
@@ -47,6 +50,8 @@ export default function StudentDetails() {
   const { data: bond } = useGetBondByStudentId(id || "");
   const { data: appointments, isLoading: loadingAppointments } =
     useGetAppointmentsByBondId(bond?.id || "");
+  const { data: workoutsData, isLoading: loadingWorkouts } =
+    useGetCustomerWorkoutHistory(id || "");
   const { mutate: updateBond } = useUpdateBond();
   const { mutate: updateAppointment } = useUpdateAppointment();
 
@@ -174,7 +179,7 @@ export default function StudentDetails() {
     <div className="flex flex-1 flex-col h-full bg-neutral-dark-01">
       {/* Tabs */}
       <div className="flex-1 flex flex-col mt-5">
-        <div className="grid w-full grid-cols-2 gap-2 bg-neutral-dark-03 p-1 rounded-lg mb-4">
+        <div className="grid w-full grid-cols-3 gap-2 bg-neutral-dark-03 p-1 rounded-lg mb-4">
           <button
             onClick={() => setActiveTab("info")}
             className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -194,6 +199,16 @@ export default function StudentDetails() {
             }`}
           >
             Encontros
+          </button>
+          <button
+            onClick={() => setActiveTab("workouts")}
+            className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              activeTab === "workouts"
+                ? "bg-primary text-white"
+                : "text-neutral-white-02 hover:text-neutral-white-01"
+            }`}
+          >
+            Treinos
           </button>
         </div>
 
@@ -428,6 +443,121 @@ export default function StudentDetails() {
                             {appointment.address.state}
                           </p>
                           <p>CEP: {appointment.address.zipCode}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === "workouts" && (
+            <motion.div
+              key="workouts"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-3 h-full"
+            >
+              {loadingWorkouts ? (
+                <div className="flex items-center justify-center h-32">
+                  <p className="text-neutral-white-02">Carregando...</p>
+                </div>
+              ) : !workoutsData?.data || workoutsData?.data?.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32">
+                  <Dumbbell size={48} className="text-neutral-white-02 mb-4" />
+                  <p className="text-neutral-white-02 text-center">
+                    Nenhum treino realizado
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {workoutsData.data?.map((workout) => (
+                    <div
+                      key={workout.id}
+                      onClick={() =>
+                        navigate(`/students/${id}/workouts/${workout.id}`)
+                      }
+                      className="bg-neutral-dark-03 rounded-lg p-4 space-y-3 cursor-pointer hover:bg-neutral-dark-02/50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-semibold text-lg">
+                            {workout.workoutTemplateTitle}
+                          </p>
+                          <p className="text-xs text-neutral-white-02">
+                            {new Date(workout.startedAt).toLocaleString(
+                              "pt-BR",
+                              {
+                                dateStyle: "short",
+                                timeStyle: "short",
+                              }
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              workout.status === "C"
+                                ? "bg-green-500/20 text-green-500"
+                                : workout.status === "IP"
+                                ? "bg-blue-500/20 text-blue-500"
+                                : "bg-gray-500/20 text-gray-500"
+                            }`}
+                          >
+                            {workout.status === "C"
+                              ? "Completo"
+                              : workout.status === "IP"
+                              ? "Em progresso"
+                              : "Cancelado"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3 text-sm text-neutral-white-02">
+                        {workout.durationMinutes && (
+                          <div className="flex items-center gap-1">
+                            <Clock size={14} />
+                            <span>{workout.durationMinutes} min</span>
+                          </div>
+                        )}
+
+                        {workout.totalVolume && (
+                          <div className="flex items-center gap-1">
+                            <TrendingUp size={14} />
+                            <span>{workout.totalVolume.toFixed(0)} kg</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1">
+                          <Dumbbell size={14} />
+                          <span>
+                            {workout.exercisesCompleted}/
+                            {workout.totalExercises} exercícios
+                          </span>
+                        </div>
+                      </div>
+
+                      {workout.difficultyRating && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-neutral-dark-02">
+                          <span className="text-xs text-neutral-white-02">
+                            Dificuldade:
+                          </span>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <div
+                                key={star}
+                                className={`w-3 h-3 rounded-full ${
+                                  star <= (workout.difficultyRating || 0)
+                                    ? "bg-primary"
+                                    : "bg-neutral-dark-02"
+                                }`}
+                              />
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

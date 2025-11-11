@@ -188,3 +188,25 @@ export function useGetPreviousExerciseData(
     retry: 1,
   });
 }
+
+// Buscar histórico de treinos de um cliente específico (para profissionais)
+export function useGetCustomerWorkoutHistory(
+  customerId: string | null | undefined,
+  page: number = 1,
+  pageSize: number = 20
+) {
+  return useQuery({
+    queryKey: ["getCustomerWorkoutHistory", customerId, page, pageSize],
+    queryFn: async () => {
+      if (!customerId) throw new Error("ID do cliente é obrigatório");
+      const request = await api.get<
+        ApiResponse<WorkoutSessionSummaryResponse[]>
+      >(
+        `/workoutSession/customer/${customerId}?page=${page}&pageSize=${pageSize}`
+      );
+      return request.data;
+    },
+    enabled: !!customerId,
+    retry: 1,
+  });
+}
