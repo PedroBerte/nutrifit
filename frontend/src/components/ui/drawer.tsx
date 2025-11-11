@@ -56,8 +56,9 @@ function DrawerContent({
 }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
   return (
     <DrawerPortal data-slot="drawer-portal">
-      <DrawerOverlay />
+      <DrawerOverlay onClick={(e) => e.stopPropagation()} />
       <DrawerPrimitive.Content
+        onClick={(e) => e.stopPropagation()}
         data-slot="drawer-content"
         className={cn(
           "group/drawer-content bg-neutral-dark-03 fixed z-50 flex h-auto flex-col",

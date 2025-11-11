@@ -75,9 +75,9 @@ export default function RoutineCard({
   };
 
   return (
-    <div 
+    <div
       className="w-full bg-neutral-dark-03 rounded-sm p-4 space-y-4 cursor-pointer hover:bg-neutral-dark-02/50 transition-colors"
-      onClick={handleDetails}
+      onClick={() => handleDetails()}
     >
       <div className="flex justify-between items-center">
         <p className="text-2xl font-bold">{title}</p>
@@ -86,9 +86,10 @@ export default function RoutineCard({
           size="sm"
           className="text-muted-foreground hover:text-destructive hover:border-destructive"
           onClick={(e) => {
-            e.stopPropagation();
             setIsDeleteDialogOpen(true);
+            e.stopPropagation();
           }}
+          type="button"
         >
           <Trash2 size={16} />
         </Button>
@@ -121,7 +122,7 @@ export default function RoutineCard({
           <BookText />
           Detalhes
         </Button>
-        <Button 
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             handleSend();
