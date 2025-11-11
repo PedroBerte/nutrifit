@@ -5,12 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { useGetMyRoutines } from "@/services/api/routine";
 import type { RoutineType } from "@/types/routine";
+import PersonalSemAtendimento from "@/assets/personal/PersonalSemAtendimento.png";
+import PersonalSemTreinosPertoValidade from "@/assets/personal/PersonalSemTreinosPertoValidade.png";
 
 export default function PersonalHome() {
   const { user } = useAuth();
   const { data: routines } = useGetMyRoutines(1, 5);
   const navigate = useNavigate();
-  console.log(routines);
 
   const getRoutineDueDate = (routine: RoutineType): Date => {
     const createdAt = new Date(routine.createdAt);
@@ -49,7 +50,7 @@ export default function PersonalHome() {
           title="Agenda"
           icon={<Calendar size={22} />}
           description="Sua agenda"
-          onClick={() => {}}
+          onClick={() => { }}
         />
         <BigButton
           title="Vínculos"
@@ -66,9 +67,13 @@ export default function PersonalHome() {
         transition={{ duration: 0.4, delay: 0.2 }}
         className="space-y-2"
       >
-        <p className="font-bold">Próximos Atendimentos:</p>
+        <p className="font-bold">Próximos Atendimentos</p>
         <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center py-5 gap-2">
-          <CalendarX2 color="green" />
+          <img
+            src={PersonalSemAtendimento}
+            alt="Nenhum atendimento agendado"
+            className="w-36 object-contain"
+          />
           <div>Nenhum atendimento agendado.</div>
         </div>
       </motion.section>
@@ -78,8 +83,8 @@ export default function PersonalHome() {
         transition={{ duration: 0.4, delay: 0.4 }}
         className="space-y-2"
       >
-        <p className="font-bold">Treinos próximos da validade:</p>
-        <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center">
+        <p className="font-bold">Treinos próximos da validade</p>
+        <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center py-5 gap-2">
           {routines?.data && routines.data.items.length > 0 ? (
             routines.data.items.map((routine) => {
               return (
@@ -93,7 +98,7 @@ export default function PersonalHome() {
                       0,
                       Math.ceil(
                         (getRoutineDueDate(routine).getTime() - Date.now()) /
-                          (1000 * 60 * 60 * 24)
+                        (1000 * 60 * 60 * 24)
                       )
                     )}{" "}
                     dias
@@ -111,8 +116,12 @@ export default function PersonalHome() {
               );
             })
           ) : (
-            <div className="py-5 space-y-2">
-              <CalendarX2 color="green" />
+            <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center gap-2 py-2">
+              <img
+                src={PersonalSemTreinosPertoValidade}
+                alt="Nenhum treino próximo da validade"
+                className="w-36 object-contain"
+              />
               <div>Nenhum treino próximo da validade.</div>
             </div>
           )}

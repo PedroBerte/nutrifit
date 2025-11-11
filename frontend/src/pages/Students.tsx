@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import genericPerson from "@/assets/generic-person.svg";
+import PersonalSemAlunos from "@/assets/personal/PersonalSemAlunos.png";
 
 export default function Students() {
   const navigate = useNavigate();
@@ -79,12 +80,24 @@ export default function Students() {
           <p className="text-muted-foreground">Carregando alunos...</p>
         </div>
       ) : students.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground">
-            {debouncedSearch
-              ? "Nenhum aluno encontrado"
-              : "Você ainda não tem alunos ativos"}
-          </p>
+        <div className="flex flex-1 items-center justify-center flex-col">
+          {!debouncedSearch &&
+            <p className="text-muted-foreground pt-4">
+              Você ainda não tem alunos ativos
+            </p>
+          }
+          {debouncedSearch &&
+            <p>
+              Nenhum aluno encontrado
+            </p>
+          }
+          {!debouncedSearch &&
+            <img
+              src={PersonalSemAlunos}
+              alt="Nenhum aluno ativo pt-2"
+              className="w-64 object-contain"
+            />
+          }
         </div>
       ) : (
         <div className="flex flex-col gap-3">

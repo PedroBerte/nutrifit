@@ -6,6 +6,7 @@ import { CirclePlus } from "lucide-react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo } from "react";
+import PersonalSemPlanosTreino from "@/assets/personal/PersonalSemPlanosTreino.png";
 
 export default function RoutinesList() {
   const navigate = useNavigate();
@@ -45,9 +46,16 @@ export default function RoutinesList() {
         className="w-full space-y-3"
       >
         {!isLoading && filteredRoutines.length === 0 && (
-          <p className="text-center mt-10 text-neutral-white-03">
-            Nenhum plano de treino encontrado.
-          </p>
+          <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center py-2 gap-2">
+            <p className="text-muted-foreground pt-4">
+              Nenhum plano de treino encontrado
+            </p>
+            <img
+              src={PersonalSemPlanosTreino}
+              alt="Nenhum atendimento agendado"
+              className="w-36 object-contain"
+            />
+          </div>
         )}
         {!isLoading &&
           filteredRoutines.map((routine) => (
@@ -66,6 +74,6 @@ export default function RoutinesList() {
           </p>
         )}
       </motion.div>
-    </motion.div>
+    </motion.div >
   );
 }

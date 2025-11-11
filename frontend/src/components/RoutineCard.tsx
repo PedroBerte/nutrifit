@@ -75,8 +75,24 @@ export default function RoutineCard({
   };
 
   return (
-    <div className="w-full bg-neutral-dark-03 rounded-sm p-4 space-y-4">
-      <p className="text-2xl font-bold">{title}</p>
+    <div 
+      className="w-full bg-neutral-dark-03 rounded-sm p-4 space-y-4 cursor-pointer hover:bg-neutral-dark-02/50 transition-colors"
+      onClick={handleDetails}
+    >
+      <div className="flex justify-between items-center">
+        <p className="text-2xl font-bold">{title}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive hover:border-destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsDeleteDialogOpen(true);
+          }}
+        >
+          <Trash2 size={16} />
+        </Button>
+      </div>
       <article className="space-y-2">
         <section className="flex gap-2">
           <ChartColumnBig />
@@ -94,25 +110,26 @@ export default function RoutineCard({
           <p>{weeks} semanas</p>
         </section>
       </article>
-      <article className="flex justify-between gap-2 pt-3">
+      <article className="flex justify-end gap-2 pt-3">
         <Button
-          variant="destructive"
-          className="bg-destructive"
-          onClick={() => setIsDeleteDialogOpen(true)}
+          variant="outline"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDetails();
+          }}
         >
-          <Trash2 />
-          Excluir
+          <BookText />
+          Detalhes
         </Button>
-        <div className="space-x-2">
-          <Button className="bg-secondary" onClick={handleDetails}>
-            <BookText />
-            Detalhes
-          </Button>
-          <Button onClick={handleSend}>
-            <Send />
-            Atribuir
-          </Button>
-        </div>
+        <Button 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSend();
+          }}
+        >
+          <Send />
+          Atribuir
+        </Button>
       </article>
 
       <AssignRoutineDrawer
