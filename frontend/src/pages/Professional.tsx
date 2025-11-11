@@ -19,11 +19,13 @@ import {
 import type { CustomerProfessionalBondType } from "@/types/professional";
 import { useCreateBond, useGetBondsSent } from "@/services/api/bond";
 import { motion } from "motion/react";
+import { useToast } from "@/contexts/ToastContext";
 
 export default function Professional() {
   const { user, logout } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
   const { data: bondsSent } = useGetBondsSent();
   const { mutate: createProposal } = useCreateBond();
 
@@ -33,7 +35,8 @@ export default function Professional() {
     ? bondsSent?.some((bond) => bond.professionalId === id) ?? false
     : false;
 
-  const [alreadySentProposal, setAlreadySentProposal] = useState(initialAlreadySent);
+  const [alreadySentProposal, setAlreadySentProposal] =
+    useState(initialAlreadySent);
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
@@ -118,9 +121,9 @@ export default function Professional() {
 
   const sendProposal = async (professionalId: string) => {
     if (isSending || alreadySentProposal) return;
-    
+
     setIsSending(true);
-    
+
     var newProposal: CustomerProfessionalBondType = {
       id: null,
       customerId: user?.id || "",
@@ -139,9 +142,11 @@ export default function Professional() {
       onSuccess: () => {
         setAlreadySentProposal(true);
         setIsSending(false);
+        toast.success("Proposta enviada com sucesso!");
       },
       onError: () => {
         setIsSending(false);
+        toast.error("Ocorreu um erro ao enviar a proposta.");
       },
     });
   };

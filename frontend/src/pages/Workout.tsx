@@ -12,6 +12,9 @@ import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { useGetBondAsCustomer } from "@/services/api/bond";
 import { useState, useEffect } from "react";
+import { useGetAppointmentsByBondId } from "@/services/api/appointment";
+import PendingAppointmentDrawer from "@/components/PendingAppointmentDrawer";
+import { Bell } from "lucide-react";
 
 export default function Workout() {
   const navigate = useNavigate();
@@ -21,6 +24,14 @@ export default function Workout() {
     useGetBondAsCustomer();
   const { data: routinesResponse, isLoading: isLoadingRoutines } =
     useGetMyAssignedRoutines();
+
+  // Busca appointments do bond ativo
+  const { data: appointments } = useGetAppointmentsByBondId(
+    studentBond?.id || ""
+  );
+
+  // Filtra appointments pendentes
+  const pendingAppointment = appointments?.find((apt) => apt.status === "P");
 
   const [activeWorkoutInfo, setActiveWorkoutInfo] =
     useState<ReturnType<typeof getActiveWorkoutInfo>>(null);
@@ -103,14 +114,32 @@ export default function Workout() {
 
       {studentBond && (
         <div className="flex gap-2 mt-2">
-          <div className="bg-primary text-white rounded-full h-12 w-12 flex items-center justify-center font-semibold">
-            {getInitials(studentBond.professional?.name)}
-          </div>
+          {pendingAppointment ? (
+            <PendingAppointmentDrawer appointment={pendingAppointment}>
+              <div className="relative cursor-pointer">
+                <div className="bg-primary text-white rounded-full h-12 w-12 flex items-center justify-center font-semibold">
+                  {getInitials(studentBond.professional?.name)}
+                </div>
+                <div className="absolute -top-1 -right-1 bg-destructive text-white rounded-full h-5 w-5 flex items-center justify-center shadow-lg animate-pulse">
+                  <Bell className="h-3 w-3" />
+                </div>
+              </div>
+            </PendingAppointmentDrawer>
+          ) : (
+            <div className="bg-primary text-white rounded-full h-12 w-12 flex items-center justify-center font-semibold">
+              {getInitials(studentBond.professional?.name)}
+            </div>
+          )}
           <div>
             <p className="font-bold text-md">Personal Responsável:</p>
             <p className="text-sm text-muted-foreground">
               {studentBond.professional?.name}
             </p>
+            {pendingAppointment && (
+              <p className="text-xs text-primary font-semibold mt-1">
+                Nova solicitação de agendamento
+              </p>
+            )}
           </div>
         </div>
       )}

@@ -99,5 +99,23 @@ namespace Nutrifit.API.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
+        [HttpGet("customer/{customerId}")]
+        public async Task<IActionResult> GetCustomerWorkoutHistory(Guid customerId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                var response = await _workoutSessionService.GetCustomerWorkoutHistoryAsync(customerId, page, pageSize);
+
+                if (!response.Success)
+                    return NotFound(response);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }
