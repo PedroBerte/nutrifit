@@ -1,24 +1,95 @@
 import { BigButton } from "@/components/BigButton";
 import { useAuth } from "@/contexts/AuthContext";
-import { Calendar, CalendarX2, Check, Dumbbell, Users } from "lucide-react";
+import {
+  Calendar,
+  Check,
+  Dumbbell,
+  Users,
+  Edit,
+  Clock,
+  ClockFading,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { useGetMyRoutines } from "@/services/api/routine";
-import type { RoutineType } from "@/types/routine";
+import { useGetRoutinesNearExpiry } from "@/services/api/routine";
+import type { RoutineExpiryType } from "@/types/routine";
 import PersonalSemAtendimento from "@/assets/personal/PersonalSemAtendimento.png";
 import PersonalSemTreinosPertoValidade from "@/assets/personal/PersonalSemTreinosPertoValidade.png";
+import type { JSX } from "react/jsx-runtime";
+import GenericPerson from "@/assets/generic-person.svg";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import UpdateExpiryDialog from "@/components/UpdateExpiryDialog";
 
 export default function PersonalHome() {
   const { user } = useAuth();
-  const { data: routines } = useGetMyRoutines(1, 5);
+  const { data: expiringRoutines } = useGetRoutinesNearExpiry(15);
   const navigate = useNavigate();
 
-  const getRoutineDueDate = (routine: RoutineType): Date => {
-    const createdAt = new Date(routine.createdAt);
-    const weeks = routine.weeks || 0;
-    const expiryDate = new Date(createdAt);
-    expiryDate.setDate(createdAt.getDate() + weeks * 7);
-    return expiryDate;
+  const [customerToUpdate, setCustomerToUpdate] = useState<{
+    routineId: string;
+    customerId: string;
+    customerName: string;
+    routineTitle: string;
+    expiresAt: string;
+  } | null>(null);
+
+  const handleOpenDialog = (item: RoutineExpiryType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCustomerToUpdate({
+      routineId: item.routineId,
+      customerId: item.customerId,
+      customerName: item.customerName,
+      routineTitle: item.routineTitle,
+      expiresAt: item.expiresAt,
+    });
+  };
+
+  const WorkoutToDueCard = (item: RoutineExpiryType): JSX.Element => {
+    return (
+      <div
+        key={item.customerId}
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/routines/${item.routineId}`);
+        }}
+        className="flex flex-row items-center w-full bg-neutral-dark-03 rounded-md p-3 gap-3"
+      >
+        <div className="flex flex-col flex-1 gap-2">
+          <p className="font-bold">
+            Em {item.daysUntilExpiry}{" "}
+            {item.daysUntilExpiry === 1 ? "dia" : "dias"}
+          </p>
+          <div className="flex flex-row items-center gap-3 border border-border w-full rounded-md p-3">
+            <>
+              {item.customerImageUrl ? (
+                <img
+                  src={item.customerImageUrl}
+                  alt={item.customerName}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <img
+                  src={GenericPerson}
+                  alt="Avatar"
+                  className="w-10 h-10 rounded-full"
+                />
+              )}
+              <div className="flex flex-col flex-1">
+                <p className="font-semibold">{item.customerName}</p>
+                <p className="text-sm text-muted-foreground">
+                  {item.routineTitle}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Ver rotina</p>
+              </div>
+            </>
+            <Button onClick={(e) => handleOpenDialog(item, e)}>
+              <ClockFading size={16} />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -50,7 +121,7 @@ export default function PersonalHome() {
           title="Agenda"
           icon={<Calendar size={22} />}
           description="Sua agenda"
-          onClick={() => { }}
+          onClick={() => {}}
         />
         <BigButton
           title="Vínculos"
@@ -72,9 +143,11 @@ export default function PersonalHome() {
           <img
             src={PersonalSemAtendimento}
             alt="Nenhum atendimento agendado"
-            className="w-36 object-contain"
+            className="w-30 object-contain"
           />
-          <div>Nenhum atendimento agendado.</div>
+          <p className="text-muted-foreground font-medium text-sm">
+            Nenhum atendimento agendado.
+          </p>
         </div>
       </motion.section>
       <motion.section
@@ -84,50 +157,41 @@ export default function PersonalHome() {
         className="space-y-2"
       >
         <p className="font-bold">Treinos próximos da validade</p>
-        <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center py-5 gap-2">
-          {routines?.data && routines.data.items.length > 0 ? (
-            routines.data.items.map((routine) => {
-              return (
-                <div
-                  key={routine.id}
-                  className="flex flex-col w-full bg-neutral-dark-03 rounded-sm p-4 gap-2"
-                >
-                  <p>
-                    Vence em{" "}
-                    {Math.max(
-                      0,
-                      Math.ceil(
-                        (getRoutineDueDate(routine).getTime() - Date.now()) /
-                        (1000 * 60 * 60 * 24)
-                      )
-                    )}{" "}
-                    dias
-                  </p>
-                  <div className="border border-border w-full rounded-sm p-3">
-                    <strong>{routine.title}</strong>
-                    <p>
-                      Criado em:{" "}
-                      {new Date(routine.createdAt).toLocaleDateString("pt-br")}{" "}
-                      - Vence em:{" "}
-                      {getRoutineDueDate(routine).toLocaleDateString("pt-br")}
-                    </p>
-                  </div>
-                </div>
-              );
+        <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center gap-2">
+          {expiringRoutines?.data && expiringRoutines.data.length > 0 ? (
+            expiringRoutines.data.map((item) => {
+              return WorkoutToDueCard(item);
             })
           ) : (
             <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center gap-2 py-2">
               <img
                 src={PersonalSemTreinosPertoValidade}
                 alt="Nenhum treino próximo da validade"
-                className="w-36 object-contain"
+                className="w-30 object-contain"
               />
-              <div>Nenhum treino próximo da validade.</div>
+              <p className="text-muted-foreground font-medium text-sm">
+                Nenhum treino próximo da validade.
+              </p>
             </div>
           )}
           <div></div>
         </div>
       </motion.section>
+
+      {/* Dialog para alterar data de vencimento */}
+      <UpdateExpiryDialog
+        open={!!customerToUpdate}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCustomerToUpdate(null);
+          }
+        }}
+        routineId={customerToUpdate?.routineId || ""}
+        customerId={customerToUpdate?.customerId || ""}
+        customerName={customerToUpdate?.customerName || ""}
+        routineTitle={customerToUpdate?.routineTitle || ""}
+        currentExpiryDate={customerToUpdate?.expiresAt || ""}
+      />
     </div>
   );
 }

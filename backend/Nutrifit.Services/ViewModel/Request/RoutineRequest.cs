@@ -12,8 +12,6 @@ public class CreateRoutineRequest
     [MaxLength(3)]
     public string? Goal { get; set; }
 
-    public int? Weeks { get; set; }
-
     [MaxLength(3)]
     public string? Difficulty { get; set; }
 
@@ -39,8 +37,6 @@ public class UpdateRoutineRequest
     [MaxLength(3)]
     public string? Goal { get; set; }
 
-    public int? Weeks { get; set; }
-
     [MaxLength(3)]
     public string? Difficulty { get; set; }
 
@@ -62,9 +58,11 @@ public class UpdateRoutineRequest
 
 public class AssignRoutineToCustomerRequest
 {
-    [Required(ErrorMessage = "ID da rotina � obrigat�rio")]
+    [Required(ErrorMessage = "ID da rotina é obrigatório")]
     public Guid RoutineId { get; set; }
 
-    [Required(ErrorMessage = "ID do cliente � obrigat�rio")]
+    [Required(ErrorMessage = "ID do cliente é obrigatório")]
     public Guid CustomerId { get; set; }
+
+    public DateTime? ExpiresAt { get; set; }
 }

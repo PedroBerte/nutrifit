@@ -36,7 +36,6 @@ public class RoutineService : IRoutineService
                 PersonalId = personalId,
                 Title = request.Title,
                 Goal = request.Goal,
-                Weeks = request.Weeks,
                 Difficulty = request.Difficulty,
                 Status = "A",
                 CreatedAt = DateTime.UtcNow
@@ -52,7 +51,6 @@ public class RoutineService : IRoutineService
                 PersonalName = personal.Name,
                 Title = routine.Title,
                 Goal = routine.Goal,
-                Weeks = routine.Weeks,
                 Difficulty = routine.Difficulty,
                 Status = routine.Status,
                 CreatedAt = routine.CreatedAt,
@@ -83,9 +81,6 @@ public class RoutineService : IRoutineService
 
             if (request.Goal != null)
                 routine.Goal = request.Goal;
-
-            if (request.Weeks.HasValue)
-                routine.Weeks = request.Weeks;
 
             if (!string.IsNullOrEmpty(request.Difficulty))
                 routine.Difficulty = request.Difficulty;
@@ -188,7 +183,6 @@ public class RoutineService : IRoutineService
                 PersonalImageUrl = routine.Personal.ImageUrl,
                 Title = routine.Title,
                 Goal = routine.Goal,
-                Weeks = routine.Weeks,
                 Difficulty = routine.Difficulty,
                 Status = routine.Status,
                 CreatedAt = routine.CreatedAt,
@@ -251,7 +245,6 @@ public class RoutineService : IRoutineService
                 PersonalName = r.Personal.Name,
                 Title = r.Title,
                 Goal = r.Goal,
-                Weeks = r.Weeks,
                 Difficulty = r.Difficulty,
                 Status = r.Status,
                 CreatedAt = r.CreatedAt,
@@ -300,6 +293,7 @@ public class RoutineService : IRoutineService
                 RoutineId = request.RoutineId,
                 CustomerId = request.CustomerId,
                 Status = "A",
+                ExpiresAt = request.ExpiresAt,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -372,7 +366,6 @@ public class RoutineService : IRoutineService
                 PersonalName = cr.Routine.Personal.Name,
                 Title = cr.Routine.Title,
                 Goal = cr.Routine.Goal,
-                Weeks = cr.Routine.Weeks,
                 Difficulty = cr.Routine.Difficulty,
                 Status = cr.Routine.Status,
                 CreatedAt = cr.Routine.CreatedAt,
@@ -424,7 +417,8 @@ public class RoutineService : IRoutineService
                     Name = cr.Customer.Name,
                     Email = cr.Customer.Email,
                     ImageUrl = cr.Customer.ImageUrl,
-                    AssignedAt = cr.CreatedAt
+                    AssignedAt = cr.CreatedAt,
+                    ExpiresAt = cr.ExpiresAt
                 })
                 .OrderBy(c => c.Name)
                 .ToList();
@@ -454,6 +448,74 @@ public class RoutineService : IRoutineService
         catch (Exception ex)
         {
             return ApiResponse.CreateFailure($"Erro ao buscar alunos da rotina: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse> GetRoutinesNearExpiryAsync(Guid personalId, int daysThreshold = 7)
+    {
+        try
+        {
+            var now = DateTime.UtcNow;
+            var thresholdDate = now.AddDays(daysThreshold);
+
+            var expiringRoutines = await _context.CustomerRoutines
+                .Include(cr => cr.Customer)
+                .Include(cr => cr.Routine)
+                .Where(cr => cr.Routine.PersonalId == personalId
+                    && cr.Status == "A"
+                    && cr.ExpiresAt != null
+                    && cr.ExpiresAt <= thresholdDate
+                    && cr.ExpiresAt >= now)
+                .OrderBy(cr => cr.ExpiresAt)
+                .Select(cr => new RoutineExpiryResponse
+                {
+                    CustomerId = cr.CustomerId,
+                    CustomerName = cr.Customer.Name,
+                    CustomerImageUrl = cr.Customer.ImageUrl,
+                    RoutineId = cr.RoutineId,
+                    RoutineTitle = cr.Routine.Title,
+                    ExpiresAt = cr.ExpiresAt!.Value,
+                    DaysUntilExpiry = (int)Math.Ceiling((cr.ExpiresAt!.Value - now).TotalDays)
+                })
+                .ToListAsync();
+
+            return ApiResponse.CreateSuccess("Rotinas próximas da validade carregadas com sucesso", expiringRoutines);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse.CreateFailure($"Erro ao buscar rotinas próximas da validade: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse> UpdateCustomerRoutineExpiryAsync(Guid routineId, Guid customerId, Guid personalId, DateTime? expiresAt)
+    {
+        try
+        {
+            // Verificar se a rotina pertence ao personal
+            var routine = await _context.Routines
+                .FirstOrDefaultAsync(r => r.Id == routineId && r.PersonalId == personalId);
+
+            if (routine == null)
+                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão");
+
+            // Buscar a atribuição
+            var customerRoutine = await _context.CustomerRoutines
+                .FirstOrDefaultAsync(cr => cr.RoutineId == routineId && cr.CustomerId == customerId && cr.Status == "A");
+
+            if (customerRoutine == null)
+                return ApiResponse.CreateFailure("Atribuição não encontrada");
+
+            // Atualizar a data de vencimento
+            customerRoutine.ExpiresAt = expiresAt;
+            customerRoutine.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return ApiResponse.CreateSuccess("Data de vencimento atualizada com sucesso");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse.CreateFailure($"Erro ao atualizar data de vencimento: {ex.Message}");
         }
     }
 }

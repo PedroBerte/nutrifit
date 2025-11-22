@@ -241,4 +241,60 @@ public class RoutineController : ControllerBase
             return StatusCode(500, new { message = $"Erro ao buscar alunos da rotina: {ex.Message}" });
         }
     }
+
+    /// <summary>
+    /// Busca rotinas próximas da validade (CustomerRoutines com ExpiresAt dentro do threshold)
+    /// </summary>
+    [HttpGet("near-expiry")]
+    public async Task<IActionResult> GetRoutinesNearExpiry([FromQuery] int daysThreshold = 7)
+    {
+        try
+        {
+            var userId = GetUserId();
+            var result = await _routineService.GetRoutinesNearExpiryAsync(userId, daysThreshold);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao buscar rotinas próximas da validade: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Atualiza a data de vencimento de uma rotina atribuída a um cliente
+    /// </summary>
+    [HttpPut("{routineId}/customer/{customerId}/expiry")]
+    public async Task<IActionResult> UpdateCustomerRoutineExpiry(
+        Guid routineId,
+        Guid customerId,
+        [FromBody] UpdateExpiryRequest request)
+    {
+        try
+        {
+            var userId = GetUserId();
+            var result = await _routineService.UpdateCustomerRoutineExpiryAsync(
+                routineId,
+                customerId,
+                userId,
+                request.ExpiresAt);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao atualizar data de vencimento: {ex.Message}" });
+        }
+    }
+}
+
+public class UpdateExpiryRequest
+{
+    public DateTime? ExpiresAt { get; set; }
 }
