@@ -99,9 +99,6 @@ export default function WorkoutSessionDetails() {
     >
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-          <ArrowLeft size={20} />
-        </Button>
         <div className="flex-1">
           <h1 className="text-xl font-bold">{session.workoutTemplateTitle}</h1>
           <p className="text-sm text-neutral-white-02">

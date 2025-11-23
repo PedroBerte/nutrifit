@@ -8,6 +8,7 @@ namespace Nutrifit.Repository.Entities
         public Guid RoutineId { get; set; }
         public Guid CustomerId { get; set; }
         public string Status { get; set; } = "A";
+        public DateTime? ExpiresAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 

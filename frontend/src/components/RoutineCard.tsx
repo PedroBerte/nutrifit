@@ -1,11 +1,4 @@
-import {
-  BookText,
-  Calendar,
-  ChartColumnBig,
-  Send,
-  Target,
-  Trash2,
-} from "lucide-react";
+import { BookText, ChartColumnBig, Send, Target, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -29,7 +22,6 @@ interface RoutineCardProps {
   title: string;
   difficulty: string;
   goal: string;
-  weeks: number;
 }
 
 export default function RoutineCard({
@@ -37,7 +29,6 @@ export default function RoutineCard({
   title,
   difficulty,
   goal,
-  weeks,
 }: RoutineCardProps) {
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -104,11 +95,6 @@ export default function RoutineCard({
           <Target />
           <p className="font-bold">Objetivo: </p>
           <p>{getGoalLabel(goal)}</p>
-        </section>
-        <section className="flex gap-2">
-          <Calendar />
-          <p className="font-bold">Semanas: </p>
-          <p>{weeks} semanas</p>
         </section>
       </article>
       <article className="flex justify-end gap-2 pt-3">

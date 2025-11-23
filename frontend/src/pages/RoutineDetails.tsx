@@ -15,14 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
-import {
   Form,
   FormControl,
   FormField,
@@ -30,19 +22,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Calendar, Plus, Edit, Settings, FileX2, Check, Loader2 } from "lucide-react";
+import { Plus, Settings, FileX2, Loader2 } from "lucide-react";
 import { GOAL_OPTIONS, DIFFICULTY_OPTIONS } from "@/constants/routine";
 import { Spinner } from "@/components/ui/spinner";
 import { motion } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
-
-const WEEK_OPTIONS = [
-  { value: 4, label: "4 semanas (1 mês)" },
-  { value: 8, label: "8 semanas (2 meses)" },
-  { value: 12, label: "12 semanas (3 meses)" },
-  { value: 16, label: "16 semanas (4 meses)" },
-  { value: 24, label: "24 semanas (6 meses)" },
-];
 
 const updateRoutineSchema = z.object({
   title: z
@@ -51,7 +35,6 @@ const updateRoutineSchema = z.object({
     .max(200, "Título muito longo"),
   goal: z.string(),
   difficulty: z.string(),
-  weeks: z.number().optional(),
 });
 
 type UpdateRoutineFormData = z.infer<typeof updateRoutineSchema>;
@@ -64,9 +47,9 @@ export default function RoutineDetails() {
   const { data: templates, isLoading: loadingTemplates } =
     useGetWorkoutTemplatesByRoutine(routineId);
   const updateRoutine = useUpdateRoutine();
-  const [isWeeksDrawerOpen, setIsWeeksDrawerOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [originalData, setOriginalData] = useState<UpdateRoutineFormData | null>(null);
+  const [originalData, setOriginalData] =
+    useState<UpdateRoutineFormData | null>(null);
   const toast = useToast();
 
   const form = useForm<UpdateRoutineFormData>({
@@ -79,7 +62,6 @@ export default function RoutineDetails() {
         title: routine.data.title || "",
         goal: routine.data.goal || "",
         difficulty: routine.data.difficulty || "",
-        weeks: routine.data.weeks || undefined,
       };
       form.reset(formData, { keepDefaultValues: false });
       setOriginalData(formData); // Guarda os dados originais
@@ -98,14 +80,13 @@ export default function RoutineDetails() {
   useEffect(() => {
     const subscription = form.watch((values) => {
       if (!originalData) return;
-      
+
       // Compara se há diferenças entre os valores atuais e os originais
-      const isDifferent = 
+      const isDifferent =
         values.title !== originalData.title ||
         values.goal !== originalData.goal ||
-        values.difficulty !== originalData.difficulty ||
-        values.weeks !== originalData.weeks;
-      
+        values.difficulty !== originalData.difficulty;
+
       setHasChanges(isDifferent);
     });
     return () => subscription.unsubscribe();
@@ -121,7 +102,6 @@ export default function RoutineDetails() {
           title: data.title.trim(),
           goal: data.goal || undefined,
           difficulty: data.difficulty || undefined,
-          weeks: data.weeks,
         },
       });
 
@@ -157,11 +137,6 @@ export default function RoutineDetails() {
   const handleEditWorkout = (workoutId: string) => {
     navigate(`/routines/${routineId}/workouts/${workoutId}`);
   };
-
-  const selectedWeeks = form.watch("weeks");
-  const selectedWeekLabel = WEEK_OPTIONS.find(
-    (opt) => opt.value === selectedWeeks
-  )?.label;
 
   if (loadingRoutine) {
     return (
@@ -225,10 +200,6 @@ export default function RoutineDetails() {
                   control={form.control}
                   name="goal"
                   render={({ field }) => {
-                    console.log(
-                      "🎨 Renderizando Goal - Valor atual:",
-                      field.value
-                    );
                     return (
                       <FormItem>
                         <FormLabel>Objetivo</FormLabel>
@@ -305,64 +276,9 @@ export default function RoutineDetails() {
                   }}
                 />
 
-                {/* Semanas */}
-                <FormField
-                  control={form.control}
-                  name="weeks"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Semanas</FormLabel>
-                      <Drawer
-                        open={isWeeksDrawerOpen}
-                        onOpenChange={setIsWeeksDrawerOpen}
-                      >
-                        <DrawerTrigger asChild className="bg-transparent">
-                          <FormControl>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="w-full justify-start text-left font-normal"
-                            >
-                              <Calendar className="mr-2 size-4" />
-                              {selectedWeekLabel || "Selecione a duração"}
-                            </Button>
-                          </FormControl>
-                        </DrawerTrigger>
-                        <DrawerContent>
-                          <DrawerHeader>
-                            <DrawerTitle>Selecione a duração</DrawerTitle>
-                          </DrawerHeader>
-                          <div className="p-4 space-y-2">
-                            {WEEK_OPTIONS.map((option) => (
-                              <DrawerClose asChild key={option.value}>
-                                <Button
-                                  type="button"
-                                  variant={
-                                    selectedWeeks === option.value
-                                      ? "default"
-                                      : "outline"
-                                  }
-                                  className="w-full justify-start"
-                                  onClick={() => {
-                                    field.onChange(option.value);
-                                    setIsWeeksDrawerOpen(false);
-                                  }}
-                                >
-                                  {option.label}
-                                </Button>
-                              </DrawerClose>
-                            ))}
-                          </div>
-                        </DrawerContent>
-                      </Drawer>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 {/* Botões aparecem apenas quando há mudanças */}
                 {hasChanges && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}

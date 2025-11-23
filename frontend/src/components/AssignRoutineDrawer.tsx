@@ -16,6 +16,10 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Calendar } from "./ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import {
   useAssignRoutine,
   useUnassignRoutine,
@@ -28,10 +32,15 @@ import {
   Circle,
   UserMinus,
   Users,
+  CalendarIcon,
+  Trash,
+  Clock,
+  Edit,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/contexts/ToastContext";
 import type { CustomerBasicInfo } from "@/types/routine";
+import UpdateExpiryDialog from "./UpdateExpiryDialog";
 
 interface AssignRoutineDrawerProps {
   open: boolean;
@@ -47,7 +56,16 @@ export default function AssignRoutineDrawer({
   routineTitle,
 }: AssignRoutineDrawerProps) {
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [expiryDate, setExpiryDate] = useState<Date | undefined>(undefined);
+  const [customerExpiryDates, setCustomerExpiryDates] = useState<
+    Record<string, Date | undefined>
+  >({});
+  const [datePickerCustomer, setDatePickerCustomer] = useState<string | null>(
+    null
+  );
   const [customerToUnassign, setCustomerToUnassign] =
+    useState<CustomerBasicInfo | null>(null);
+  const [customerToUpdateExpiry, setCustomerToUpdateExpiry] =
     useState<CustomerBasicInfo | null>(null);
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -75,11 +93,14 @@ export default function AssignRoutineDrawer({
     }
 
     try {
-      // Enviar cada atribuição individualmente (API não suporta bulk)
+      // Enviar cada atribuição individualmente com data específica ou global
       const promises = selectedCustomers.map((customerId) =>
         assignMutation.mutateAsync({
           routineId,
           customerId,
+          expiresAt: customerExpiryDates[customerId]
+            ? customerExpiryDates[customerId]?.toISOString()
+            : expiryDate?.toISOString(),
         })
       );
 
@@ -98,6 +119,8 @@ export default function AssignRoutineDrawer({
         `Rotina "${routineTitle}" atribuída com sucesso a ${selectedCustomers.length} aluno(s)!`
       );
       setSelectedCustomers([]);
+      setExpiryDate(undefined);
+      setCustomerExpiryDates({});
     } catch (error: any) {
       console.error("Erro ao atribuir rotina:", error);
       const errorMessage =
@@ -201,16 +224,36 @@ export default function AssignRoutineDrawer({
                             <p className="text-sm text-muted-foreground">
                               {customer.email}
                             </p>
+                            {customer.expiresAt && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Vence em:{" "}
+                                {format(
+                                  new Date(customer.expiresAt),
+                                  "dd/MM/yyyy"
+                                )}
+                              </p>
+                            )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => setCustomerToUnassign(customer)}
-                          >
-                            <UserMinus size={18} />
-                            Remover
-                          </Button>
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-muted-foreground hover:text-primary"
+                              onClick={() =>
+                                setCustomerToUpdateExpiry(customer)
+                              }
+                            >
+                              <Edit size={16} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setCustomerToUnassign(customer)}
+                            >
+                              <UserMinus size={16} />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -238,48 +281,77 @@ export default function AssignRoutineDrawer({
                         const isSelected = selectedCustomers.includes(
                           customer.id
                         );
+                        const hasCustomDate =
+                          !!customerExpiryDates[customer.id];
 
                         return (
                           <div
                             key={customer.id}
-                            onClick={() => toggleCustomer(customer.id)}
-                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                            className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                               isSelected
                                 ? "border-primary bg-primary/10"
                                 : "border-border hover:border-primary/50"
                             }`}
                           >
-                            {isSelected ? (
-                              <CheckCircle
-                                className="text-primary flex-shrink-0"
-                                size={24}
-                              />
-                            ) : (
-                              <Circle
-                                className="text-muted-foreground flex-shrink-0"
-                                size={24}
-                              />
-                            )}
-                            {customer.imageUrl ? (
-                              <img
-                                src={customer.imageUrl}
-                                alt={customer.name}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                                <UserCheck
-                                  size={20}
-                                  className="text-muted-foreground"
+                            <div
+                              onClick={() => toggleCustomer(customer.id)}
+                              className="flex items-center gap-3 flex-1 cursor-pointer"
+                            >
+                              {isSelected ? (
+                                <CheckCircle
+                                  className="text-primary flex-shrink-0"
+                                  size={24}
                                 />
+                              ) : (
+                                <Circle
+                                  className="text-muted-foreground flex-shrink-0"
+                                  size={24}
+                                />
+                              )}
+                              {customer.imageUrl ? (
+                                <img
+                                  src={customer.imageUrl}
+                                  alt={customer.name}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                                  <UserCheck
+                                    size={20}
+                                    className="text-muted-foreground"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <p className="font-semibold">{customer.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {customer.email}
+                                </p>
+                                {hasCustomDate && (
+                                  <p className="text-xs text-primary mt-1">
+                                    Vencimento:{" "}
+                                    {format(
+                                      customerExpiryDates[customer.id]!,
+                                      "dd/MM/yyyy"
+                                    )}
+                                  </p>
+                                )}
                               </div>
-                            )}
-                            <div className="flex-1">
-                              <p className="font-semibold">{customer.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {customer.email}
-                              </p>
                             </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={cn(
+                                "flex-shrink-0",
+                                hasCustomDate && "text-primary"
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDatePickerCustomer(customer.id);
+                              }}
+                            >
+                              <Clock size={18} />
+                            </Button>
                           </div>
                         );
                       })}
@@ -359,6 +431,79 @@ export default function AssignRoutineDrawer({
               ) : (
                 "Confirmar Remoção"
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Atualização de Data de Vencimento */}
+      {customerToUpdateExpiry && (
+        <UpdateExpiryDialog
+          open={!!customerToUpdateExpiry}
+          onOpenChange={(open) => !open && setCustomerToUpdateExpiry(null)}
+          routineId={routineId}
+          customerId={customerToUpdateExpiry.id}
+          customerName={customerToUpdateExpiry.name}
+          routineTitle={routineTitle}
+          currentExpiryDate={
+            customerToUpdateExpiry.expiresAt || new Date().toISOString()
+          }
+        />
+      )}
+
+      {/* Dialog de Seleção de Data Individual (para novos alunos) */}
+      <Dialog
+        open={!!datePickerCustomer}
+        onOpenChange={(open) => !open && setDatePickerCustomer(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Definir Data de Vencimento</DialogTitle>
+            <DialogDescription>
+              Selecione uma data de vencimento específica para este aluno, ou
+              deixe em branco para não definir uma data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <Calendar
+              mode="single"
+              selected={
+                datePickerCustomer
+                  ? customerExpiryDates[datePickerCustomer]
+                  : undefined
+              }
+              onSelect={(date) => {
+                if (datePickerCustomer) {
+                  setCustomerExpiryDates((prev) => ({
+                    ...prev,
+                    [datePickerCustomer]: date,
+                  }));
+                }
+              }}
+              disabled={(date) => date < new Date()}
+              captionLayout="dropdown"
+              className="rounded-md border"
+            />
+          </div>
+          <DialogFooter className="flex gap-2">
+            {datePickerCustomer && customerExpiryDates[datePickerCustomer] && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (datePickerCustomer) {
+                    setCustomerExpiryDates((prev) => {
+                      const newDates = { ...prev };
+                      delete newDates[datePickerCustomer];
+                      return newDates;
+                    });
+                  }
+                }}
+              >
+                Limpar Data
+              </Button>
+            )}
+            <Button onClick={() => setDatePickerCustomer(null)}>
+              Confirmar
             </Button>
           </DialogFooter>
         </DialogContent>

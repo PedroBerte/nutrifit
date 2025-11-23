@@ -5,6 +5,7 @@ import type {
   AssignRoutineRequest,
   RoutineType,
   RoutineCustomersResponse,
+  RoutineExpiryType,
 } from "@/types/routine";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -178,6 +179,19 @@ export function useGetRoutineCustomers(routineId: string | null | undefined) {
       return request.data;
     },
     enabled: !!routineId,
+    retry: 1,
+  });
+}
+
+export function useGetRoutinesNearExpiry(daysThreshold: number = 5) {
+  return useQuery({
+    queryKey: ["getRoutinesNearExpiry", daysThreshold],
+    queryFn: async () => {
+      const request = await api.get<ApiResponse<RoutineExpiryType[]>>(
+        `/routine/near-expiry?daysThreshold=${daysThreshold}`
+      );
+      return request.data;
+    },
     retry: 1,
   });
 }

@@ -14,4 +14,6 @@ public interface IRoutineService
     Task<ApiResponse> UnassignRoutineFromCustomerAsync(Guid routineId, Guid customerId, Guid personalId);
     Task<ApiResponse> GetCustomerRoutinesAsync(Guid customerId, int page = 1, int pageSize = 10);
     Task<ApiResponse> GetRoutineCustomersAsync(Guid routineId, Guid personalId);
+    Task<ApiResponse> GetRoutinesNearExpiryAsync(Guid personalId, int daysThreshold = 7);
+    Task<ApiResponse> UpdateCustomerRoutineExpiryAsync(Guid routineId, Guid customerId, Guid personalId, DateTime? expiresAt);
 }

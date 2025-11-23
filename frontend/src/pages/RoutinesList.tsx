@@ -65,7 +65,6 @@ export default function RoutinesList() {
               title={routine.title}
               difficulty={routine.difficulty || ""}
               goal={routine.goal || ""}
-              weeks={routine.weeks || 0}
             />
           ))}
         {isLoading && (
@@ -74,6 +73,6 @@ export default function RoutinesList() {
           </p>
         )}
       </motion.div>
-    </motion.div >
+    </motion.div>
   );
 }
