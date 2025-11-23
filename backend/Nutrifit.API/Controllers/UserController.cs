@@ -16,11 +16,13 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _service;
     private readonly IFavoriteService _favoriteService;
+    private readonly IAddressService _addressService;
 
-    public UserController(IUserService service, IFavoriteService favoriteService)
+    public UserController(IUserService service, IFavoriteService favoriteService, IAddressService addressService)
     {
         _service = service;
         _favoriteService = favoriteService;
+        _addressService = addressService;
     }
 
     private Guid? GetCurrentUserId()
@@ -178,6 +180,31 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
+    }
+
+    [HttpPost("geocode-addresses")]
+    public async Task<ActionResult> GeocodeAllAddresses()
+    {
+        try
+        {
+            var isAdmin = User.FindFirst("isAdmin")?.Value == "True";
+            if (!isAdmin)
+                return Forbid();
+
+            var (processed, success, failed) = await _addressService.GeocodeAllAddressesAsync();
+            
+            return Ok(new
+            {
+                message = "Geocodificação concluída",
+                processed,
+                success,
+                failed
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro ao geocodificar endereços: {ex.Message}");
         }
     }
 }

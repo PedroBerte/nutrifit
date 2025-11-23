@@ -8,4 +8,5 @@ public interface IAddressService
     Task<AddressEntity> GetByIdAsync(Guid id);
     Task<AddressEntity> UpdateAsync(AddressEntity address);
     Task DeleteAsync(Guid id);
+    Task<(int processed, int success, int failed)> GeocodeAllAddressesAsync();
 }

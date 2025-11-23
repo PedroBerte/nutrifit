@@ -113,4 +113,47 @@ public class AddressService : IAddressService
             throw new Exception("Erro ao excluir endereço.", ex);
         }
     }
+
+    public async Task<(int processed, int success, int failed)> GeocodeAllAddressesAsync()
+    {
+        var addresses = await _context.Addresses
+            .Where(a => a.Latitude == null || a.Longitude == null)
+            .ToListAsync();
+
+        int processed = 0;
+        int success = 0;
+        int failed = 0;
+
+        foreach (var address in addresses)
+        {
+            processed++;
+            
+            if (string.IsNullOrEmpty(address.ZipCode) || string.IsNullOrEmpty(address.City))
+            {
+                failed++;
+                continue;
+            }
+
+            var (lat, lon) = await _geocodingService.GetCoordinatesAsync(
+                address.ZipCode,
+                address.City,
+                address.State,
+                address.Country ?? "Brasil"
+            );
+
+            if (lat.HasValue && lon.HasValue)
+            {
+                address.Latitude = lat.Value;
+                address.Longitude = lon.Value;
+                success++;
+            }
+            else
+            {
+                failed++;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return (processed, success, failed);
+    }
 }
