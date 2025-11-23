@@ -37,6 +37,7 @@ public class RoutineService : IRoutineService
                 Title = request.Title,
                 Goal = request.Goal,
                 Difficulty = request.Difficulty,
+                Weeks = request.Weeks,
                 Status = "A",
                 CreatedAt = DateTime.UtcNow
             };
@@ -52,6 +53,7 @@ public class RoutineService : IRoutineService
                 Title = routine.Title,
                 Goal = routine.Goal,
                 Difficulty = routine.Difficulty,
+                Weeks = routine.Weeks,
                 Status = routine.Status,
                 CreatedAt = routine.CreatedAt,
                 WorkoutCount = 0,
@@ -84,6 +86,9 @@ public class RoutineService : IRoutineService
 
             if (!string.IsNullOrEmpty(request.Difficulty))
                 routine.Difficulty = request.Difficulty;
+
+            if (request.Weeks.HasValue)
+                routine.Weeks = request.Weeks;
 
             if (!string.IsNullOrEmpty(request.Status))
                 routine.Status = request.Status;
@@ -184,6 +189,7 @@ public class RoutineService : IRoutineService
                 Title = routine.Title,
                 Goal = routine.Goal,
                 Difficulty = routine.Difficulty,
+                Weeks = routine.Weeks,
                 Status = routine.Status,
                 CreatedAt = routine.CreatedAt,
                 UpdatedAt = routine.UpdatedAt,
@@ -246,6 +252,7 @@ public class RoutineService : IRoutineService
                 Title = r.Title,
                 Goal = r.Goal,
                 Difficulty = r.Difficulty,
+                Weeks = r.Weeks,
                 Status = r.Status,
                 CreatedAt = r.CreatedAt,
                 UpdatedAt = r.UpdatedAt,
@@ -367,6 +374,7 @@ public class RoutineService : IRoutineService
                 Title = cr.Routine.Title,
                 Goal = cr.Routine.Goal,
                 Difficulty = cr.Routine.Difficulty,
+                Weeks = cr.Routine.Weeks,
                 Status = cr.Routine.Status,
                 CreatedAt = cr.Routine.CreatedAt,
                 UpdatedAt = cr.Routine.UpdatedAt,

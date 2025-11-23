@@ -15,17 +15,24 @@ public class CreateRoutineRequest
     [MaxLength(3)]
     public string? Difficulty { get; set; }
 
+    public int? Weeks { get; set; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (!RoutineConstants.Goal.IsValid(Goal))
             yield return new ValidationResult(
-                "Objetivo inv�lido. Use: HYP, WLS, DEF, CON, STR ou END",
+                "Objetivo inválido. Use: HYP, WLS, DEF, CON, STR ou END",
                 new[] { nameof(Goal) });
 
         if (!RoutineConstants.Difficulty.IsValid(Difficulty))
             yield return new ValidationResult(
-                "Dificuldade inv�lida. Use: BEG, INT ou ADV",
+                "Dificuldade inválida. Use: BEG, INT ou ADV",
                 new[] { nameof(Difficulty) });
+
+        if (Weeks.HasValue && (Weeks.Value < 1 || Weeks.Value > 52))
+            yield return new ValidationResult(
+                "Semanas deve estar entre 1 e 52",
+                new[] { nameof(Weeks) });
     }
 }
 
@@ -40,6 +47,8 @@ public class UpdateRoutineRequest
     [MaxLength(3)]
     public string? Difficulty { get; set; }
 
+    public int? Weeks { get; set; }
+
     public string? Status { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -51,8 +60,13 @@ public class UpdateRoutineRequest
 
         if (!RoutineConstants.Difficulty.IsValid(Difficulty))
             yield return new ValidationResult(
-                "Dificuldade inv�lida. Use: BEG, INT ou ADV",
+                "Dificuldade inválida. Use: BEG, INT ou ADV",
                 new[] { nameof(Difficulty) });
+
+        if (Weeks.HasValue && (Weeks.Value < 1 || Weeks.Value > 52))
+            yield return new ValidationResult(
+                "Semanas deve estar entre 1 e 52",
+                new[] { nameof(Weeks) });
     }
 }
 
