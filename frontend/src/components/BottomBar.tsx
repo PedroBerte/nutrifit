@@ -28,7 +28,7 @@ export default function BottomBar() {
           <Dumbbell size={32} />
         </button>
 
-        {/* <button
+        <button
           onClick={() => navigate("/diet")}
           className={`flex flex-col items-center justify-center p-3 rounded-full transition-all ${
             pathname.startsWith("/diet")
@@ -38,7 +38,7 @@ export default function BottomBar() {
           aria-label="Nutrição"
         >
           <Apple size={32} />
-        </button> */}
+        </button>
 
         <button
           onClick={() => navigate("/profile")}
