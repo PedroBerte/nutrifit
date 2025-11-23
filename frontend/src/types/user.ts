@@ -1,6 +1,7 @@
 import type {
   CustomerProfessionalBondType,
   ProfessionalCredentialType,
+  ProfessionalDetailsType,
 } from "./professional";
 import type { ProfileType } from "./profile";
 
@@ -29,6 +30,9 @@ export interface UserType {
   address?: AddressType | null;
   profile?: ProfileType | null;
   professionalCredential?: ProfessionalCredentialType | null;
+  professionalDetails?: ProfessionalDetailsType | null;
+  averageRating?: number | null;
+  totalFeedbacks?: number | null;
 }
 
 export interface AddressType {

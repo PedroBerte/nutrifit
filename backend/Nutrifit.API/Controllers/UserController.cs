@@ -26,12 +26,27 @@ public class UserController : ControllerBase
         {
             var users = await _service.GetAllAsync();
             if (users == null)
-                return StatusCode(500, "Erro ao buscar usuários.");
+                return StatusCode(500, "Erro ao buscar usuÃ¡rios.");
 
             if (users.Count == 0)
                 return NoContent();
 
-            return Ok(users.Adapt<List<UserDto>>());
+            var usersDto = users.Adapt<List<UserDto>>();
+            
+            // Calcular rating para profissionais
+            foreach (var userDto in usersDto)
+            {
+                if (userDto.ProfessionalCredential != null)
+                {
+                    var feedbacks = await _service.GetProfessionalFeedbacksAsync(userDto.Id!.Value);
+                    userDto.TotalFeedbacks = feedbacks.Count;
+                    userDto.AverageRating = feedbacks.Count > 0 
+                        ? Math.Round(feedbacks.Average(f => f.Rate), 2) 
+                        : null;
+                }
+            }
+
+            return Ok(usersDto);
         }
         catch (Exception ex)
         {
@@ -65,7 +80,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserDto>> Create([FromBody] UserDto userDto)
     {
         if (userDto == null)
-            return BadRequest("Usuário inválido.");
+            return BadRequest("Usuï¿½rio invï¿½lido.");
 
         try
         {
@@ -85,7 +100,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserDto>> Update(Guid id, [FromBody] UserDto userDto)
     {
         if (userDto == null || id != userDto.Id)
-            return BadRequest("Id do usuário não corresponde ao parâmetro.");
+            return BadRequest("Id do usuï¿½rio nï¿½o corresponde ao parï¿½metro.");
 
         try
         {

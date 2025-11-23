@@ -16,6 +16,7 @@ namespace Nutrifit.Repository
         public DbSet<CustomerFeedbackEntity> CustomerFeedbacks => Set<CustomerFeedbackEntity>();
         public DbSet<ProfessionalFeedbackEntity> ProfessionalFeedbacks => Set<ProfessionalFeedbackEntity>();
         public DbSet<ProfessionalCredentialEntity> ProfessionalCredentials => Set<ProfessionalCredentialEntity>();
+        public DbSet<ProfessionalDetailsEntity> ProfessionalDetails => Set<ProfessionalDetailsEntity>();
         public DbSet<ProfileEntity> Profiles => Set<ProfileEntity>();
         public DbSet<PushSubscriptionEntity> PushSubscriptions { get; set; } = null!;
         public DbSet<ExerciseCategoryEntity> ExerciseCategories => Set<ExerciseCategoryEntity>();
@@ -137,6 +138,11 @@ namespace Nutrifit.Repository
                     .WithOne(credential => credential.Professional)
                     .HasForeignKey<ProfessionalCredentialEntity>(credential => credential.ProfessionalId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasOne(u => u.ProfessionalDetails)
+                    .WithOne(details => details.Professional)
+                    .HasForeignKey<ProfessionalDetailsEntity>(details => details.ProfessionalId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             b.Entity<CustomerProfessionalBondEntity>(e =>
@@ -241,6 +247,24 @@ namespace Nutrifit.Repository
                 e.Property(x => x.CreatedAt)
                     .HasColumnType("timestamp without time zone")
                     .HasDefaultValueSql("timezone('utc', now())");
+            });
+
+            b.Entity<ProfessionalDetailsEntity>(e =>
+            {
+                e.ToTable("ProfessionalDetails");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(pd => pd.Professional)
+                    .WithOne(u => u.ProfessionalDetails)
+                    .HasForeignKey<ProfessionalDetailsEntity>(pd => pd.ProfessionalId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasIndex(pd => pd.ProfessionalId).IsUnique();
             });
 
             b.Entity<ExerciseCategoryEntity>(e =>

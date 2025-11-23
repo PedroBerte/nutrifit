@@ -21,6 +21,9 @@ public class UserDto
     public AddressDto? Address { get; set; }
     public ProfileDto? Profile { get; set; } = null!;    
     public ProfessionalCredentialDto? ProfessionalCredential { get; set; }
+    public ProfessionalDetailsDto? ProfessionalDetails { get; set; }
+    public double? AverageRating { get; set; }
+    public int? TotalFeedbacks { get; set; }
 }
 
 public class AddressDto
