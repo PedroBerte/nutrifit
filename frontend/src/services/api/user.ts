@@ -111,3 +111,23 @@ export function useUpdateUser() {
     },
   });
 }
+
+export function useGeocodeAllAddresses() {
+  return useMutation({
+    mutationKey: ["geocodeAllAddresses"],
+    retry: 0,
+    mutationFn: async () => {
+      const request = await api.post<{
+        message: string;
+        processed: number;
+        success: number;
+        failed: number;
+      }>(`/user/geocode-addresses`);
+      return request.data;
+    },
+    onError: (e) => {
+      console.error("Erro ao geocodificar endereços", e);
+      throw e;
+    },
+  });
+}

@@ -114,7 +114,9 @@ public class UserService : IUserService
         try
         {
             return await _context.CustomerFeedbacks
+                .Include(f => f.Customer)
                 .Where(f => f.ProfessionalId == professionalId)
+                .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
         }
         catch (Exception ex)

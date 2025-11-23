@@ -15,11 +15,13 @@ import {
   Apple,
   Edit,
   VenusAndMars,
+  Star,
 } from "lucide-react";
 import type { CustomerProfessionalBondType } from "@/types/professional";
 import { useCreateBond, useGetBondsSent } from "@/services/api/bond";
 import { motion } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
+import { useGetProfessionalFeedbacks } from "@/services/api/feedback";
 
 export default function Professional() {
   const { user, logout } = useAuth();
@@ -28,6 +30,7 @@ export default function Professional() {
   const toast = useToast();
   const { data: bondsSent } = useGetBondsSent();
   const { mutate: createProposal } = useCreateBond();
+  const { data: feedbacks } = useGetProfessionalFeedbacks(id);
 
   if (!id) navigate("/home");
 
@@ -304,6 +307,53 @@ export default function Professional() {
                   </span>
                 </div>
               </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Seção de Avaliações */}
+        {feedbacks && feedbacks.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-neutral-dark-03 rounded-xl p-4"
+          >
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-400" />
+              Avaliações ({feedbacks.length})
+            </h3>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {feedbacks.map((feedback) => (
+                <div key={feedback.id} className="border-b border-neutral-dark-02 pb-4 last:border-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex">
+                        {[...Array(5)].map((_, index) => (
+                          <Star
+                            key={index}
+                            className={`w-4 h-4 ${
+                              index < feedback.rate
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "text-gray-600"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      {feedback.customerName && (
+                        <span className="text-sm font-semibold text-gray-300">
+                          {feedback.customerName}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {new Date(feedback.createdAt).toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+                  {feedback.testimony && (
+                    <p className="text-sm text-gray-300">{feedback.testimony}</p>
+                  )}
+                </div>
+              ))}
             </div>
           </motion.div>
         )}

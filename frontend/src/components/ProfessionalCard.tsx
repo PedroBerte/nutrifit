@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import GenericPersonSvg from "@/assets/generic-person.svg";
 import Verified from "@/assets/verified.svg";
-import { Star, MapPin, Bookmark } from "lucide-react";
+import { MapPin, Bookmark, Award, Monitor, Video, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AttendanceMode } from "@/types/professional";
 import { addFavorite, removeFavorite } from "@/services/api/favorite";
@@ -42,11 +42,11 @@ export default function ProfessionalCard({
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Evitar navegar para o perfil
-    
+
     if (isTogglingFavorite) return;
-    
+
     setIsTogglingFavorite(true);
-    
+
     try {
       if (isFavorite) {
         await removeFavorite(id);
@@ -55,7 +55,7 @@ export default function ProfessionalCard({
         await addFavorite(id);
         setIsFavorite(true);
       }
-      
+
       if (onFavoriteChange) {
         onFavoriteChange();
       }
@@ -73,24 +73,40 @@ export default function ProfessionalCard({
     return null;
   };
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-1">
-        {[...Array(5)].map((_, index) => (
-          <Star
-            key={index}
-            className={`w-3 h-3 ${
-              index < Math.round(rating)
-                ? "fill-yellow-400 text-yellow-400"
-                : "text-gray-600"
-            }`}
-          />
-        ))}
-        <span className="text-xs text-gray-400 ml-1">
-          {rating.toFixed(1)} ({totalFeedbacks || 0})
-        </span>
-      </div>
-    );
+  const getAttendanceModeIcon = (mode?: AttendanceMode | null) => {
+    if (mode === AttendanceMode.Presencial) return <Users className="w-3 h-3" />;
+    if (mode === AttendanceMode.Online) return <Monitor className="w-3 h-3" />;
+    if (mode === AttendanceMode.Hibrido) return <Video className="w-3 h-3" />;
+    return null;
+  };
+
+  const getRatingBadge = (rating: number, totalFeedbacks?: number | null) => {
+    // Não mostrar badge se não tiver avaliações suficientes
+    if (!totalFeedbacks || totalFeedbacks < 3) return null;
+
+    if (rating >= 4.5) {
+      return {
+        text: "Nota máxima",
+        className: "bg-green-500/20 text-green-400 border border-green-500/30"
+      };
+    }
+
+    if (rating >= 4.0) {
+      return {
+        text: "Muito bem avaliado",
+        className: "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+      };
+    }
+
+    if (rating >= 3.5) {
+      return {
+        text: "Bem avaliado",
+        className: "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+      };
+    }
+
+    // Não mostrar nada para avaliações ruins (< 3.5)
+    return null;
   };
 
   return (
@@ -100,53 +116,64 @@ export default function ProfessionalCard({
     >
       {/* Botão de Favorito */}
       <motion.button
-        className="absolute top-3 right-3 p-2 rounded-full bg-neutral-dark-02 hover:bg-neutral-dark-01 transition-colors z-10"
+        className="absolute top-3 right-3 z-10"
         onClick={handleFavoriteClick}
         disabled={isTogglingFavorite}
         whileTap={{ scale: 0.9 }}
         whileHover={{ scale: 1.1 }}
       >
         <Bookmark
-          className={`w-5 h-5 transition-all ${
-            isFavorite
-              ? "fill-primary-light text-primary-light"
-              : "text-gray-400"
-          }`}
+          className={`w-5 h-5 transition-all ${isFavorite
+            ? "fill-primary text-primary"
+            : "text-gray-400 hover:text-gray-300"
+            }`}
         />
       </motion.button>
 
-      <div className="flex gap-3">
-        <img src={GenericPersonSvg} alt="" className="w-12 h-12" />
-        <div className="overflow-hidden text-ellipsis flex-1">
-          <p className="text-sm font-semibold text-gray-400">{subtitle}</p>
-          <div className="flex gap-1 items-center">
-            <img src={Verified} alt="" className="w-4 h-4" />
-            <p className="text-lg font-semibold">{name}</p>
+      <div className="flex gap-3 pr-8">
+        <div className="flex-1 min-w-0">
+          <div className="flex gap-3">
+            <img src={GenericPersonSvg} alt="" className="w-12 h-12 flex-shrink-0" />
+            <div className="flex flex-col">
+              <p className="text-sm font-semibold text-gray-400">{subtitle}</p>
+
+              <div className="flex gap-1 items-center">
+                <img src={Verified} alt="" className="w-4 h-4" />
+                <p className="text-lg font-semibold truncate">{name}</p>
+              </div>
+            </div>
           </div>
-          
-          {rating && rating > 0 && (
-            <div className="mt-1">{renderStars(rating)}</div>
-          )}
-          
-          <p className="text-xs text-gray-500 line-clamp-2 text-ellipsis mt-1">
-            {description}
-          </p>
-          
-          <div className="flex flex-wrap gap-2 mt-2">
+
+          {/* Tags */}
+          <div className="flex flex-wrap items-center gap-2 mt-2">
             {tags && tags.filter(Boolean).map((tag, index) => (
               <span
                 key={index}
-                className="text-xs bg-primary-light/20 text-primary-light px-2 py-1 rounded-full"
+                className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full whitespace-nowrap"
               >
                 {tag}
               </span>
             ))}
           </div>
-          
-          <div className="flex gap-3 mt-2 text-xs text-gray-400">
+
+          {/* Localização, Modalidade e Rating Badge */}
+          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+            {rating && rating > 0 && (() => {
+              const badge = getRatingBadge(rating, totalFeedbacks);
+              if (!badge) return null;
+
+              return (
+                <span className="flex items-center gap-1">
+                  <Award className="w-3 h-3" />
+                  {badge.text}
+                </span>
+              );
+            })()}
+            
             {attendanceMode !== null && attendanceMode !== undefined && (
               <span className="flex items-center gap-1">
-                📍 {getAttendanceModeName(attendanceMode)}
+                {getAttendanceModeIcon(attendanceMode)}
+                {getAttendanceModeName(attendanceMode)}
               </span>
             )}
             {city && state && (
@@ -156,6 +183,10 @@ export default function ProfessionalCard({
               </span>
             )}
           </div>
+
+          <p className="text-xs text-gray-500 line-clamp-4 mt-1">
+            {description}
+          </p>
         </div>
       </div>
     </div>

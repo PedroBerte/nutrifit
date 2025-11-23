@@ -1,17 +1,19 @@
 import ProfessionalCard from "@/components/ProfessionalCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useGetAllUsers, useGetUserById } from "@/services/api/user";
+import { useGetAllUsers, useGetUserById, useGeocodeAllAddresses } from "@/services/api/user";
 import { AttendanceMode } from "@/types/professional";
 import { motion } from "motion/react";
 import { Filter, X, MapPin, AlertCircle } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
+import { toast } from "sonner";
 
 export default function ProfessionalsList() {
   const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
   const { data: currentUserData } = useGetUserById(currentUserId);
+  const geocodeMutation = useGeocodeAllAddresses();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -109,6 +111,20 @@ export default function ProfessionalsList() {
 
   const hasActiveFilters = minRating || selectedMode !== null || selectedTag || selectedCity || showOnlyFavorites || selectedDistance !== null;
 
+  const handleGeocodeAll = async () => {
+    try {
+      toast.loading("Geocodificando endereços... (pode levar ~40s)", { id: "geocode" });
+      const result = await geocodeMutation.mutateAsync();
+      toast.success(
+        `${result.message}: ${result.success} sucessos, ${result.failed} falhas`,
+        { id: "geocode", duration: 5000 }
+      );
+      refetch();
+    } catch (error) {
+      toast.error("Erro ao geocodificar endereços", { id: "geocode" });
+    }
+  };
+
   return (
     <motion.div
       className="flex flex-1 flex-col gap-4 mt-4"
@@ -123,6 +139,14 @@ export default function ProfessionalsList() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleGeocodeAll}
+          disabled={geocodeMutation.isPending}
+        >
+          test
+        </Button>
         <Button
           variant={showFilters ? "default" : "outline"}
           size="icon"
@@ -187,21 +211,21 @@ export default function ProfessionalsList() {
                 variant={selectedMode === AttendanceMode.Presencial ? "default" : "outline"}
                 onClick={() => setSelectedMode(selectedMode === AttendanceMode.Presencial ? null : AttendanceMode.Presencial)}
               >
-                Presencial
+                Atendimento Presencial
               </Button>
               <Button
                 size="sm"
                 variant={selectedMode === AttendanceMode.Online ? "default" : "outline"}
                 onClick={() => setSelectedMode(selectedMode === AttendanceMode.Online ? null : AttendanceMode.Online)}
               >
-                Online
+                Atendimento Online
               </Button>
               <Button
                 size="sm"
                 variant={selectedMode === AttendanceMode.Hibrido ? "default" : "outline"}
                 onClick={() => setSelectedMode(selectedMode === AttendanceMode.Hibrido ? null : AttendanceMode.Hibrido)}
               >
-                Híbrido
+                Atendimento Híbrido
               </Button>
             </div>
           </div>
