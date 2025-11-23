@@ -111,6 +111,17 @@ export function useGetAllBonds(
   });
 }
 
+export function useGetMyBonds() {
+  return useQuery({
+    queryKey: ["getMyBonds"],
+    queryFn: async () => {
+      const request = await api.get<CustomerProfessionalBondType[]>(`/bond/as-professional`);
+      return request.data;
+    },
+    retry: 1,
+  });
+}
+
 export function useUpdateBond() {
   return useMutation({
     mutationKey: ["updateBond"],
