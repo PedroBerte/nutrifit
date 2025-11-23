@@ -16,12 +16,15 @@ import {
   Edit,
   VenusAndMars,
   Star,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import type { CustomerProfessionalBondType } from "@/types/professional";
 import { useCreateBond, useGetBondsSent } from "@/services/api/bond";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
 import { useGetProfessionalFeedbacks } from "@/services/api/feedback";
+import { getUserAvatarUrl } from "@/lib/avatar";
 
 export default function Professional() {
   const { user, logout } = useAuth();
@@ -31,6 +34,19 @@ export default function Professional() {
   const { data: bondsSent } = useGetBondsSent();
   const { mutate: createProposal } = useCreateBond();
   const { data: feedbacks } = useGetProfessionalFeedbacks(id);
+
+  const [expandedSections, setExpandedSections] = useState({
+    personalInfo: true,
+    credentials: false,
+    address: false,
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   if (!id) navigate("/home");
 
@@ -163,11 +179,11 @@ export default function Professional() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center gap-3 bg-neutral-dark-03 p-4 rounded-lg"
         >
-          <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-2xl font-bold text-white">
-              {userData.name?.charAt(0)?.toUpperCase() || "U"}
-            </span>
-          </div>
+          <img 
+            src={getUserAvatarUrl(userData)} 
+            alt={userData.name || 'Avatar'}
+            className="w-20 h-20 rounded-full object-cover bg-neutral-dark-02"
+          />
 
           <div className="text-center space-y-2">
             <h2 className="text-lg font-semibold text-neutral-white-01">
@@ -188,128 +204,205 @@ export default function Professional() {
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-3 bg-neutral-dark-03 rounded-lg p-4"
+        <Button
+          onClick={() => id && sendProposal(id)}
+          disabled={alreadySentProposal || isSending}
         >
-          <div className="flex items-center space-x-2 text-neutral-white-01">
-            <Mail className="w-5 h-5" />
-            <span className="text-sm">{userData.email}</span>
-          </div>
+          {alreadySentProposal ? "Proposta Enviada" : "Enviar Proposta"}
+        </Button>
 
-          {userData.phoneNumber && (
-            <div className="flex items-center space-x-2 text-neutral-white-01">
-              <Phone className="w-5 h-5" />
-              <span className="text-sm">{userData.phoneNumber}</span>
-            </div>
-          )}
+        <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
+          <button
+            onClick={() => toggleSection("personalInfo")}
+            className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-02 transition-colors"
+          >
+            <h3 className="text-lg font-semibold text-neutral-white-01">
+              Informações Pessoais
+            </h3>
+            {expandedSections.personalInfo ? (
+              <ChevronUp className="w-5 h-5 text-neutral-white-02" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-neutral-white-02" />
+            )}
+          </button>
+          <AnimatePresence>
+            {expandedSections.personalInfo && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-col gap-3 p-4 pt-0">
+                  <div className="flex items-center space-x-2 text-neutral-white-01">
+                    <Mail className="w-5 h-5" />
+                    <span className="text-sm">{userData.email}</span>
+                  </div>
 
-          {userData.dateOfBirth && (
-            <div className="flex items-center space-x-2 text-neutral-white-01">
-              <Calendar className="w-5 h-5" />
-              <span className="text-sm">
-                {formatDate(userData.dateOfBirth)}
-                {calculateAge(userData.dateOfBirth) &&
-                  ` • ${calculateAge(userData.dateOfBirth)} anos`}
-              </span>
-            </div>
-          )}
+                  {userData.phoneNumber && (
+                    <div className="flex items-center space-x-2 text-neutral-white-01">
+                      <Phone className="w-5 h-5" />
+                      <span className="text-sm">{userData.phoneNumber}</span>
+                    </div>
+                  )}
 
-          {userData.sex && (
-            <div className="flex items-center space-x-2 text-neutral-white-01">
-              <VenusAndMars className="w-5 h-5" />
-              <span className="text-sm">{getSexLabel(userData.sex)}</span>
-            </div>
-          )}
-        </motion.div>
+                  {userData.dateOfBirth && (
+                    <div className="flex items-center space-x-2 text-neutral-white-01">
+                      <Calendar className="w-5 h-5" />
+                      <span className="text-sm">
+                        {formatDate(userData.dateOfBirth)}
+                        {calculateAge(userData.dateOfBirth) &&
+                          ` • ${calculateAge(userData.dateOfBirth)} anos`}
+                      </span>
+                    </div>
+                  )}
+
+                  {userData.sex && (
+                    <div className="flex items-center space-x-2 text-neutral-white-01">
+                      <VenusAndMars className="w-5 h-5" />
+                      <span className="text-sm">{getSexLabel(userData.sex)}</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {userData.professionalCredential && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-neutral-dark-03 rounded-lg p-4 space-y-3"
-          >
-            <div className="space-y-2">
-              <div>
-                <span className="text-xs text-neutral-white-02 block mb-1">
-                  {userData.professionalCredential.type === "CRN"
-                    ? "CRN"
-                    : "CREF"}
-                  :
-                </span>
-                <p className="text-sm text-neutral-white-01">
-                  {userData.professionalCredential.credentialId}
-                </p>
-              </div>
-
-              {userData.professionalCredential.biography && (
-                <div className="mt-3">
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Biografia:
-                  </span>
-                  <p className="text-sm text-neutral-white-01">
-                    {userData.professionalCredential.biography}
-                  </p>
-                </div>
+          <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
+            <button
+              onClick={() => toggleSection("credentials")}
+              className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-02 transition-colors"
+            >
+              <h3 className="text-lg font-semibold text-neutral-white-01">
+                Credenciais
+              </h3>
+              {expandedSections.credentials ? (
+                <ChevronUp className="w-5 h-5 text-neutral-white-02" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-neutral-white-02" />
               )}
-            </div>
-          </motion.div>
+            </button>
+            <AnimatePresence>
+              {expandedSections.credentials && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-4 pt-0 space-y-3">
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-xs text-neutral-white-02 block mb-1">
+                          {userData.professionalCredential.type === "CRN"
+                            ? "CRN"
+                            : "CREF"}
+                          
+                        </span>
+                        <p className="text-sm text-neutral-white-01">
+                          {userData.professionalCredential.credentialId}
+                        </p>
+                      </div>
+
+                      {userData.professionalCredential.biography && (
+                        <div className="mt-3">
+                          <span className="text-xs text-neutral-white-02 block mb-1">
+                            Biografia
+                          </span>
+                          <p className="text-sm text-neutral-white-01">
+                            {userData.professionalCredential.biography}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )}
 
         {userData.address && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-neutral-dark-03 rounded-lg p-4 space-y-3"
-          >
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="text-xs text-neutral-white-02 block mb-1">
-                  CEP:
-                </span>
-                <span className="text-sm text-neutral-white-01">
-                  {userData.address.zipCode || "Não informado"}
-                </span>
-              </div>
+          <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
+            <button
+              onClick={() => toggleSection("address")}
+              className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-02 transition-colors"
+            >
+              <h3 className="text-lg font-semibold text-neutral-white-01">
+                Endereço
+              </h3>
+              {expandedSections.address ? (
+                <ChevronUp className="w-5 h-5 text-neutral-white-02" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-neutral-white-02" />
+              )}
+            </button>
+            <AnimatePresence>
+              {expandedSections.address && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-4 pt-0 space-y-3">
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <span className="text-xs text-neutral-white-02 block mb-1">
+                          CEP:
+                        </span>
+                        <span className="text-sm text-neutral-white-01">
+                          {userData.address.zipCode || "Não informado"}
+                        </span>
+                      </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Rua:
-                  </span>
-                  <span className="text-sm text-neutral-white-01">
-                    {userData.address.addressLine || "Não informado"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Número:
-                  </span>
-                  <span className="text-sm text-neutral-white-01">
-                    {userData.address.number || "Não informado"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Estado:
-                  </span>
-                  <span className="text-sm text-neutral-white-01">
-                    {userData.address.state || "Não informado"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Cidade:
-                  </span>
-                  <span className="text-sm text-neutral-white-01">
-                    {userData.address.city || "Não informado"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-xs text-neutral-white-02 block mb-1">
+                            Rua
+                          </span>
+                          <span className="text-sm text-neutral-white-01">
+                            {userData.address.addressLine || "Não informado"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-neutral-white-02 block mb-1">
+                            Número
+                          </span>
+                          <span className="text-sm text-neutral-white-01">
+                            {userData.address.number || "Não informado"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-neutral-white-02 block mb-1">
+                            Estado
+                          </span>
+                          <span className="text-sm text-neutral-white-01">
+                            {userData.address.state || "Não informado"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-neutral-white-02 block mb-1">
+                            Cidade
+                          </span>
+                          <span className="text-sm text-neutral-white-01">
+                            {userData.address.city || "Não informado"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )}
+
 
         {/* Seção de Avaliações */}
         {feedbacks && feedbacks.length > 0 && (
@@ -318,39 +411,26 @@ export default function Professional() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-neutral-dark-03 rounded-xl p-4"
           >
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-400" />
-              Avaliações ({feedbacks.length})
+            <h3 className="text-lg font-semibold mb-4">
+              Avaliações
             </h3>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {feedbacks.map((feedback) => (
-                <div key={feedback.id} className="border-b border-neutral-dark-02 pb-4 last:border-0">
+                <div key={feedback.id} className="pb-4 last:pb-0">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex">
-                        {[...Array(5)].map((_, index) => (
-                          <Star
-                            key={index}
-                            className={`w-4 h-4 ${
-                              index < feedback.rate
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "text-gray-600"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      {feedback.customerName && (
-                        <span className="text-sm font-semibold text-gray-300">
-                          {feedback.customerName}
-                        </span>
-                      )}
-                    </div>
+                    {feedback.customerName && (
+                      <span className="text-sm font-semibold text-neutral-white-01">
+                        {feedback.customerName}
+                      </span>
+                    )}
                     <span className="text-xs text-gray-400">
                       {new Date(feedback.createdAt).toLocaleDateString("pt-BR")}
                     </span>
                   </div>
                   {feedback.testimony && (
-                    <p className="text-sm text-gray-300">{feedback.testimony}</p>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      "{feedback.testimony}"
+                    </p>
                   )}
                 </div>
               ))}
@@ -365,13 +445,6 @@ export default function Professional() {
         >
           Conta criada em {formatDate(userData.createdAt)}
         </motion.div>
-
-        <Button
-          onClick={() => id && sendProposal(id)}
-          disabled={alreadySentProposal || isSending}
-        >
-          {alreadySentProposal ? "Proposta Enviada" : "Enviar Proposta"}
-        </Button>
       </div>
     </div>
   );

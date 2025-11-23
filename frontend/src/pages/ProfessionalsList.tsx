@@ -4,20 +4,28 @@ import { Button } from "@/components/ui/button";
 import { useGetAllUsers, useGetUserById, useGeocodeAllAddresses } from "@/services/api/user";
 import { AttendanceMode } from "@/types/professional";
 import { motion } from "motion/react";
-import { Filter, X, MapPin, AlertCircle } from "lucide-react";
+import { Filter, X, MapPin, AlertCircle, Bookmark } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { toast } from "sonner";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 
 export default function ProfessionalsList() {
   const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
   const { data: currentUserData } = useGetUserById(currentUserId);
   const geocodeMutation = useGeocodeAllAddresses();
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [minRating, setMinRating] = useState<number | null>(null);
   const [selectedMode, setSelectedMode] = useState<AttendanceMode | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -25,21 +33,21 @@ export default function ProfessionalsList() {
   const [selectedDistance, setSelectedDistance] = useState<number | null>(null);
 
   const userHasAddress = useMemo(() => {
-    return currentUserData?.address?.latitude !== null && 
-           currentUserData?.address?.latitude !== undefined &&
-           currentUserData?.address?.longitude !== null &&
-           currentUserData?.address?.longitude !== undefined;
+    return currentUserData?.address?.latitude !== null &&
+      currentUserData?.address?.latitude !== undefined &&
+      currentUserData?.address?.longitude !== null &&
+      currentUserData?.address?.longitude !== undefined;
   }, [currentUserData]);
 
   const { data, isLoading, refetch } = useGetAllUsers(
-    false, 
-    false, 
+    false,
+    false,
     true,
     selectedDistance && userHasAddress ? currentUserData?.address?.latitude! : null,
     selectedDistance && userHasAddress ? currentUserData?.address?.longitude! : null,
-    selectedDistance
+    selectedDistance && userHasAddress ? selectedDistance : null
   );
-  
+
   // Extrair tags únicas e cidades únicas
   const allTags = Array.from(
     new Set(
@@ -49,23 +57,18 @@ export default function ProfessionalsList() {
         p.professionalDetails?.tag3,
       ]).filter(Boolean) as string[]
     )
-  );
+  ).sort();
 
   const allCities = Array.from(
     new Set(
       data?.map(p => p.address?.city).filter(Boolean) as string[]
     )
-  );
+  ).sort();
 
   // Filtrar profissionais
   const filteredProfessionals = data?.filter(professional => {
     // Filtro de busca por nome
     if (searchTerm && !professional.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
-
-    // Filtro de rating mínimo
-    if (minRating && (professional.averageRating || 0) < minRating) {
       return false;
     }
 
@@ -100,7 +103,6 @@ export default function ProfessionalsList() {
   });
 
   const clearFilters = () => {
-    setMinRating(null);
     setSelectedMode(null);
     setSelectedTag(null);
     setSelectedCity(null);
@@ -109,7 +111,7 @@ export default function ProfessionalsList() {
     setSelectedDistance(null);
   };
 
-  const hasActiveFilters = minRating || selectedMode !== null || selectedTag || selectedCity || showOnlyFavorites || selectedDistance !== null;
+  const hasActiveFilters = selectedMode !== null || selectedTag || selectedCity || showOnlyFavorites || selectedDistance !== null;
 
   const handleGeocodeAll = async () => {
     try {
@@ -140,14 +142,6 @@ export default function ProfessionalsList() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleGeocodeAll}
-          disabled={geocodeMutation.isPending}
-        >
-          test
-        </Button>
-        <Button
           variant={showFilters ? "default" : "outline"}
           size="icon"
           onClick={() => setShowFilters(!showFilters)}
@@ -156,164 +150,241 @@ export default function ProfessionalsList() {
         </Button>
       </div>
 
-      {showFilters && (
-        <motion.div
-          className="bg-neutral-dark-03 p-4 rounded-xl space-y-4"
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-        >
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Filtros</h3>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="w-4 h-4 mr-1" />
-                Limpar
-              </Button>
-            )}
-          </div>
-
-          {/* Favoritos */}
-          <div>
-            <Button
-              size="sm"
-              variant={showOnlyFavorites ? "default" : "outline"}
-              onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
-              className="w-full"
-            >
-              ⭐ {showOnlyFavorites ? "Mostrando apenas favoritos" : "Mostrar apenas favoritos"}
-            </Button>
-          </div>
-
-          {/* Rating */}
-          <div>
-            <label className="text-sm text-gray-400 block mb-2">Rating Mínimo</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((rating) => (
-                <Button
-                  key={rating}
-                  size="sm"
-                  variant={minRating === rating ? "default" : "outline"}
-                  onClick={() => setMinRating(minRating === rating ? null : rating)}
-                >
-                  {rating}★
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Modalidade */}
-          <div>
-            <label className="text-sm text-gray-400 block mb-2">Modalidade de Atendimento</label>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant={selectedMode === AttendanceMode.Presencial ? "default" : "outline"}
-                onClick={() => setSelectedMode(selectedMode === AttendanceMode.Presencial ? null : AttendanceMode.Presencial)}
+      {/* Pills de Filtros Ativos */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap gap-2">
+          {showOnlyFavorites && (
+            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
+              <Bookmark className="w-3 h-3" />
+              <span>Favoritos</span>
+              <button
+                onClick={() => setShowOnlyFavorites(false)}
+                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
               >
-                Atendimento Presencial
-              </Button>
-              <Button
-                size="sm"
-                variant={selectedMode === AttendanceMode.Online ? "default" : "outline"}
-                onClick={() => setSelectedMode(selectedMode === AttendanceMode.Online ? null : AttendanceMode.Online)}
-              >
-                Atendimento Online
-              </Button>
-              <Button
-                size="sm"
-                variant={selectedMode === AttendanceMode.Hibrido ? "default" : "outline"}
-                onClick={() => setSelectedMode(selectedMode === AttendanceMode.Hibrido ? null : AttendanceMode.Hibrido)}
-              >
-                Atendimento Híbrido
-              </Button>
-            </div>
-          </div>
-
-          {/* Tags */}
-          {allTags.length > 0 && (
-            <div>
-              <label className="text-sm text-gray-400 block mb-2">Especialidades</label>
-              <div className="flex flex-wrap gap-2">
-                {allTags.map((tag) => (
-                  <Button
-                    key={tag}
-                    size="sm"
-                    variant={selectedTag === tag ? "default" : "outline"}
-                    onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                  >
-                    {tag}
-                  </Button>
-                ))}
-              </div>
+                <X className="w-3 h-3" />
+              </button>
             </div>
           )}
-
-          {/* Cidade */}
-          {allCities.length > 0 && (
-            <div>
-              <label className="text-sm text-gray-400 block mb-2">Localização</label>
-              <div className="flex flex-wrap gap-2">
-                {allCities.map((city) => (
-                  <Button
-                    key={city}
-                    size="sm"
-                    variant={selectedCity === city ? "default" : "outline"}
-                    onClick={() => {
-                      setSelectedCity(selectedCity === city ? null : city);
-                      if (city !== selectedCity) setSelectedDistance(null);
-                    }}
-                    disabled={selectedDistance !== null}
-                  >
-                    {city}
-                  </Button>
-                ))}
-              </div>
+          
+          {selectedMode !== null && (
+            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
+              <span>
+                {selectedMode === AttendanceMode.Presencial ? "Presencial" : 
+                 selectedMode === AttendanceMode.Online ? "Online" : "Híbrido"}
+              </span>
+              <button
+                onClick={() => setSelectedMode(null)}
+                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </div>
           )}
-
-          {/* Distância (geolocalização) */}
-          <div>
-            <label className="text-sm text-gray-400 flex items-center gap-2 mb-2">
-              <MapPin className="w-4 h-4" />
-              Filtrar por distância
-            </label>
-            {!userHasAddress ? (
-              <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-yellow-500">
-                  Complete seu perfil com endereço para usar este filtro
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {[5, 10, 20, 50].map((distance) => (
-                  <Button
-                    key={distance}
-                    size="sm"
-                    variant={selectedDistance === distance ? "default" : "outline"}
-                    onClick={() => {
-                      setSelectedDistance(selectedDistance === distance ? null : distance);
-                      if (distance !== selectedDistance) setSelectedCity(null);
-                    }}
-                  >
-                    {distance} km
-                  </Button>
-                ))}
-                <Button
-                  size="sm"
-                  variant={selectedDistance === null ? "default" : "outline"}
-                  onClick={() => {
-                    setSelectedDistance(null);
-                  }}
-                >
-                  Qualquer distância
-                </Button>
-              </div>
-            )}
-          </div>
-        </motion.div>
+          
+          {selectedTag && (
+            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
+              <span>{selectedTag}</span>
+              <button
+                onClick={() => setSelectedTag(null)}
+                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+          
+          {selectedCity && (
+            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
+              <MapPin className="w-3 h-3" />
+              <span>{selectedCity}</span>
+              <button
+                onClick={() => setSelectedCity(null)}
+                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+          
+          {selectedDistance !== null && (
+            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
+              <MapPin className="w-3 h-3" />
+              <span>{selectedDistance} km</span>
+              <button
+                onClick={() => setSelectedDistance(null)}
+                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+          
+          <button
+            onClick={clearFilters}
+            className="px-3 py-1 text-sm text-gray-400 hover:text-gray-300 underline"
+          >
+            Limpar todos
+          </button>
+        </div>
       )}
+
+      <Drawer open={showFilters} onOpenChange={setShowFilters}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Filtros</DrawerTitle>
+            <DrawerDescription>
+              Refine sua busca por profissionais
+            </DrawerDescription>
+          </DrawerHeader>
+
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 max-h-[70vh]">
+            {/* Favoritos */}
+            <div>
+              <Button
+                size="sm"
+                variant={showOnlyFavorites ? "default" : "outline"}
+                onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+                className="w-full"
+              >
+                <Bookmark className="w-4 h-4 mr-2" />
+                {showOnlyFavorites ? "Mostrando apenas favoritos" : "Mostrar apenas favoritos"}
+              </Button>
+            </div>
+
+            {/* Modalidade */}
+            <div>
+              <label className="text-sm text-gray-400 block mb-2">Modalidade de Atendimento</label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant={selectedMode === AttendanceMode.Presencial ? "default" : "outline"}
+                  onClick={() => setSelectedMode(selectedMode === AttendanceMode.Presencial ? null : AttendanceMode.Presencial)}
+                >
+                  Presencial
+                </Button>
+                <Button
+                  size="sm"
+                  variant={selectedMode === AttendanceMode.Online ? "default" : "outline"}
+                  onClick={() => setSelectedMode(selectedMode === AttendanceMode.Online ? null : AttendanceMode.Online)}
+                >
+                  Online
+                </Button>
+                <Button
+                  size="sm"
+                  variant={selectedMode === AttendanceMode.Hibrido ? "default" : "outline"}
+                  onClick={() => setSelectedMode(selectedMode === AttendanceMode.Hibrido ? null : AttendanceMode.Hibrido)}
+                >
+                  Híbrido
+                </Button>
+              </div>
+            </div>
+
+            {/* Tags */}
+            {allTags.length > 0 && (
+              <div>
+                <label className="text-sm text-gray-400 block mb-2">
+                  Especialidades ({allTags.length})
+                </label>
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                  {allTags.map((tag) => (
+                    <Button
+                      key={tag}
+                      size="sm"
+                      variant={selectedTag === tag ? "default" : "outline"}
+                      onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                      className="flex-shrink-0"
+                    >
+                      {tag}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cidade */}
+            {allCities.length > 0 && (
+              <div>
+                <label className="text-sm text-gray-400 block mb-2">
+                  Cidades ({allCities.length})
+                </label>
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                  {allCities.map((city) => (
+                    <Button
+                      key={city}
+                      size="sm"
+                      variant={selectedCity === city ? "default" : "outline"}
+                      onClick={() => {
+                        setSelectedCity(selectedCity === city ? null : city);
+                        if (city !== selectedCity) setSelectedDistance(null);
+                      }}
+                      disabled={selectedDistance !== null}
+                      className="flex-shrink-0"
+                    >
+                      {city}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Distância (geolocalização) */}
+            <div>
+              <label className="text-sm text-gray-400 flex items-center gap-2 mb-2">
+                <MapPin className="w-4 h-4" />
+                Filtrar por distância
+              </label>
+              {!userHasAddress ? (
+                <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-yellow-500">
+                    Complete seu perfil com endereço para usar este filtro
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {[5, 10, 20, 50].map((distance) => (
+                    <Button
+                      key={distance}
+                      size="sm"
+                      variant={selectedDistance === distance ? "default" : "outline"}
+                      onClick={() => {
+                        setSelectedDistance(selectedDistance === distance ? null : distance);
+                        if (distance !== selectedDistance) setSelectedCity(null);
+                      }}
+                    >
+                      {distance} km
+                    </Button>
+                  ))}
+                  <Button
+                    size="sm"
+                    variant={selectedDistance === null ? "default" : "outline"}
+                    onClick={() => {
+                      setSelectedDistance(null);
+                    }}
+                  >
+                    Qualquer distância
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DrawerFooter className="border-t pt-4">
+            <Button 
+              variant="outline" 
+              onClick={clearFilters} 
+              className="w-full"
+              disabled={!hasActiveFilters}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Limpar Filtros
+            </Button>
+            <Button onClick={() => setShowFilters(false)} className="w-full">
+              Fechar
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       {isLoading && <p>Carregando profissionais...</p>}
 
@@ -331,6 +402,7 @@ export default function ProfessionalsList() {
               key={professional.id}
               subtitle="Personal Trainer"
               name={professional.name}
+              email={professional.email}
               description={
                 professional.professionalCredential?.biography ||
                 "Sem descrição"

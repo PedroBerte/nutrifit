@@ -1,17 +1,18 @@
 import React, { useState } from "react";
-import GenericPersonSvg from "@/assets/generic-person.svg";
 import Verified from "@/assets/verified.svg";
 import { MapPin, Bookmark, Award, Monitor, Video, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AttendanceMode } from "@/types/professional";
 import { addFavorite, removeFavorite } from "@/services/api/favorite";
 import { motion } from "motion/react";
+import { getUserAvatarUrl } from "@/lib/avatar";
 
 type ProfessionalCardProps = {
   subtitle: string;
   name: string;
   description: string;
   id: string;
+  email?: string | null;
   rating?: number | null;
   totalFeedbacks?: number | null;
   tags?: (string | null | undefined)[];
@@ -27,6 +28,7 @@ export default function ProfessionalCard({
   name,
   description,
   id,
+  email,
   rating,
   totalFeedbacks,
   tags,
@@ -133,7 +135,11 @@ export default function ProfessionalCard({
       <div className="flex gap-3 pr-8">
         <div className="flex-1 min-w-0">
           <div className="flex gap-3">
-            <img src={GenericPersonSvg} alt="" className="w-12 h-12 flex-shrink-0" />
+            <img 
+              src={getUserAvatarUrl({ email, name, id })} 
+              alt={name || "Avatar"} 
+              className="w-12 h-12 flex-shrink-0 rounded-full object-cover bg-neutral-dark-02" 
+            />
             <div className="flex flex-col">
               <p className="text-sm font-semibold text-gray-400">{subtitle}</p>
 
