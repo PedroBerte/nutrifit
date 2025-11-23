@@ -80,6 +80,7 @@ export default function WorkoutSession() {
   const [isRestTimerRunning, setIsRestTimerRunning] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [expandedExerciseIds, setExpandedExerciseIds] = useState<Set<string>>(
     new Set<string>()
   );
@@ -352,6 +353,7 @@ export default function WorkoutSession() {
       await completeSession.mutateAsync(payload);
       clearLocalWorkout();
       setIsWorkoutTimerRunning(false);
+      setShowCompleteConfirm(false);
       toast.success("Treino concluído com sucesso!");
       navigate("/workout");
     } catch (error: any) {
@@ -669,7 +671,7 @@ export default function WorkoutSession() {
           >
             Cancelar
           </Button>
-          <Button onClick={handleCompleteSession} className="flex-1">
+          <Button onClick={() => setShowCompleteConfirm(true)} className="flex-1">
             Concluir
           </Button>
         </div>
@@ -703,6 +705,58 @@ export default function WorkoutSession() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {/* Drawer de confirmação de conclusão */}
+      <Drawer open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
+        <DrawerContent>
+          <DrawerHeader>
+            <div className="flex items-center gap-2 text-green-500 mb-2">
+              <CheckCircle2 size={24} />
+              <DrawerTitle>Concluir Treino?</DrawerTitle>
+            </div>
+            <DrawerDescription>
+              Tem certeza que deseja finalizar este treino?
+              <br />
+              Seus dados serão salvos e você poderá visualizar o histórico.
+            </DrawerDescription>
+          </DrawerHeader>
+
+          <div className="px-4 py-4 space-y-3">
+            <div className="bg-neutral-dark-02 rounded-lg p-4 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Duração</span>
+                <span className="font-bold">
+                  {Math.floor(workoutTimer / 60)}min {workoutTimer % 60}s
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Volume Total</span>
+                <span className="font-bold">
+                  {localWorkout ? calculateTotalVolume(localWorkout) : 0} kg
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Séries Totais</span>
+                <span className="font-bold">
+                  {localWorkout ? getTotalSets(localWorkout) : 0}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <DrawerFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowCompleteConfirm(false)}
+            >
+              Continuar Treino
+            </Button>
+            <Button onClick={handleCompleteSession} className="bg-green-600 hover:bg-green-700">
+              Sim, finalizar treino
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       {/* Drawer de Ajuda */}
       <Drawer open={showHelpSheet} onOpenChange={setShowHelpSheet}>
