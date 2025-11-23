@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import GenericPersonSvg from "@/assets/generic-person.svg";
 import Verified from "@/assets/verified.svg";
-import { Star, MapPin } from "lucide-react";
+import { Star, MapPin, Bookmark } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AttendanceMode } from "@/types/professional";
+import { addFavorite, removeFavorite } from "@/services/api/favorite";
+import { motion } from "motion/react";
 
 type ProfessionalCardProps = {
   subtitle: string;
@@ -16,6 +18,8 @@ type ProfessionalCardProps = {
   attendanceMode?: AttendanceMode | null;
   city?: string | null;
   state?: string | null;
+  isFavorite?: boolean | null;
+  onFavoriteChange?: () => void;
 };
 
 export default function ProfessionalCard({
@@ -29,8 +33,38 @@ export default function ProfessionalCard({
   attendanceMode,
   city,
   state,
+  isFavorite: initialIsFavorite,
+  onFavoriteChange,
 }: ProfessionalCardProps) {
   const navigate = useNavigate();
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite || false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Evitar navegar para o perfil
+    
+    if (isTogglingFavorite) return;
+    
+    setIsTogglingFavorite(true);
+    
+    try {
+      if (isFavorite) {
+        await removeFavorite(id);
+        setIsFavorite(false);
+      } else {
+        await addFavorite(id);
+        setIsFavorite(true);
+      }
+      
+      if (onFavoriteChange) {
+        onFavoriteChange();
+      }
+    } catch (error) {
+      console.error("Erro ao alterar favorito:", error);
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
 
   const getAttendanceModeName = (mode?: AttendanceMode | null) => {
     if (mode === AttendanceMode.Presencial) return "Presencial";
@@ -61,9 +95,26 @@ export default function ProfessionalCard({
 
   return (
     <div
-      className="bg-neutral-dark-03 p-4 rounded-xl cursor-pointer hover:bg-neutral-dark-02 transition-colors"
+      className="bg-neutral-dark-03 p-4 rounded-xl cursor-pointer hover:bg-neutral-dark-02 transition-colors relative"
       onClick={() => navigate(`/professional/${id}`)}
     >
+      {/* Botão de Favorito */}
+      <motion.button
+        className="absolute top-3 right-3 p-2 rounded-full bg-neutral-dark-02 hover:bg-neutral-dark-01 transition-colors z-10"
+        onClick={handleFavoriteClick}
+        disabled={isTogglingFavorite}
+        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.1 }}
+      >
+        <Bookmark
+          className={`w-5 h-5 transition-all ${
+            isFavorite
+              ? "fill-primary-light text-primary-light"
+              : "text-gray-400"
+          }`}
+        />
+      </motion.button>
+
       <div className="flex gap-3">
         <img src={GenericPersonSvg} alt="" className="w-12 h-12" />
         <div className="overflow-hidden text-ellipsis flex-1">

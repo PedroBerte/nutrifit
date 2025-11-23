@@ -17,6 +17,7 @@ namespace Nutrifit.Repository
         public DbSet<ProfessionalFeedbackEntity> ProfessionalFeedbacks => Set<ProfessionalFeedbackEntity>();
         public DbSet<ProfessionalCredentialEntity> ProfessionalCredentials => Set<ProfessionalCredentialEntity>();
         public DbSet<ProfessionalDetailsEntity> ProfessionalDetails => Set<ProfessionalDetailsEntity>();
+        public DbSet<FavoriteProfessionalEntity> FavoriteProfessionals => Set<FavoriteProfessionalEntity>();
         public DbSet<ProfileEntity> Profiles => Set<ProfileEntity>();
         public DbSet<PushSubscriptionEntity> PushSubscriptions { get; set; } = null!;
         public DbSet<ExerciseCategoryEntity> ExerciseCategories => Set<ExerciseCategoryEntity>();
@@ -265,6 +266,30 @@ namespace Nutrifit.Repository
                     .OnDelete(DeleteBehavior.Cascade);
 
                 e.HasIndex(pd => pd.ProfessionalId).IsUnique();
+            });
+
+            b.Entity<FavoriteProfessionalEntity>(e =>
+            {
+                e.ToTable("FavoriteProfessionals");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(f => f.Customer)
+                    .WithMany()
+                    .HasForeignKey(f => f.CustomerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasOne(f => f.Professional)
+                    .WithMany()
+                    .HasForeignKey(f => f.ProfessionalId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Índice único para evitar duplicatas (um cliente não pode favoritar o mesmo profissional duas vezes)
+                e.HasIndex(f => new { f.CustomerId, f.ProfessionalId }).IsUnique();
             });
 
             b.Entity<ExerciseCategoryEntity>(e =>

@@ -33,6 +33,7 @@ export interface UserType {
   professionalDetails?: ProfessionalDetailsType | null;
   averageRating?: number | null;
   totalFeedbacks?: number | null;
+  isFavorite?: boolean | null;
 }
 
 export interface AddressType {
@@ -44,6 +45,8 @@ export interface AddressType {
   zipCode?: string | null;
   country: string;
   addressType: number;
+  latitude?: number | null;
+  longitude?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
   status?: string | null;

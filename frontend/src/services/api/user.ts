@@ -33,12 +33,15 @@ export function useGetUserById(id: string | null | undefined) {
 export function useGetAllUsers(
   onlyNutritionists: boolean = false,
   onlyPersonals: boolean = false,
-  allProfessionals: boolean = false
+  allProfessionals: boolean = false,
+  userLat?: number | null,
+  userLon?: number | null,
+  maxDistanceKm?: number | null
 ) {
   return useQuery({
     queryKey: [
       "getAllUsers",
-      { onlyNutritionists, onlyPersonals, allProfessionals },
+      { onlyNutritionists, onlyPersonals, allProfessionals, userLat, userLon, maxDistanceKm },
     ],
     queryFn: async ({ queryKey }) => {
       const [, filters] = queryKey as [
@@ -47,9 +50,27 @@ export function useGetAllUsers(
           onlyNutritionists: boolean;
           onlyPersonals: boolean;
           allProfessionals: boolean;
+          userLat?: number | null;
+          userLon?: number | null;
+          maxDistanceKm?: number | null;
         }
       ];
-      const request = await api.get<UserType[]>(`/user`);
+      
+      // Construir query params
+      const params = new URLSearchParams();
+      if (filters.userLat !== null && filters.userLat !== undefined) {
+        params.append('userLat', filters.userLat.toString());
+      }
+      if (filters.userLon !== null && filters.userLon !== undefined) {
+        params.append('userLon', filters.userLon.toString());
+      }
+      if (filters.maxDistanceKm !== null && filters.maxDistanceKm !== undefined) {
+        params.append('maxDistanceKm', filters.maxDistanceKm.toString());
+      }
+      
+      const queryString = params.toString();
+      const url = queryString ? `/user?${queryString}` : '/user';
+      const request = await api.get<UserType[]>(url);
 
       if (filters.onlyNutritionists) {
         return request.data.filter(

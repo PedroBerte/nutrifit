@@ -1,9 +1,11 @@
 using Nutrifit.Services.Services.Interfaces;
+using Nutrifit.Services.Services;
 using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Repository.Entities;
 using Nutrifit.Services.DTO;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Nutrifit.API.Controllers;
 
@@ -13,14 +15,28 @@ namespace Nutrifit.API.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
+    private readonly IFavoriteService _favoriteService;
 
-    public UserController(IUserService service)
+    public UserController(IUserService service, IFavoriteService favoriteService)
     {
         _service = service;
+        _favoriteService = favoriteService;
+    }
+
+    private Guid? GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst("id")?.Value;
+        if (string.IsNullOrEmpty(userIdClaim))
+            return null;
+        
+        return Guid.Parse(userIdClaim);
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<UserDto>>> GetAll()
+    public async Task<ActionResult<List<UserDto>>> GetAll(
+        [FromQuery] double? userLat = null,
+        [FromQuery] double? userLon = null,
+        [FromQuery] int? maxDistanceKm = null)
     {
         try
         {
@@ -33,7 +49,9 @@ public class UserController : ControllerBase
 
             var usersDto = users.Adapt<List<UserDto>>();
             
-            // Calcular rating para profissionais
+            var currentUserId = GetCurrentUserId();
+            
+            // Calcular rating e favoritos para profissionais
             foreach (var userDto in usersDto)
             {
                 if (userDto.ProfessionalCredential != null)
@@ -43,7 +61,32 @@ public class UserController : ControllerBase
                     userDto.AverageRating = feedbacks.Count > 0 
                         ? Math.Round(feedbacks.Average(f => f.Rate), 2) 
                         : null;
+
+                    // Verificar se está nos favoritos do usuário logado
+                    if (currentUserId.HasValue)
+                    {
+                        userDto.IsFavorite = await _favoriteService.IsFavoriteAsync(currentUserId.Value, userDto.Id!.Value);
+                    }
                 }
+            }
+
+            // Filtro de distância
+            if (userLat.HasValue && userLon.HasValue && maxDistanceKm.HasValue)
+            {
+                usersDto = usersDto.Where(u =>
+                {
+                    if (u.Address?.Latitude == null || u.Address?.Longitude == null)
+                        return false;
+
+                    var distance = UserService.CalculateDistance(
+                        userLat.Value,
+                        userLon.Value,
+                        u.Address.Latitude.Value,
+                        u.Address.Longitude.Value
+                    );
+
+                    return distance <= maxDistanceKm.Value;
+                }).ToList();
             }
 
             return Ok(usersDto);

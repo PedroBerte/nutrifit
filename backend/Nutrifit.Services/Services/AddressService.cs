@@ -8,10 +8,12 @@ namespace Nutrifit.Services.Services;
 public class AddressService : IAddressService
 {
     private readonly NutrifitContext _context;
+    private readonly IGeocodingService _geocodingService;
 
-    public AddressService(NutrifitContext context)
+    public AddressService(NutrifitContext context, IGeocodingService geocodingService)
     {
         _context = context;
+        _geocodingService = geocodingService;
     }
 
     public async Task<AddressEntity> CreateAsync(AddressEntity address)
@@ -21,6 +23,19 @@ public class AddressService : IAddressService
             address.Id = Guid.NewGuid();
             address.CreatedAt = DateTime.UtcNow;
             address.Status = "A";
+
+            // Try to geocode address
+            if (!string.IsNullOrEmpty(address.ZipCode) && !string.IsNullOrEmpty(address.City))
+            {
+                var (lat, lon) = await _geocodingService.GetCoordinatesAsync(
+                    address.ZipCode, 
+                    address.City, 
+                    address.State, 
+                    address.Country
+                );
+                address.Latitude = lat;
+                address.Longitude = lon;
+            }
 
             await _context.Addresses.AddAsync(address);
             await _context.SaveChangesAsync();
@@ -56,6 +71,19 @@ public class AddressService : IAddressService
             var existing = await _context.Addresses.FindAsync(address.Id);
             if (existing == null)
                 throw new InvalidOperationException("Endereço não encontrado para atualização.");
+
+            // Try to geocode if address details changed
+            if (!string.IsNullOrEmpty(address.ZipCode) && !string.IsNullOrEmpty(address.City))
+            {
+                var (lat, lon) = await _geocodingService.GetCoordinatesAsync(
+                    address.ZipCode,
+                    address.City,
+                    address.State,
+                    address.Country
+                );
+                address.Latitude = lat;
+                address.Longitude = lon;
+            }
 
             _context.Entry(existing).CurrentValues.SetValues(address);
             existing.UpdatedAt = DateTime.UtcNow;

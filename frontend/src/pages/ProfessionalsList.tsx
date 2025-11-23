@@ -1,21 +1,43 @@
 import ProfessionalCard from "@/components/ProfessionalCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useGetAllUsers } from "@/services/api/user";
+import { useGetAllUsers, useGetUserById } from "@/services/api/user";
 import { AttendanceMode } from "@/types/professional";
 import { motion } from "motion/react";
-import { Filter, X } from "lucide-react";
-import { useState } from "react";
+import { Filter, X, MapPin, AlertCircle } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
 export default function ProfessionalsList() {
-  const { data, isLoading } = useGetAllUsers(false, false, true);
+  const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
+  const { data: currentUserData } = useGetUserById(currentUserId);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [minRating, setMinRating] = useState<number | null>(null);
   const [selectedMode, setSelectedMode] = useState<AttendanceMode | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [selectedDistance, setSelectedDistance] = useState<number | null>(null);
 
+  const userHasAddress = useMemo(() => {
+    return currentUserData?.address?.latitude !== null && 
+           currentUserData?.address?.latitude !== undefined &&
+           currentUserData?.address?.longitude !== null &&
+           currentUserData?.address?.longitude !== undefined;
+  }, [currentUserData]);
+
+  const { data, isLoading, refetch } = useGetAllUsers(
+    false, 
+    false, 
+    true,
+    selectedDistance && userHasAddress ? currentUserData?.address?.latitude! : null,
+    selectedDistance && userHasAddress ? currentUserData?.address?.longitude! : null,
+    selectedDistance
+  );
+  
   // Extrair tags únicas e cidades únicas
   const allTags = Array.from(
     new Set(
@@ -62,8 +84,13 @@ export default function ProfessionalsList() {
       }
     }
 
-    // Filtro de cidade
-    if (selectedCity && professional.address?.city !== selectedCity) {
+    // Filtro de cidade (só aplica se não tiver filtro de distância ativo)
+    if (selectedCity && !selectedDistance && professional.address?.city !== selectedCity) {
+      return false;
+    }
+
+    // Filtro de favoritos
+    if (showOnlyFavorites && !professional.isFavorite) {
       return false;
     }
 
@@ -76,9 +103,11 @@ export default function ProfessionalsList() {
     setSelectedTag(null);
     setSelectedCity(null);
     setSearchTerm("");
+    setShowOnlyFavorites(false);
+    setSelectedDistance(null);
   };
 
-  const hasActiveFilters = minRating || selectedMode !== null || selectedTag || selectedCity;
+  const hasActiveFilters = minRating || selectedMode !== null || selectedTag || selectedCity || showOnlyFavorites || selectedDistance !== null;
 
   return (
     <motion.div
@@ -118,6 +147,18 @@ export default function ProfessionalsList() {
                 Limpar
               </Button>
             )}
+          </div>
+
+          {/* Favoritos */}
+          <div>
+            <Button
+              size="sm"
+              variant={showOnlyFavorites ? "default" : "outline"}
+              onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+              className="w-full"
+            >
+              ⭐ {showOnlyFavorites ? "Mostrando apenas favoritos" : "Mostrar apenas favoritos"}
+            </Button>
           </div>
 
           {/* Rating */}
@@ -194,7 +235,11 @@ export default function ProfessionalsList() {
                     key={city}
                     size="sm"
                     variant={selectedCity === city ? "default" : "outline"}
-                    onClick={() => setSelectedCity(selectedCity === city ? null : city)}
+                    onClick={() => {
+                      setSelectedCity(selectedCity === city ? null : city);
+                      if (city !== selectedCity) setSelectedDistance(null);
+                    }}
+                    disabled={selectedDistance !== null}
                   >
                     {city}
                   </Button>
@@ -202,6 +247,47 @@ export default function ProfessionalsList() {
               </div>
             </div>
           )}
+
+          {/* Distância (geolocalização) */}
+          <div>
+            <label className="text-sm text-gray-400 flex items-center gap-2 mb-2">
+              <MapPin className="w-4 h-4" />
+              Filtrar por distância
+            </label>
+            {!userHasAddress ? (
+              <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-yellow-500">
+                  Complete seu perfil com endereço para usar este filtro
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {[5, 10, 20, 50].map((distance) => (
+                  <Button
+                    key={distance}
+                    size="sm"
+                    variant={selectedDistance === distance ? "default" : "outline"}
+                    onClick={() => {
+                      setSelectedDistance(selectedDistance === distance ? null : distance);
+                      if (distance !== selectedDistance) setSelectedCity(null);
+                    }}
+                  >
+                    {distance} km
+                  </Button>
+                ))}
+                <Button
+                  size="sm"
+                  variant={selectedDistance === null ? "default" : "outline"}
+                  onClick={() => {
+                    setSelectedDistance(null);
+                  }}
+                >
+                  Qualquer distância
+                </Button>
+              </div>
+            )}
+          </div>
         </motion.div>
       )}
 
@@ -235,6 +321,8 @@ export default function ProfessionalsList() {
               attendanceMode={professional.professionalDetails?.attendanceMode}
               city={professional.address?.city}
               state={professional.address?.state}
+              isFavorite={professional.isFavorite}
+              onFavoriteChange={() => refetch()}
             />
           );
         }
