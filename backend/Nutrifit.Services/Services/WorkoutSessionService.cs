@@ -253,5 +253,82 @@ namespace Nutrifit.Services.Services
                 return ApiResponse.CreateFailure($"Erro ao buscar dados anteriores: {ex.Message}");
             }
         }
+
+        public async Task<ApiResponse> GetExerciseHistoryAsync(Guid exerciseId, Guid customerId)
+        {
+            try
+            {
+                // Busca todas as sessões completadas deste exercício pelo usuário
+                var exerciseSessions = await _context.ExerciseSessions
+                    .Include(es => es.SetSessions)
+                    .Include(es => es.WorkoutSession)
+                    .Include(es => es.Exercise)
+                    .Where(es => es.ExerciseId == exerciseId
+                        && es.WorkoutSession.CustomerId == customerId
+                        && es.WorkoutSession.Status == "C"
+                        && es.Status == "C")
+                    .OrderByDescending(es => es.WorkoutSession.CompletedAt)
+                    .ToListAsync();
+
+                if (!exerciseSessions.Any())
+                {
+                    return ApiResponse.CreateFailure("Nenhum histórico encontrado para este exercício");
+                }
+
+                var exercise = exerciseSessions.First().Exercise;
+
+                // Calcula estatísticas gerais
+                var allSets = exerciseSessions.SelectMany(es => es.SetSessions).ToList();
+                var stats = new ExerciseStats
+                {
+                    TotalSessions = exerciseSessions.Count,
+                    TotalSets = allSets.Count,
+                    TotalReps = allSets.Sum(s => s.Reps ?? 0),
+                    TotalVolume = allSets.Sum(s => (s.Load ?? 0) * (s.Reps ?? 0)),
+                    MaxLoad = allSets.Max(s => s.Load ?? 0),
+                    AverageLoad = allSets.Any(s => s.Load.HasValue)
+                        ? allSets.Where(s => s.Load.HasValue).Average(s => s.Load!.Value)
+                        : 0,
+                    LastPerformed = exerciseSessions.First().WorkoutSession.CompletedAt,
+                    FirstPerformed = exerciseSessions.Last().WorkoutSession.CompletedAt
+                };
+
+                // Mapeia sessões individuais
+                var sessions = exerciseSessions.Select(es => new ExerciseSessionHistoryItem
+                {
+                    SessionId = es.WorkoutSession.Id,
+                    PerformedAt = es.WorkoutSession.CompletedAt ?? DateTime.UtcNow,
+                    WorkoutTemplateTitle = es.WorkoutSession.WorkoutTemplate?.Title ?? "Treino",
+                    Sets = es.SetSessions.OrderBy(s => s.SetNumber).Select(s => new SetHistoryItem
+                    {
+                        SetNumber = s.SetNumber,
+                        Load = s.Load,
+                        Reps = s.Reps,
+                        Volume = (s.Load ?? 0) * (s.Reps ?? 0)
+                    }).ToList(),
+                    SessionVolume = es.SetSessions.Sum(s => (s.Load ?? 0) * (s.Reps ?? 0)),
+                    MaxLoad = es.SetSessions.Max(s => s.Load ?? 0),
+                    AverageLoad = es.SetSessions.Any(s => s.Load.HasValue)
+                        ? es.SetSessions.Where(s => s.Load.HasValue).Average(s => s.Load!.Value)
+                        : 0,
+                    TotalReps = es.SetSessions.Sum(s => s.Reps ?? 0)
+                }).ToList();
+
+                var response = new ExerciseHistoryResponse
+                {
+                    ExerciseId = exerciseId,
+                    ExerciseName = exercise.Name,
+                    ImageUrl = exercise.ImageUrl,
+                    Stats = stats,
+                    Sessions = sessions
+                };
+
+                return ApiResponse.CreateSuccess("Histórico do exercício encontrado", response);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse.CreateFailure($"Erro ao buscar histórico do exercício: {ex.Message}");
+            }
+        }
     }
 }

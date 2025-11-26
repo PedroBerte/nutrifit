@@ -15,5 +15,8 @@ namespace Nutrifit.Services.Services.Interfaces
 
         // Previous Exercise Data
         Task<ApiResponse> GetPreviousExerciseDataAsync(Guid exerciseId, Guid customerId);
+
+        // Exercise History
+        Task<ApiResponse> GetExerciseHistoryAsync(Guid exerciseId, Guid customerId);
     }
 }

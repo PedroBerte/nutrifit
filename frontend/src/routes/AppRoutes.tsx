@@ -23,6 +23,7 @@ import WorkoutSession from "@/pages/WorkoutSession";
 import WorkoutSessionDetails from "@/pages/WorkoutSessionDetails";
 import ProfessionalsList from "@/pages/ProfessionalsList";
 import PersonalHome from "@/pages/PersonalHome";
+import ExerciseHistory from "@/pages/ExerciseHistory";
 
 export function AppRoutes() {
   return (
@@ -43,6 +44,10 @@ export function AppRoutes() {
             <Route
               path="workout/session/:templateId"
               element={<WorkoutSession />}
+            />
+            <Route
+              path="exercise/:exerciseId/history"
+              element={<ExerciseHistory />}
             />
             <Route path="personal" element={<PersonalHome />} />
             <Route path="profile" element={<Profile />} />
