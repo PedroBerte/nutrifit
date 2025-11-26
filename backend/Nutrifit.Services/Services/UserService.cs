@@ -20,12 +20,13 @@ public class UserService : IUserService
             return await _context.Users
                 .Include(x => x.Address)
                 .Include(x => x.ProfessionalCredential)
+                .Include(x => x.ProfessionalDetails)
                 .Include(x => x.Profile)
                 .ToListAsync();
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar usuários.", ex);
+            throw new Exception("Erro ao buscar usuÃ¡rios.", ex);
         }
     }
 
@@ -36,16 +37,17 @@ public class UserService : IUserService
             var user = await _context.Users
                 .Include(x => x.Address)
                 .Include(x => x.ProfessionalCredential)
+                .Include(x => x.ProfessionalDetails)
                 .Include(x => x.Profile)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (user is null)
-                throw new InvalidOperationException("Usuário não encontrado.");
+                throw new InvalidOperationException("UsuÃ¡rio nÃ£o encontrado.");
             return user;
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar usuário.", ex);
+            throw new Exception("Erro ao buscar usuÃ¡rio.", ex);
         }
     }
 
@@ -69,7 +71,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao criar usuário.", ex);
+            throw new Exception("Erro ao criar usuï¿½rio.", ex);
         }
     }
 
@@ -79,7 +81,7 @@ public class UserService : IUserService
         {
             var existing = await _context.Users.FindAsync(user.Id);
             if (existing == null)
-                throw new InvalidOperationException("Usuário não encontrado para atualização.");
+                throw new InvalidOperationException("Usuï¿½rio nï¿½o encontrado para atualizaï¿½ï¿½o.");
             _context.Entry(existing).CurrentValues.SetValues(user);
             existing.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -87,7 +89,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao atualizar usuário.", ex);
+            throw new Exception("Erro ao atualizar usuï¿½rio.", ex);
         }
     }
 
@@ -97,13 +99,48 @@ public class UserService : IUserService
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
-                throw new InvalidOperationException("Usuário não encontrado para exclusão.");
+                throw new InvalidOperationException("UsuÃ¡rio nÃ£o encontrado para exclusÃ£o.");
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao excluir usuário.", ex);
+            throw new Exception("Erro ao excluir usuÃ¡rio.", ex);
         }
+    }
+
+    public async Task<List<CustomerFeedbackEntity>> GetProfessionalFeedbacksAsync(Guid professionalId)
+    {
+        try
+        {
+            return await _context.CustomerFeedbacks
+                .Include(f => f.Customer)
+                .Where(f => f.ProfessionalId == professionalId)
+                .OrderByDescending(f => f.CreatedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Erro ao buscar feedbacks do profissional.", ex);
+        }
+    }
+
+    public static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 6371; // Raio da Terra em km
+        var dLat = ToRadians(lat2 - lat1);
+        var dLon = ToRadians(lon2 - lon1);
+
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return R * c;
+    }
+
+    private static double ToRadians(double degrees)
+    {
+        return degrees * Math.PI / 180;
     }
 }

@@ -9,4 +9,5 @@ public interface IUserService
     Task<UserEntity> AddAsync(UserEntity user);
     Task<UserEntity> UpdateAsync(UserEntity user);
     Task DeleteAsync(Guid id);
+    Task<List<CustomerFeedbackEntity>> GetProfessionalFeedbacksAsync(Guid professionalId);
 }

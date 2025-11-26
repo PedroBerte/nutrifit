@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/drawer";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetAllBonds, useUpdateBond } from "@/services/api/bond";
+import { useGetMyBonds, useUpdateBond } from "@/services/api/bond";
 import type { CustomerProfessionalBondType } from "@/types/professional";
 import { Check, X } from "lucide-react";
 import React, { useState } from "react";
@@ -23,7 +23,7 @@ import PersonalSemVinculo from "@/assets/personal/PersonalSemVinculo.png";
 
 
 export default function Bond() {
-  const { data, isLoading, refetch } = useGetAllBonds();
+  const { data, isLoading, refetch } = useGetMyBonds();
   const { mutate: updateBond } = useUpdateBond();
   const toast = useToast();
 

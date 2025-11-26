@@ -280,7 +280,7 @@ export default function Profile() {
             <div className="space-y-3 text-sm">
               <div>
                 <span className="text-xs text-neutral-white-02 block mb-1">
-                  CEP:
+                  CEP
                 </span>
                 <span className="text-sm text-neutral-white-01">
                   {userData.address.zipCode || "Não informado"}
@@ -290,7 +290,7 @@ export default function Profile() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <span className="text-xs text-neutral-white-02 block mb-1">
-                    Rua:
+                    Rua
                   </span>
                   <span className="text-sm text-neutral-white-01">
                     {userData.address.addressLine || "Não informado"}
@@ -298,7 +298,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <span className="text-xs text-neutral-white-02 block mb-1">
-                    Número:
+                    Número
                   </span>
                   <span className="text-sm text-neutral-white-01">
                     {userData.address.number || "Não informado"}
@@ -306,7 +306,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <span className="text-xs text-neutral-white-02 block mb-1">
-                    Estado:
+                    Estado
                   </span>
                   <span className="text-sm text-neutral-white-01">
                     {userData.address.state || "Não informado"}
@@ -314,7 +314,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <span className="text-xs text-neutral-white-02 block mb-1">
-                    Cidade:
+                    Cidade
                   </span>
                   <span className="text-sm text-neutral-white-01">
                     {userData.address.city || "Não informado"}

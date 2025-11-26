@@ -10,6 +10,8 @@ public class AddressEntity
     public string? ZipCode { get; set; }
     public string Country { get; set; } = null!;
     public int AddressType { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string Status { get; set; }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrifit.Repository;
@@ -11,9 +12,11 @@ using Nutrifit.Repository;
 namespace Nutrifit.Repository.Migrations
 {
     [DbContext(typeof(NutrifitContext))]
-    partial class NutrifitContextModelSnapshot : ModelSnapshot
+    [Migration("20251123175703_AddFavoriteProfessionals")]
+    partial class AddFavoriteProfessionals
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,12 +51,6 @@ namespace Nutrifit.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("timezone('utc', now())");
-
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("double precision");
 
                     b.Property<string>("Number")
                         .HasColumnType("text");

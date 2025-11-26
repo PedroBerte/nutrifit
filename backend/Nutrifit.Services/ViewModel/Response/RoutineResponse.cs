@@ -8,6 +8,7 @@ public class RoutineResponse
     public string Title { get; set; } = string.Empty;
     public string? Goal { get; set; }
     public string? Difficulty { get; set; }
+    public int? Weeks { get; set; }
     public string Status { get; set; } = "A";
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -24,6 +25,7 @@ public class RoutineDetailResponse
     public string Title { get; set; } = string.Empty;
     public string? Goal { get; set; }
     public string? Difficulty { get; set; }
+    public int? Weeks { get; set; }
     public string Status { get; set; } = "A";
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

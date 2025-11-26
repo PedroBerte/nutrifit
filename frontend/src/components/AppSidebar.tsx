@@ -58,6 +58,13 @@ export function AppSidebar() {
     return name.split(" ")[0];
   };
 
+  const getInitials = (name: string | null) => {
+    if (!name) return "U";
+    const names = name.trim().split(" ");
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+  };
+
   const handleLogout = () => {
     toggleSidebar();
     logout();
@@ -73,19 +80,26 @@ export function AppSidebar() {
     <Sidebar side="right" variant="floating">
       <SidebarContent>
         <SidebarGroup>
-          <section className="flex flex-row justify-between mb-4 p-2 text-sm w-full">
-            <p>Olá, {getFirstUserName(user && user.name)} 👋🏻</p>
-            <ArrowRightFromLine size={20} onClick={() => toggleSidebar()} />
+          <section className="flex flex-row justify-between items-center mb-6 p-4 text-base font-medium w-full">
+            <p className="text-neutral-white-01">Olá, {getFirstUserName(user && user.name)} 👋🏻</p>
+            <button 
+              onClick={() => toggleSidebar()} 
+              className="p-2 hover:bg-neutral-dark-02 rounded-lg transition-colors"
+            >
+              <ArrowRightFromLine size={22} className="text-neutral-white-02" />
+            </button>
           </section>
-          <SidebarGroupLabel>Ir para:</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sm font-semibold text-neutral-white-02 mb-3 px-4">
+            Navegação
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-2">
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                  <SidebarMenuButton asChild className="h-12 text-base font-medium hover:bg-neutral-dark-02 rounded-xl transition-colors">
+                    <a href={item.url} className="flex items-center gap-3 px-4">
+                      <item.icon size={22} className="text-primary" />
+                      <span className="text-neutral-white-01">{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -94,31 +108,47 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <User2 /> {user && user.name ? user.name : "Usuário"}{" "}
-                  <ChevronUp className="ml-auto" />
+                <SidebarMenuButton className="h-14 hover:bg-neutral-dark-02 rounded-xl transition-colors">
+                  <div className="flex items-center gap-3 w-full px-2">
+                    <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center">
+                      <span className="text-sm font-semibold text-white">
+                        {getInitials(user && user.name)}
+                      </span>
+                    </div>
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-sm font-medium text-neutral-white-01 truncate">
+                        {user && user.name ? user.name : "Usuário"}
+                      </p>
+                      <p className="text-xs text-neutral-white-02">Ver opções</p>
+                    </div>
+                    <ChevronUp size={18} className="text-neutral-white-02 flex-shrink-0" />
+                  </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 side="top"
                 align="end"
-                className="w-[--radix-popper-anchor-width] border-border/5"
+                className="w-[--radix-popper-anchor-width] border-border/5 p-2"
               >
-                <DropdownMenuItem onClick={() => handleProfileClick()}>
-                  <p className="">Ver meu perfil</p>
+                <DropdownMenuItem 
+                  onClick={() => handleProfileClick()}
+                  className="h-11 text-base font-medium cursor-pointer rounded-lg"
+                >
+                  <User2 size={18} className="mr-3" />
+                  <p>Ver meu perfil</p>
                 </DropdownMenuItem>
-                <Separator className="my-1" />
+                <Separator className="my-2" />
                 <DropdownMenuItem
-                  className="flex flex-row justify-between text-red-500"
+                  className="h-11 text-base font-medium cursor-pointer rounded-lg text-red-500 hover:bg-red-500/10 focus:bg-red-500/10"
                   onClick={handleLogout}
                 >
+                  <LogOut size={18} className="mr-3" />
                   <p>Sair</p>
-                  <LogOut color="red" />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

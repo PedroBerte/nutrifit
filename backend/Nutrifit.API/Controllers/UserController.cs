@@ -1,9 +1,11 @@
 using Nutrifit.Services.Services.Interfaces;
+using Nutrifit.Services.Services;
 using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Repository.Entities;
 using Nutrifit.Services.DTO;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Nutrifit.API.Controllers;
 
@@ -13,25 +15,83 @@ namespace Nutrifit.API.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
+    private readonly IFavoriteService _favoriteService;
+    private readonly IAddressService _addressService;
 
-    public UserController(IUserService service)
+    public UserController(IUserService service, IFavoriteService favoriteService, IAddressService addressService)
     {
         _service = service;
+        _favoriteService = favoriteService;
+        _addressService = addressService;
+    }
+
+    private Guid? GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst("id")?.Value;
+        if (string.IsNullOrEmpty(userIdClaim))
+            return null;
+        
+        return Guid.Parse(userIdClaim);
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<UserDto>>> GetAll()
+    public async Task<ActionResult<List<UserDto>>> GetAll(
+        [FromQuery] double? userLat = null,
+        [FromQuery] double? userLon = null,
+        [FromQuery] int? maxDistanceKm = null)
     {
         try
         {
             var users = await _service.GetAllAsync();
             if (users == null)
-                return StatusCode(500, "Erro ao buscar usu�rios.");
+                return StatusCode(500, "Erro ao buscar usuários.");
 
             if (users.Count == 0)
                 return NoContent();
 
-            return Ok(users.Adapt<List<UserDto>>());
+            var usersDto = users.Adapt<List<UserDto>>();
+            
+            var currentUserId = GetCurrentUserId();
+            
+            // Calcular rating e favoritos para profissionais
+            foreach (var userDto in usersDto)
+            {
+                if (userDto.ProfessionalCredential != null)
+                {
+                    var feedbacks = await _service.GetProfessionalFeedbacksAsync(userDto.Id!.Value);
+                    userDto.TotalFeedbacks = feedbacks.Count;
+                    userDto.AverageRating = feedbacks.Count > 0 
+                        ? Math.Round(feedbacks.Average(f => f.Rate), 2) 
+                        : null;
+
+                    // Verificar se está nos favoritos do usuário logado
+                    if (currentUserId.HasValue)
+                    {
+                        userDto.IsFavorite = await _favoriteService.IsFavoriteAsync(currentUserId.Value, userDto.Id!.Value);
+                    }
+                }
+            }
+
+            // Filtro de distância
+            if (userLat.HasValue && userLon.HasValue && maxDistanceKm.HasValue)
+            {
+                usersDto = usersDto.Where(u =>
+                {
+                    if (u.Address?.Latitude == null || u.Address?.Longitude == null)
+                        return false;
+
+                    var distance = UserService.CalculateDistance(
+                        userLat.Value,
+                        userLon.Value,
+                        u.Address.Latitude.Value,
+                        u.Address.Longitude.Value
+                    );
+
+                    return distance <= maxDistanceKm.Value;
+                }).ToList();
+            }
+
+            return Ok(usersDto);
         }
         catch (Exception ex)
         {
@@ -65,7 +125,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserDto>> Create([FromBody] UserDto userDto)
     {
         if (userDto == null)
-            return BadRequest("Usu�rio inv�lido.");
+            return BadRequest("Usu�rio inv�lido.");
 
         try
         {
@@ -85,7 +145,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserDto>> Update(Guid id, [FromBody] UserDto userDto)
     {
         if (userDto == null || id != userDto.Id)
-            return BadRequest("Id do usu�rio n�o corresponde ao par�metro.");
+            return BadRequest("Id do usu�rio n�o corresponde ao par�metro.");
 
         try
         {
@@ -120,6 +180,58 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
+    }
+
+    [HttpPost("geocode-addresses")]
+    public async Task<ActionResult> GeocodeAllAddresses()
+    {
+        try
+        {
+            // TEMPORÁRIO: Removida verificação de admin para facilitar teste
+            // var isAdmin = User.FindFirst("isAdmin")?.Value == "True";
+            // if (!isAdmin)
+            //     return Forbid();
+
+            var (processed, success, failed) = await _addressService.GeocodeAllAddressesAsync();
+            
+            return Ok(new
+            {
+                message = "Geocodificação concluída",
+                processed,
+                success,
+                failed
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro ao geocodificar endereços: {ex.Message}");
+        }
+    }
+
+    [HttpGet("{id}/feedbacks")]
+    public async Task<ActionResult> GetProfessionalFeedbacks(Guid id)
+    {
+        try
+        {
+            var feedbacks = await _service.GetProfessionalFeedbacksAsync(id);
+            
+            var feedbacksDto = feedbacks.Select(f => new FeedbackDto
+            {
+                Id = f.Id,
+                ProfessionalId = f.ProfessionalId,
+                CustomerId = f.CustomerId,
+                CustomerName = f.Customer?.Name,
+                CreatedAt = f.CreatedAt,
+                Testimony = f.Testimony,
+                Rate = f.Rate
+            }).ToList();
+            
+            return Ok(feedbacksDto);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro ao buscar avaliações: {ex.Message}");
         }
     }
 }

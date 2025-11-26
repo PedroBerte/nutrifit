@@ -2,6 +2,7 @@ export interface CreateRoutineRequest {
   title: string;
   goal?: string;
   difficulty?: string;
+  weeks?: number;
 }
 
 export interface UpdateRoutineRequest {
@@ -22,6 +23,7 @@ export interface RoutineType {
   title: string;
   goal?: string;
   difficulty?: string;
+  weeks?: number;
   status: string;
   createdAt: string;
   updatedAt: string;

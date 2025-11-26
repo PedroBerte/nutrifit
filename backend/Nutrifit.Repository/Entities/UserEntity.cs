@@ -22,5 +22,6 @@ public class UserEntity
     public ProfileEntity Profile { get; set; } = null!;
     public AddressEntity? Address { get; set; }
     public ProfessionalCredentialEntity? ProfessionalCredential { get; set; }
+    public ProfessionalDetailsEntity? ProfessionalDetails { get; set; }
     public ICollection<CustomerFeedbackEntity> CustomerFeedbacks { get; set; }  = new List<CustomerFeedbackEntity>();
 }

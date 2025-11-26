@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrifit.Repository;
@@ -11,9 +12,11 @@ using Nutrifit.Repository;
 namespace Nutrifit.Repository.Migrations
 {
     [DbContext(typeof(NutrifitContext))]
-    partial class NutrifitContextModelSnapshot : ModelSnapshot
+    [Migration("20251123155650_AddWeeksToRoutine")]
+    partial class AddWeeksToRoutine
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,12 +51,6 @@ namespace Nutrifit.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("timezone('utc', now())");
-
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("double precision");
 
                     b.Property<string>("Number")
                         .HasColumnType("text");
@@ -889,33 +886,6 @@ namespace Nutrifit.Repository.Migrations
                     b.ToTable("ExerciseTemplates", (string)null);
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.FavoriteProfessionalEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp without time zone")
-                        .HasDefaultValueSql("timezone('utc', now())");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProfessionalId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProfessionalId");
-
-                    b.HasIndex("CustomerId", "ProfessionalId")
-                        .IsUnique();
-
-                    b.ToTable("FavoriteProfessionals", (string)null);
-                });
-
             modelBuilder.Entity("Nutrifit.Repository.Entities.MuscleEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1204,43 +1174,6 @@ namespace Nutrifit.Repository.Migrations
                         .IsUnique();
 
                     b.ToTable("ProfessionalCredentials", (string)null);
-                });
-
-            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalDetailsEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("AttendanceMode")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp without time zone")
-                        .HasDefaultValueSql("timezone('utc', now())");
-
-                    b.Property<Guid>("ProfessionalId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Tag1")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Tag2")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Tag3")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProfessionalId")
-                        .IsUnique();
-
-                    b.ToTable("ProfessionalDetails", (string)null);
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalFeedbackEntity", b =>
@@ -2001,25 +1934,6 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("WorkoutTemplate");
                 });
 
-            modelBuilder.Entity("Nutrifit.Repository.Entities.FavoriteProfessionalEntity", b =>
-                {
-                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Professional")
-                        .WithMany()
-                        .HasForeignKey("ProfessionalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Professional");
-                });
-
             modelBuilder.Entity("Nutrifit.Repository.Entities.MuscleEntity", b =>
                 {
                     b.HasOne("Nutrifit.Repository.Entities.MuscleGroupEntity", "MuscleGroup")
@@ -2036,17 +1950,6 @@ namespace Nutrifit.Repository.Migrations
                     b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Professional")
                         .WithOne("ProfessionalCredential")
                         .HasForeignKey("Nutrifit.Repository.Entities.ProfessionalCredentialEntity", "ProfessionalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Professional");
-                });
-
-            modelBuilder.Entity("Nutrifit.Repository.Entities.ProfessionalDetailsEntity", b =>
-                {
-                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "Professional")
-                        .WithOne("ProfessionalDetails")
-                        .HasForeignKey("Nutrifit.Repository.Entities.ProfessionalDetailsEntity", "ProfessionalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2258,8 +2161,6 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("CustomerFeedbacks");
 
                     b.Navigation("ProfessionalCredential");
-
-                    b.Navigation("ProfessionalDetails");
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutEntity", b =>

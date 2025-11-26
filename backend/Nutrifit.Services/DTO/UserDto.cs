@@ -21,6 +21,10 @@ public class UserDto
     public AddressDto? Address { get; set; }
     public ProfileDto? Profile { get; set; } = null!;    
     public ProfessionalCredentialDto? ProfessionalCredential { get; set; }
+    public ProfessionalDetailsDto? ProfessionalDetails { get; set; }
+    public double? AverageRating { get; set; }
+    public int? TotalFeedbacks { get; set; }
+    public bool? IsFavorite { get; set; }
 }
 
 public class AddressDto
@@ -33,6 +37,8 @@ public class AddressDto
     public string? ZipCode { get; set; }
     public string? Country { get; set; } = null!;
     public int? AddressType { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string? Status { get; set; }

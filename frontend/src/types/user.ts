@@ -1,6 +1,7 @@
 import type {
   CustomerProfessionalBondType,
   ProfessionalCredentialType,
+  ProfessionalDetailsType,
 } from "./professional";
 import type { ProfileType } from "./profile";
 
@@ -29,6 +30,10 @@ export interface UserType {
   address?: AddressType | null;
   profile?: ProfileType | null;
   professionalCredential?: ProfessionalCredentialType | null;
+  professionalDetails?: ProfessionalDetailsType | null;
+  averageRating?: number | null;
+  totalFeedbacks?: number | null;
+  isFavorite?: boolean | null;
 }
 
 export interface AddressType {
@@ -40,6 +45,8 @@ export interface AddressType {
   zipCode?: string | null;
   country: string;
   addressType: number;
+  latitude?: number | null;
+  longitude?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
   status?: string | null;

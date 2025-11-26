@@ -60,6 +60,13 @@ var redisConn = builder.Configuration.GetConnectionString("Redis");
 builder.Services.AddSingleton<IConnectionMultiplexer>(
     ConnectionMultiplexer.Connect(redisConn));
 
+// HttpClient for Nominatim API
+builder.Services.AddHttpClient("Nominatim", client =>
+{
+    client.DefaultRequestHeaders.Add("User-Agent", "NutriFit-App/1.0 (contact@nutrifit.com)");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
@@ -74,6 +81,8 @@ builder.Services.AddScoped<IRoutineService, RoutineService>();
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
 builder.Services.AddScoped<IWorkoutTemplateService, WorkoutTemplateService>();
 builder.Services.AddScoped<IWorkoutSessionService, WorkoutSessionService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<IGeocodingService, GeocodingService>();
 
 builder.Services.AddCors(o =>
 {

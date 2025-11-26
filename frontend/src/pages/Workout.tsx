@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { useGetAppointmentsByBondId } from "@/services/api/appointment";
 import PendingAppointmentDrawer from "@/components/PendingAppointmentDrawer";
 import { Bell } from "lucide-react";
+import AlunoSemPersonal from "@/assets/aluno/AlunoSemPersonal.png";
 
 export default function Workout() {
   const navigate = useNavigate();
@@ -55,20 +56,27 @@ export default function Workout() {
 
     if (!studentBond) {
       return (
-        <InformationCard
-          title="Nenhum personal encontrado!"
-          description="Encontre um personal para você!"
-        >
-          <Button
-            className="w-full"
-            type="button"
-            onClick={() => {
-              navigate("/ProfessionalsList", { replace: true });
-            }}
+        <div className="flex flex-col gap-6 items-center">
+          <InformationCard
+            title="Nenhum vínculo encontrado!"
+            description="Encontre um personal para você!"
           >
-            Encontrar Personal
-          </Button>
-        </InformationCard>
+            <Button
+              className="w-full"
+              type="button"
+              onClick={() => {
+                navigate("/ProfessionalsList", { replace: true });
+              }}
+            >
+              Encontrar Personal
+            </Button>
+          </InformationCard>
+          <img
+            src={AlunoSemPersonal}
+            alt="Nenhum personal vinculado"
+            className="object-contain w-full"
+          />
+        </div>
       );
     }
 
@@ -179,13 +187,20 @@ export default function Workout() {
           )}
 
           {!isLoadingRoutines && routines.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                Nenhuma rotina de treino atribuída ainda.
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Peça ao seu personal para enviar uma rotina!
-              </p>
+            <div className="flex flex-col flex-1 gap-6">
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground mt-1">
+                  Aguarde enquanto seu personal cria uma rotina de treinos para você!
+                </p>
+              </div>
+
+              <div className="flex flex-1 items-center justify-center">
+                <img
+                  src={AlunoSemPersonal}
+                  alt="Nenhum treino atribuído"
+                  className="w-60 object-contain"
+                />
+              </div>
             </div>
           )}
 
