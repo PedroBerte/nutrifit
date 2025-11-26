@@ -61,6 +61,7 @@ import {
   Trash2,
   GripVertical,
   HelpCircle,
+  ChartBar,
 } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion, AnimatePresence } from "motion/react";
@@ -204,8 +205,9 @@ export default function WorkoutSession() {
 
       for (let i = 0; i < localWorkout.exercises.length; i++) {
         const exercise = localWorkout.exercises[i];
-        const allSetsCompleted = exercise.sets.length > 0 &&
-          exercise.sets.every(set => set.completed);
+        const allSetsCompleted =
+          exercise.sets.length > 0 &&
+          exercise.sets.every((set) => set.completed);
 
         if (allSetsCompleted) {
           lastCompletedIndex = i;
@@ -299,8 +301,8 @@ export default function WorkoutSession() {
   useEffect(() => {
     if (!localWorkout) return;
 
-    const hasCompletedSet = localWorkout.exercises.some(exercise =>
-      exercise.sets.some(set => set.completed)
+    const hasCompletedSet = localWorkout.exercises.some((exercise) =>
+      exercise.sets.some((set) => set.completed)
     );
 
     const hasSeenEditHint = localStorage.getItem("hasSeenEditSwipeHint");
@@ -459,7 +461,7 @@ export default function WorkoutSession() {
                   setShowHelpSheet(true);
                 }}
                 variant="ghost"
-                size='sm'
+                size="sm"
               >
                 <HelpCircle className="size-5" />
               </Button>
@@ -502,7 +504,9 @@ export default function WorkoutSession() {
                       <Clock size={14} />
                       <span className="text-xs font-medium">Tempo Total</span>
                     </div>
-                    <p className="text-lg font-bold font-mono text-foreground">{formatTime(workoutTimer)}</p>
+                    <p className="text-lg font-bold font-mono text-foreground">
+                      {formatTime(workoutTimer)}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {Math.floor(workoutTimer / 60)} minutos
                     </p>
@@ -513,7 +517,9 @@ export default function WorkoutSession() {
                       <Dumbbell size={14} />
                       <span className="text-xs font-medium">Carga Total</span>
                     </div>
-                    <p className="text-lg font-bold text-foreground">{calculateTotalVolume(localWorkout).toFixed(1)} kg</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {calculateTotalVolume(localWorkout).toFixed(1)} kg
+                    </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Volume levantado
                     </p>
@@ -524,7 +530,9 @@ export default function WorkoutSession() {
                       <CheckCircle2 size={14} />
                       <span className="text-xs font-medium">Séries Totais</span>
                     </div>
-                    <p className="text-lg font-bold text-foreground">{getTotalSets(localWorkout)}</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {getTotalSets(localWorkout)}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Séries completadas
                     </p>
@@ -536,7 +544,12 @@ export default function WorkoutSession() {
                       <span className="text-xs font-medium">Exercícios</span>
                     </div>
                     <p className="text-lg font-bold text-foreground">
-                      {localWorkout.exercises.filter(ex => ex.sets.some(s => s.completed)).length}/{localWorkout.exercises.length}
+                      {
+                        localWorkout.exercises.filter((ex) =>
+                          ex.sets.some((s) => s.completed)
+                        ).length
+                      }
+                      /{localWorkout.exercises.length}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Exercícios iniciados
@@ -577,7 +590,10 @@ export default function WorkoutSession() {
               className="mx-4 mb-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg"
             >
               <div className="flex items-start gap-3 mb-2">
-                <GripVertical size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                <GripVertical
+                  size={20}
+                  className="text-blue-500 flex-shrink-0 mt-0.5"
+                />
                 <div className="flex-1">
                   <p className="text-sm font-bold text-blue-500 mb-1">
                     Dica: Use gestos nas séries
@@ -623,13 +639,17 @@ export default function WorkoutSession() {
               className="mx-4 mb-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg"
             >
               <div className="flex items-start gap-3">
-                <Check size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
+                <Check
+                  size={20}
+                  className="text-green-500 flex-shrink-0 mt-0.5"
+                />
                 <div className="flex-1">
                   <p className="text-sm font-bold text-green-500 mb-1">
                     Boa! Série concluída ✓
                   </p>
                   <p className="text-xs text-green-400">
-                    Precisa editar? Arraste a série completada para a direita (→) e ela voltará ao modo editável!
+                    Precisa editar? Arraste a série completada para a direita
+                    (→) e ela voltará ao modo editável!
                   </p>
                 </div>
                 <Button
@@ -659,6 +679,7 @@ export default function WorkoutSession() {
             onUpdateNotes={handleUpdateExerciseNotes}
             onAddSet={handleAddSet}
             isExpanded={expandedExerciseIds.has(exercise.id)}
+            navigate={navigate}
           />
         ))}
 
@@ -677,34 +698,34 @@ export default function WorkoutSession() {
         </div>
       </div>
 
-      {/* Sheet de confirmação de cancelamento */}
-      <Sheet open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
-        <SheetContent side="bottom" className="max-h-[80vh]">
-          <SheetHeader>
-            <div className="flex items-center gap-2 text-yellow-500 mb-2">
+      {/* Drawer de confirmação de cancelamento */}
+      <Drawer open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <DrawerContent>
+          <DrawerHeader>
+            <div className="flex items-center gap-2 text-yellow-500 mb-3">
               <AlertTriangle size={24} />
-              <SheetTitle>Cancelar Treino?</SheetTitle>
+              <DrawerTitle>Cancelar Treino?</DrawerTitle>
             </div>
-            <SheetDescription>
+            <DrawerDescription>
               Tem certeza que deseja cancelar este treino?
               <br />
               Todo o progresso será perdido.
-            </SheetDescription>
-          </SheetHeader>
+            </DrawerDescription>
+          </DrawerHeader>
 
-          <SheetFooter className="gap-2 sm:gap-2 mt-4">
+          <DrawerFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
-              onClick={() => setShowCancelDialog(false)}
+              onClick={() => setShowCancelConfirm(false)}
             >
               Continuar Treino
             </Button>
             <Button variant="destructive" onClick={handleCancelSession}>
               Sim, cancelar treino
             </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       {/* Drawer de confirmação de conclusão */}
       <Drawer open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
@@ -797,8 +818,8 @@ export default function WorkoutSession() {
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Série já confirmada? Arraste para a{" "}
-                  <span className="font-bold text-blue-400">direita</span> novamente
-                  para voltar ao modo de edição.
+                  <span className="font-bold text-blue-400">direita</span>{" "}
+                  novamente para voltar ao modo de edição.
                 </p>
               </div>
             </div>
@@ -825,17 +846,14 @@ export default function WorkoutSession() {
                 <p className="text-sm font-bold">Dica Visual</p>
               </div>
               <p className="text-sm text-foreground leading-relaxed">
-                Ao arrastar, você verá fundos coloridos aparecerem indicando a ação
-                que será executada. Solte quando o fundo estiver visível!
+                Ao arrastar, você verá fundos coloridos aparecerem indicando a
+                ação que será executada. Solte quando o fundo estiver visível!
               </p>
             </div>
           </div>
 
           <DrawerFooter className="border-t pt-4">
-            <Button
-              onClick={() => setShowHelpSheet(false)}
-              className="w-full"
-            >
+            <Button onClick={() => setShowHelpSheet(false)} className="w-full">
               Entendi, vamos treinar!
             </Button>
           </DrawerFooter>
@@ -857,6 +875,7 @@ interface ExerciseCardProps {
   onUpdateNotes: (exerciseId: string, notes: string) => void;
   onAddSet: (exerciseId: string, restSeconds?: number) => void;
   isExpanded: boolean;
+  navigate: (path: string) => void;
 }
 
 function ExerciseCard({
@@ -865,6 +884,7 @@ function ExerciseCard({
   onUpdateNotes,
   onAddSet,
   isExpanded,
+  navigate,
 }: ExerciseCardProps) {
   const [exerciseRestTimer, setExerciseRestTimer] = useState(0);
   const [isExerciseRestRunning, setIsExerciseRestRunning] = useState(false);
@@ -900,8 +920,15 @@ function ExerciseCard({
       }
     };
 
-    window.addEventListener("startRestTimer", handleStartRestTimer as EventListener);
-    return () => window.removeEventListener("startRestTimer", handleStartRestTimer as EventListener);
+    window.addEventListener(
+      "startRestTimer",
+      handleStartRestTimer as EventListener
+    );
+    return () =>
+      window.removeEventListener(
+        "startRestTimer",
+        handleStartRestTimer as EventListener
+      );
   }, [exercise.id, exercise.restSeconds]);
 
   const startRestTimer = () => {
@@ -914,12 +941,17 @@ function ExerciseCard({
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   // Verifica se todas as séries foram completadas
-  const allSetsCompleted = exercise.sets.length > 0 && exercise.sets.every(set => set.completed);
-  const completedSetsCount = exercise.sets.filter(set => set.completed).length;
+  const allSetsCompleted =
+    exercise.sets.length > 0 && exercise.sets.every((set) => set.completed);
+  const completedSetsCount = exercise.sets.filter(
+    (set) => set.completed
+  ).length;
 
   return (
     <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
@@ -933,15 +965,23 @@ function ExerciseCard({
             animate={{ rotate: isCollapsed ? 0 : 90 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
+            <ChevronRight
+              size={20}
+              className="text-muted-foreground flex-shrink-0"
+            />
           </motion.div>
 
-          <div className="flex-1 min-w-0">
-            <h3 className={`font-bold text-lg ${isCollapsed ? 'truncate' : ''}`} title={exercise.exerciseName}>
+          <div className="flex-1 min-w-0 group relative">
+            <h3
+              className={`font-bold text-lg ${
+                isCollapsed ? "truncate" : ""
+              } group-hover:text-primary transition-colors`}
+              title={exercise.exerciseName}
+            >
               {exercise.exerciseName}
             </h3>
             {isCollapsed && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {completedSetsCount}/{exercise.sets.length} séries
               </p>
             )}
@@ -953,10 +993,11 @@ function ExerciseCard({
           <Button
             size="sm"
             variant="ghost"
-            className={`h-auto px-3 py-1.5 rounded border transition-all flex-shrink-0 ${exerciseRestTimer > 0
-              ? 'bg-primary/10 border-primary hover:bg-primary/20'
-              : 'bg-neutral-dark-01 border-neutral-dark-03'
-              }`}
+            className={`h-auto px-3 py-1.5 rounded border transition-all flex-shrink-0 ${
+              exerciseRestTimer > 0
+                ? "bg-primary/10 border-primary hover:bg-primary/20"
+                : "bg-neutral-dark-01 border-neutral-dark-03"
+            }`}
             onClick={(e) => {
               e.stopPropagation(); // Previne colapsar ao clicar no timer
               if (exerciseRestTimer > 0) {
@@ -967,12 +1008,21 @@ function ExerciseCard({
               }
             }}
           >
-            <span className={`text-sm font-mono font-bold ${exerciseRestTimer > 0 ? 'text-primary' : 'text-muted-foreground'
-              }`}>
-              {exerciseRestTimer > 0 ? formatTime(exerciseRestTimer) : `${exercise.restSeconds}s`}
+            <span
+              className={`text-sm font-mono font-bold ${
+                exerciseRestTimer > 0 ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              {exerciseRestTimer > 0
+                ? formatTime(exerciseRestTimer)
+                : `${exercise.restSeconds}s`}
             </span>
             <span className="ml-2">
-              {exerciseRestTimer > 0 ? <Trash2 size={14} /> : <Play size={14} />}
+              {exerciseRestTimer > 0 ? (
+                <Trash2 size={14} />
+              ) : (
+                <Play size={14} />
+              )}
             </span>
           </Button>
         )}
@@ -988,7 +1038,7 @@ function ExerciseCard({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-4">
+            <div className="px-4 pb-4 space-y-3">
               {/* Tabela de Séries */}
               <div className="space-y-2">
                 <div className="grid grid-cols-4 gap-2 text-xs font-bold text-muted-foreground">
@@ -1012,16 +1062,28 @@ function ExerciseCard({
                 </AnimatePresence>
               </div>
 
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 w-full mt-[-16px]"
+                onClick={() => onAddSet(exercise.id, exercise.restSeconds)}
+              >
+                <Plus size={16} className="mr-1" />
+                Adicionar Série
+              </Button>
+
               {/* Botões de ação */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-end">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1"
-                  onClick={() => onAddSet(exercise.id, exercise.restSeconds)}
+                  className="flex-shrink-0 px-3"
+                  onClick={() =>
+                    navigate(`/exercise/${exercise.exerciseId}/history`)
+                  }
                 >
-                  <Plus size={16} className="mr-2" />
-                  Adicionar Série
+                  <ChartBar size={16} />
+                  <span>Evolução</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -1030,9 +1092,7 @@ function ExerciseCard({
                   onClick={() => setShowNotes(!showNotes)}
                 >
                   <Edit2 size={16} />
-                  <span>
-                    Notas
-                  </span>
+                  <span>Notas</span>
                 </Button>
               </div>
 
@@ -1048,7 +1108,9 @@ function ExerciseCard({
                     <Textarea
                       placeholder="Adicionar notas aqui..."
                       value={exercise.notes || ""}
-                      onChange={(e) => onUpdateNotes(exercise.id, e.target.value)}
+                      onChange={(e) =>
+                        onUpdateNotes(exercise.id, e.target.value)
+                      }
                       className="min-h-[60px]"
                     />
                   </motion.div>
@@ -1165,8 +1227,12 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
               ? `${set.previousLoad}kg x ${set.previousReps}`
               : "-"}
           </span>
-          <span className="text-sm font-mono font-bold text-green-500 text-center">{set.load || "-"}kg</span>
-          <span className="text-sm font-mono font-bold text-green-500 text-center">{set.reps || "-"}</span>
+          <span className="text-sm font-mono font-bold text-green-500 text-center">
+            {set.load || "-"}kg
+          </span>
+          <span className="text-sm font-mono font-bold text-green-500 text-center">
+            {set.reps || "-"}
+          </span>
         </motion.div>
       </motion.div>
     );
@@ -1252,9 +1318,11 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
 
             // Inicia o timer de descanso automaticamente apenas se for nova conclusão
             if (!wasAlreadyCompleted && restSeconds && restSeconds > 0) {
-              window.dispatchEvent(new CustomEvent("startRestTimer", {
-                detail: { exerciseId }
-              }));
+              window.dispatchEvent(
+                new CustomEvent("startRestTimer", {
+                  detail: { exerciseId },
+                })
+              );
             }
           }
         }}

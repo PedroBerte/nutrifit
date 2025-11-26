@@ -1,5 +1,6 @@
 import { api } from "@/lib/axios";
 import type { ApiResponse } from "@/types/api";
+import type { ExerciseHistoryType } from "@/types/exerciseHistory";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // ===== Request Types =====
@@ -207,6 +208,22 @@ export function useGetCustomerWorkoutHistory(
       return request.data;
     },
     enabled: !!customerId,
+    retry: 1,
+  });
+}
+
+// Buscar histórico completo de um exercício específico
+export function useGetExerciseHistory(exerciseId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["getExerciseHistory", exerciseId],
+    queryFn: async () => {
+      if (!exerciseId) throw new Error("ID do exercício é obrigatório");
+      const request = await api.get<ApiResponse<ExerciseHistoryType>>(
+        `/workoutSession/exercise/${exerciseId}/history`
+      );
+      return request.data;
+    },
+    enabled: !!exerciseId,
     retry: 1,
   });
 }
