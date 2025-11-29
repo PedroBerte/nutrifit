@@ -95,6 +95,37 @@ public class AppointmentService : IAppointmentService
         }
     }
 
+    public async Task<List<AppointmentWithBondDto>> GetProfessionalAppointmentsAsync(Guid professionalId)
+    {
+        try
+        {
+            // Busca os bonds onde o usuário é professional
+            var bondIds = await _context.CustomerProfessionalBonds
+                .Where(x => x.ProfessionalId == professionalId)
+                .Select(x => x.Id)
+                .ToListAsync();
+
+            // Busca todos os appointments (exceto cancelados)
+            var appointments = await _context.Appointments
+                .Include(x => x.Address)
+                .Where(x => bondIds.Contains(x.CustomerProfessionalBondId) && x.Status != "C")
+                .OrderBy(x => x.ScheduledAt)
+                .ToListAsync();
+
+            // Busca os bonds com os customers
+            var bonds = await _context.CustomerProfessionalBonds
+                .Include(x => x.Customer)
+                .Where(x => bondIds.Contains(x.Id))
+                .ToListAsync();
+
+            return BuildAppointmentDtosForProfessional(appointments, bonds);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Erro ao buscar agendamentos.", ex);
+        }
+    }
+
     private List<AppointmentWithBondDto> BuildAppointmentDtos(
         List<AppointmentEntity> appointments,
         List<CustomerProfessionalBondEntity> bonds)
@@ -135,6 +166,52 @@ public class AppointmentService : IAppointmentService
                         Name = bond.Professional.Name,
                         Email = bond.Professional.Email,
                         ImageUrl = bond.Professional.ImageUrl
+                    } : null
+                } : null
+            };
+        }).ToList();
+    }
+
+    private List<AppointmentWithBondDto> BuildAppointmentDtosForProfessional(
+        List<AppointmentEntity> appointments,
+        List<CustomerProfessionalBondEntity> bonds)
+    {
+        return appointments.Select(apt =>
+        {
+            var bond = bonds.FirstOrDefault(b => b.Id == apt.CustomerProfessionalBondId);
+
+            return new AppointmentWithBondDto
+            {
+                Id = apt.Id,
+                CustomerProfessionalBondId = apt.CustomerProfessionalBondId,
+                ScheduledAt = apt.ScheduledAt,
+                Type = apt.Type,
+                AddressId = apt.AddressId,
+                CreatedAt = apt.CreatedAt,
+                UpdatedAt = apt.UpdatedAt,
+                Status = apt.Status,
+                Address = apt.Address != null ? new AddressDto
+                {
+                    Id = apt.Address.Id,
+                    AddressLine = apt.Address.AddressLine,
+                    Number = apt.Address.Number,
+                    City = apt.Address.City,
+                    State = apt.Address.State,
+                    ZipCode = apt.Address.ZipCode,
+                    Country = apt.Address.Country,
+                    AddressType = apt.Address.AddressType
+                } : null,
+                CustomerProfessionalBond = bond != null ? new BondInfoDto
+                {
+                    Id = bond.Id,
+                    CustomerId = bond.CustomerId,
+                    ProfessionalId = bond.ProfessionalId,
+                    Customer = bond.Customer != null ? new ProfessionalInfoDto
+                    {
+                        Id = bond.Customer.Id,
+                        Name = bond.Customer.Name,
+                        Email = bond.Customer.Email,
+                        ImageUrl = bond.Customer.ImageUrl
                     } : null
                 } : null
             };

@@ -10,6 +10,7 @@ import {
   Search,
   Settings,
   User2,
+  Users,
 } from "lucide-react";
 import { AvatarImage } from "@/components/ui/avatar-image";
 
@@ -53,11 +54,25 @@ const items = [
     title: "Treinos",
     url: "/workout",
     icon: Dumbbell,
-    profiles: [
-      UserProfiles.STUDENT,
-      UserProfiles.PERSONAL,
-      UserProfiles.NUTRITIONIST,
-    ],
+    profiles: [UserProfiles.STUDENT],
+  },
+  {
+    title: "Treinos",
+    url: "/routines",
+    icon: Dumbbell,
+    profiles: [UserProfiles.PERSONAL],
+  },
+  {
+    title: "Agenda",
+    url: "/agenda",
+    icon: Calendar,
+    profiles: [UserProfiles.PERSONAL, UserProfiles.NUTRITIONIST],
+  },
+  {
+    title: "Vínculos",
+    url: "/bond",
+    icon: Users,
+    profiles: [UserProfiles.PERSONAL, UserProfiles.NUTRITIONIST],
   },
   {
     title: "Consultas",

@@ -27,6 +27,12 @@ export interface AppointmentType {
       email: string;
       imageUrl?: string;
     };
+    customer?: {
+      id: string;
+      name: string;
+      email: string;
+      imageUrl?: string;
+    };
   };
 }
 

@@ -72,6 +72,25 @@ public class AppointmentController : ControllerBase
         }
     }
 
+    [HttpGet("professional/all")]
+    public async Task<IActionResult> GetProfessionalAppointments()
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")?.Value ?? throw new UnauthorizedAccessException());
+            var appointments = await _service.GetProfessionalAppointmentsAsync(userId);
+            return Ok(appointments);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized(new { message = "Usuário não autenticado." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
