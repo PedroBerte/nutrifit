@@ -139,8 +139,8 @@ public class AppointmentController : ControllerBase
                 appointment.AddressId = createdAddress.Id;
             }
 
-            var result = await _service.CreateAsync(appointment);
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+            await _service.CreateAsync(appointment);
+            return StatusCode(201);
         }
         catch (Exception ex)
         {

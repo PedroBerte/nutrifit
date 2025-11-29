@@ -102,6 +102,7 @@ export function useCreateAppointment() {
   return useMutation({
     mutationFn: async (data: CreateAppointmentRequest) => {
       const request = await api.post<AppointmentType>("/appointment", data);
+      console.log("Created appointment:", request.data);
       return request.data;
     },
     onSuccess: () => {
