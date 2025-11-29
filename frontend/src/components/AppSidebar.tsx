@@ -35,6 +35,7 @@ import {
 import { DropdownMenuItemIndicator } from "@radix-ui/react-dropdown-menu";
 import { Separator } from "./ui/separator";
 import { useNavigate } from "react-router-dom";
+import { UserProfiles } from "@/types/user";
 import { useGetUserById } from "@/services/api/user";
 
 const items = [
@@ -42,11 +43,27 @@ const items = [
     title: "Início",
     url: "/home",
     icon: Home,
+    profiles: [
+      UserProfiles.STUDENT,
+      UserProfiles.PERSONAL,
+      UserProfiles.NUTRITIONIST,
+    ],
   },
   {
     title: "Treinos",
     url: "/workout",
     icon: Dumbbell,
+    profiles: [
+      UserProfiles.STUDENT,
+      UserProfiles.PERSONAL,
+      UserProfiles.NUTRITIONIST,
+    ],
+  },
+  {
+    title: "Consultas",
+    url: "/appointments",
+    icon: Calendar,
+    profiles: [UserProfiles.STUDENT],
   },
 ];
 
@@ -59,6 +76,15 @@ export function AppSidebar() {
   const getFirstUserName = (name: string | null) => {
     if (!name) return "Usuário";
     return name.split(" ")[0];
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return "U";
+    const names = name.trim().split(" ");
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return (
+      names[0].charAt(0) + names[names.length - 1].charAt(0)
+    ).toUpperCase();
   };
 
   const handleLogout = () => {
@@ -77,9 +103,11 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <section className="flex flex-row justify-between items-center mb-6 p-4 text-base font-medium w-full">
-            <p className="text-neutral-white-01">Olá, {getFirstUserName(user && user.name)} 👋🏻</p>
-            <button 
-              onClick={() => toggleSidebar()} 
+            <p className="text-neutral-white-01">
+              Olá, {getFirstUserName(user && user.name)} 👋🏻
+            </p>
+            <button
+              onClick={() => toggleSidebar()}
               className="p-2 hover:bg-neutral-dark-02 rounded-lg transition-colors"
             >
               <ArrowRightFromLine size={22} className="text-neutral-white-02" />
@@ -90,16 +118,28 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="h-12 text-base font-medium hover:bg-neutral-dark-02 rounded-xl transition-colors">
-                    <a href={item.url} className="flex items-center gap-3 px-4">
-                      <item.icon size={22} className="text-primary" />
-                      <span className="text-neutral-white-01">{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {items
+                .filter((item) =>
+                  item.profiles.includes(user?.profile as UserProfiles)
+                )
+                .map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      className="h-12 text-base font-medium hover:bg-neutral-dark-02 rounded-xl transition-colors"
+                    >
+                      <a
+                        href={item.url}
+                        className="flex items-center gap-3 px-4"
+                      >
+                        <item.icon size={22} className="text-primary" />
+                        <span className="text-neutral-white-01">
+                          {item.title}
+                        </span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -120,9 +160,14 @@ export function AppSidebar() {
                       <p className="text-sm font-medium text-neutral-white-01 truncate">
                         {user && user.name ? user.name : "Usuário"}
                       </p>
-                      <p className="text-xs text-neutral-white-02">Ver opções</p>
+                      <p className="text-xs text-neutral-white-02">
+                        Ver opções
+                      </p>
                     </div>
-                    <ChevronUp size={18} className="text-neutral-white-02 flex-shrink-0" />
+                    <ChevronUp
+                      size={18}
+                      className="text-neutral-white-02 flex-shrink-0"
+                    />
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -131,7 +176,7 @@ export function AppSidebar() {
                 align="end"
                 className="w-[--radix-popper-anchor-width] border-border/5 p-2"
               >
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => handleProfileClick()}
                   className="h-11 text-base font-medium cursor-pointer rounded-lg"
                 >

@@ -12,8 +12,7 @@ import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { useGetBondAsCustomer } from "@/services/api/bond";
 import { useState, useEffect } from "react";
-import { useGetAppointmentsByBondId } from "@/services/api/appointment";
-import PendingAppointmentDrawer from "@/components/PendingAppointmentDrawer";
+import { useGetCustomerPendingAppointments } from "@/services/api/appointment";
 import { Bell } from "lucide-react";
 import AlunoSemPersonal from "@/assets/aluno/AlunoSemPersonal.png";
 import { AvatarImage } from "@/components/ui/avatar-image";
@@ -27,13 +26,8 @@ export default function Workout() {
   const { data: routinesResponse, isLoading: isLoadingRoutines } =
     useGetMyAssignedRoutines();
 
-  // Busca appointments do bond ativo
-  const { data: appointments } = useGetAppointmentsByBondId(
-    studentBond?.id || ""
-  );
-
-  // Filtra appointments pendentes
-  const pendingAppointment = appointments?.find((apt) => apt.status === "P");
+  // Busca appointments pendentes do usuário
+  const { data: pendingAppointments } = useGetCustomerPendingAppointments();
 
   const [activeWorkoutInfo, setActiveWorkoutInfo] =
     useState<ReturnType<typeof getActiveWorkoutInfo>>(null);
@@ -45,7 +39,7 @@ export default function Workout() {
     };
 
     checkActiveWorkout();
-    const interval = setInterval(checkActiveWorkout, 1000); // Atualiza a cada segundo
+    const interval = setInterval(checkActiveWorkout, 5000); // Atualiza a cada segundo
 
     return () => clearInterval(interval);
   }, []);
@@ -85,10 +79,27 @@ export default function Workout() {
 
     if (hasPendingBond) {
       return (
-        <InformationCard
-          title="Solicitação pendente"
-          description="Sua solicitação ao personal está pendente."
-        />
+        <div className="flex flex-col gap-6 items-center">
+          <InformationCard
+            title="Solicitação pendente"
+            description="Sua solicitação ao personal está pendente."
+          >
+            <Button
+              className="w-full"
+              type="button"
+              onClick={() => {
+                navigate("/profile", { replace: true });
+              }}
+            >
+              Verificar meus vínculos
+            </Button>
+          </InformationCard>
+          <img
+            src={AlunoSemPersonal}
+            alt="Nenhum personal vinculado"
+            className="object-contain w-full"
+          />
+        </div>
       );
     }
 
@@ -96,10 +107,27 @@ export default function Workout() {
 
     if (!hasActiveBond) {
       return (
-        <InformationCard
-          title="Vínculo inativo"
-          description="Seu vínculo com o personal não está ativo."
-        />
+        <div className="flex flex-col gap-6 items-center">
+          <InformationCard
+            title="Vínculo inativo"
+            description="Seu vínculo com o personal não está ativo."
+          >
+            <Button
+              className="w-full"
+              type="button"
+              onClick={() => {
+                navigate("/ProfessionalsList", { replace: true });
+              }}
+            >
+              Encontrar Outro Personal
+            </Button>
+          </InformationCard>
+          <img
+            src={AlunoSemPersonal}
+            alt="Nenhum personal vinculado"
+            className="object-contain w-full"
+          />
+        </div>
       );
     }
 
@@ -112,7 +140,7 @@ export default function Workout() {
     <div className="flex flex-1 py-4 flex-col gap-4">
       <p className="font-bold text-2xl">Meus Treinos</p>
 
-      {studentBond && (
+      {studentBond && studentBond.status === "A" && (
         <div className="flex gap-2 mt-2">
           {pendingAppointment ? (
             <PendingAppointmentDrawer appointment={pendingAppointment}>
@@ -146,7 +174,7 @@ export default function Workout() {
             <p className="text-sm text-muted-foreground">
               {studentBond.professional?.name}
             </p>
-            {pendingAppointment && (
+            {pendingAppointments && pendingAppointments.length > 0 && (
               <p className="text-xs text-primary font-semibold mt-1">
                 Nova solicitação de agendamento
               </p>
@@ -193,7 +221,8 @@ export default function Workout() {
             <div className="flex flex-col flex-1 gap-6">
               <div className="text-center py-8">
                 <p className="text-sm text-muted-foreground mt-1">
-                  Aguarde enquanto seu personal cria uma rotina de treinos para você!
+                  Aguarde enquanto seu personal cria uma rotina de treinos para
+                  você!
                 </p>
               </div>
 

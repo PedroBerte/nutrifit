@@ -17,6 +17,17 @@ export interface AppointmentType {
     country: string;
     addressType: number;
   };
+  customerProfessionalBond?: {
+    id: string;
+    customerId: string;
+    professionalId: string;
+    professional?: {
+      id: string;
+      name: string;
+      email: string;
+      imageUrl?: string;
+    };
+  };
 }
 
 export interface CreateAppointmentRequest {

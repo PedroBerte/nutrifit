@@ -42,16 +42,18 @@ export default function Professional() {
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
   if (!id) navigate("/home");
 
   const initialAlreadySent = bondsSent
-    ? bondsSent?.some((bond) => bond.professionalId === id) ?? false
+    ? bondsSent?.some(
+        (bond) => bond.professionalId === id && bond.status === "A"
+      ) ?? false
     : false;
 
   const [alreadySentProposal, setAlreadySentProposal] =
@@ -263,7 +265,9 @@ export default function Professional() {
                   {userData.sex && (
                     <div className="flex items-center space-x-2 text-neutral-white-01">
                       <VenusAndMars className="w-5 h-5" />
-                      <span className="text-sm">{getSexLabel(userData.sex)}</span>
+                      <span className="text-sm">
+                        {getSexLabel(userData.sex)}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -303,7 +307,6 @@ export default function Professional() {
                           {userData.professionalCredential.type === "CRN"
                             ? "CRN"
                             : "CREF"}
-                          
                         </span>
                         <p className="text-sm text-neutral-white-01">
                           {userData.professionalCredential.credentialId}
@@ -405,7 +408,6 @@ export default function Professional() {
           </div>
         )}
 
-
         {/* Seção de Avaliações */}
         {feedbacks && feedbacks.length > 0 && (
           <motion.div
@@ -413,9 +415,7 @@ export default function Professional() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-neutral-dark-03 rounded-xl p-4"
           >
-            <h3 className="text-lg font-semibold mb-4">
-              Avaliações
-            </h3>
+            <h3 className="text-lg font-semibold mb-4">Avaliações</h3>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {feedbacks.map((feedback) => (
                 <div key={feedback.id} className="pb-4 last:pb-0">
