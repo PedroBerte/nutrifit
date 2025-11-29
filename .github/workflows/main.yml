@@ -26,6 +26,10 @@ jobs:
           FRONT_PORT=${{ secrets.FRONT_PORT }}
           VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
+          MINIO_ROOT_USER=${{ secrets.MINIO_ROOT_USER }}
+          MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}
+          MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}
+          MINIO_PUBLIC_ENDPOINT=${{ secrets.MINIO_PUBLIC_ENDPOINT }}
           EOF
 
       - name: Subir stack
