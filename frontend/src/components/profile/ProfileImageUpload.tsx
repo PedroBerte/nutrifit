@@ -108,56 +108,46 @@ export function ProfileImageUpload({
   };
 
   return (
-    <div className="relative group">
-      {/* Avatar */}
-      <div className="relative w-24 h-24 rounded-full overflow-hidden bg-primary">
-        <img
-          src={displayUrl}
-          alt={userName || "Foto de perfil"}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            // Fallback para avatar gerado se a imagem falhar
-            e.currentTarget.src = getUserAvatarUrl({ name: userName, id: userId || undefined });
-          }}
-        />
+    <div className="relative">
+      {/* Avatar com borda e efeito */}
+      <div className="relative group">
+        <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-primary to-primary/60 p-1">
+          <div className="w-full h-full rounded-full overflow-hidden bg-neutral-dark-03">
+            <img
+              src={displayUrl}
+              alt={userName || "Foto de perfil"}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = getUserAvatarUrl({ name: userName, id: userId || undefined });
+              }}
+            />
+          </div>
+        </div>
 
         {/* Overlay ao passar mouse */}
-        {!isUploading && (
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Camera className="w-6 h-6 text-white" />
-          </div>
-        )}
-
-        {/* Loading overlay */}
-        {isUploading && (
-          <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 text-white animate-spin" />
-          </div>
-        )}
-      </div>
-
-      {/* Botões de ação */}
-      <div className="mt-3 flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="flex-1"
+        <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center cursor-pointer"
+          onClick={() => !isUploading && fileInputRef.current?.click()}
         >
-          <Camera className="w-4 h-4 mr-2" />
-          {currentImageUrl ? "Trocar" : "Adicionar"}
-        </Button>
+          {isUploading ? (
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+          ) : (
+            <div className="text-center">
+              <Camera className="w-8 h-8 text-white mx-auto mb-1" />
+              <p className="text-xs text-white font-medium">
+                {currentImageUrl ? "Trocar foto" : "Adicionar foto"}
+              </p>
+            </div>
+          )}
+        </div>
 
-        {currentImageUrl && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleRemoveImage}
-            disabled={isUploading}
+        {/* Badge de edição */}
+        {!isUploading && (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary hover:bg-primary/90 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110"
           >
-            <X className="w-4 h-4" />
-          </Button>
+            <Camera className="w-5 h-5" />
+          </button>
         )}
       </div>
 

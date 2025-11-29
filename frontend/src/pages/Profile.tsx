@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById } from "@/services/api/user";
@@ -17,7 +17,12 @@ import {
   Apple,
   Edit,
   VenusAndMars,
+  Award,
+  Home,
+  FileText,
+  Loader2,
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -31,7 +36,8 @@ export default function Profile() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
+      <div className="flex flex-col items-center justify-center h-full gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <p className="text-neutral-white-02">Carregando perfil...</p>
       </div>
     );
@@ -39,34 +45,45 @@ export default function Profile() {
 
   if (error || !userData) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
+      <div className="flex flex-col items-center justify-center h-full gap-3">
+        <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+          <User className="w-6 h-6 text-red-500" />
+        </div>
         <p className="text-red-500">Erro ao carregar perfil</p>
       </div>
     );
   }
 
-  const getProfileName = () => {
-    switch (userData.profile?.id) {
-      case UserProfiles.NUTRITIONIST:
-        return "Nutricionista";
-      case UserProfiles.PERSONAL:
-        return "Personal Trainer";
-      case UserProfiles.STUDENT:
-        return "Estudante";
-      default:
-        return "Usuário";
-    }
-  };
+  const getProfileBadge = () => {
+    const badges: Record<string, { icon: React.ReactElement; label: string; color: string }> = {
+      [UserProfiles.NUTRITIONIST]: {
+        icon: <Apple className="w-4 h-4" />,
+        label: "Nutricionista",
+        color: "bg-green-500/10 text-green-400 border-green-500/20",
+      },
+      [UserProfiles.PERSONAL]: {
+        icon: <Dumbbell className="w-4 h-4" />,
+        label: "Personal Trainer",
+        color: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+      },
+      [UserProfiles.STUDENT]: {
+        icon: <User className="w-4 h-4" />,
+        label: "Aluno",
+        color: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+      },
+    };
 
-  const getProfileIcon = () => {
-    switch (userData.profile?.id) {
-      case UserProfiles.NUTRITIONIST:
-        return <Apple className="w-5 h-5" />;
-      case UserProfiles.PERSONAL:
-        return <Dumbbell className="w-5 h-5" />;
-      default:
-        return <User className="w-5 h-5" />;
-    }
+    const profileId = userData.profile?.id || UserProfiles.STUDENT;
+    const badge = badges[profileId] || badges[UserProfiles.STUDENT];
+
+    return (
+      <div
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium ${badge.color}`}
+      >
+        {badge.icon}
+        {badge.label}
+      </div>
+    );
   };
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -104,32 +121,77 @@ export default function Profile() {
   };
 
   return (
-    <motion.div
-      className="flex flex-col h-full bg-neutral-dark-01"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-    >
-      {/* Header */}
-      <motion.div
-        className="flex items-center justify-between my-4"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <h1 className="text-xl font-semibold text-neutral-white-01">Perfil</h1>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+    <div className="min-h-screen bg-neutral-dark-01">
+      {/* Header com gradiente */}
+      <div className="relative pb-24 pt-6 px-4">
+        <motion.div
+          className="max-w-4xl mx-auto flex items-center justify-between"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-2xl font-bold text-neutral-white-01">
+            Meu Perfil
+          </h1>
           <Button
             size="sm"
-            className="border-primary flex flex-row gap-2"
+            variant="outline"
+            className="border-primary/30 hover:border-primary hover:bg-primary/10"
             onClick={() => setIsUpdateDrawerOpen(true)}
           >
-            <Edit />
+            <Edit className="w-4 h-4 mr-2" />
             Editar
           </Button>
         </motion.div>
-      </motion.div>
 
+        {/* Card de perfil flutuante */}
+        <motion.div
+          className="max-w-4xl mx-auto mt-6 bg-neutral-dark-03 rounded-2xl shadow-xl border border-neutral-white-01/5 overflow-hidden"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          {/* Banner top - mais suave e com gradiente radial */}
+          <div className="h-24 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-dark-03 via-transparent to-transparent" />
+          </div>
+
+          {/* Conteúdo do perfil */}
+          <div className="px-6 pb-6 -mt-16">
+            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end">
+              {/* Avatar */}
+              <div className="relative">
+                <ProfileImageUpload user={userData} onImageUpdate={() => refetch()} />
+              </div>
+
+              {/* Info principal */}
+              <div className="flex-1 space-y-3 pb-2">
+                <div>
+                  <h2 className="text-2xl font-bold text-neutral-white-01">
+                    {userData.name}
+                  </h2>
+                  {userData.professionalCredential?.biography ? (
+                    <p className="text-sm text-neutral-white-02 mt-1 max-w-2xl">
+                      {userData.professionalCredential.biography}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {userData.profile?.id !== UserProfiles.STUDENT && getProfileBadge()}
+                  {userData.professionalCredential && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium bg-amber-500/10 text-amber-400 border-amber-500/20">
+                      <Award className="w-4 h-4" />
+                      {userData.professionalCredential.type === "CRN" ? "CRN" : "CREF"} {userData.professionalCredential.credentialId}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Drawer de edição */}
       {userData && (
         <UpdateProfileDrawer
           open={isUpdateDrawerOpen}
@@ -139,194 +201,187 @@ export default function Profile() {
         />
       )}
 
-      <div className="flex-1 overflow-y-auto flex gap-3 flex-col">
-        {/* User Avatar and Basic Info */}
-        <motion.div
-          className="flex flex-col items-center gap-4 bg-neutral-dark-03 p-6 rounded-lg"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          {/* Profile Image Upload Component */}
-          <ProfileImageUpload
-            user={userData}
-            onImageUpdate={() => refetch()}
-          />
-
-          <div className="text-center space-y-2">
-            <h2 className="text-lg font-semibold text-neutral-white-01">
-              {userData.name}
-            </h2>
-            {userData.professionalCredential ? (
-              <p className="text-xs text-neutral-white-02">
-                {userData.professionalCredential.biography}
-              </p>
-            ) : (
-              <motion.div
-                className="flex items-center justify-center gap-1 mt-1"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.4 }}
-              >
-                {getProfileIcon()}
-                <span className="text-sm text-neutral-white-02">
-                  {getProfileName()}
-                </span>
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="flex flex-col gap-3 bg-neutral-dark-03 rounded-lg p-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <div className="flex items-center space-x-2 text-neutral-white-01">
-            <Mail className="w-5 h-5" />
-            <span className="text-sm">{userData.email}</span>
-          </div>
-
-          {userData.phoneNumber && (
-            <div className="flex items-center space-x-2 text-neutral-white-01">
-              <Phone className="w-5 h-5" />
-              <span className="text-sm">{userData.phoneNumber}</span>
-            </div>
-          )}
-
-          {userData.dateOfBirth && (
-            <div className="flex items-center space-x-2 text-neutral-white-01">
-              <Calendar className="w-5 h-5" />
-              <span className="text-sm">
-                {formatDate(userData.dateOfBirth)}
-                {calculateAge(userData.dateOfBirth) &&
-                  ` • ${calculateAge(userData.dateOfBirth)} anos`}
-              </span>
-            </div>
-          )}
-
-          {userData.sex && (
-            <div className="flex items-center space-x-2 text-neutral-white-01">
-              <VenusAndMars className="w-5 h-5" />
-              <span className="text-sm">{getSexLabel(userData.sex)}</span>
-            </div>
-          )}
-        </motion.div>
-
-        {userData.professionalCredential && (
+      {/* Conteúdo principal */}
+      <div className="max-w-4xl mx-auto px-4 -mt-16 pb-8">
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Informações de Contato */}
           <motion.div
-            className="bg-neutral-dark-03 rounded-lg p-4 space-y-3"
+            className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="space-y-2">
-              <div>
-                <span className="text-xs text-neutral-white-02 block mb-1">
-                  {userData.professionalCredential.type === "CRN"
-                    ? "CRN"
-                    : "CREF"}
-                  :
-                </span>
-                <p className="text-sm text-neutral-white-01">
-                  {userData.professionalCredential.credentialId}
-                </p>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Mail className="w-4 h-4 text-primary" />
               </div>
-
-              {userData.professionalCredential.biography && (
-                <div className="mt-3">
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Biografia:
-                  </span>
-                  <p className="text-sm text-neutral-white-01">
-                    {userData.professionalCredential.biography}
+              <h3 className="font-semibold text-neutral-white-01">Contato</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <Mail className="w-4 h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-neutral-white-02 mb-0.5">Email</p>
+                  <p className="text-sm text-neutral-white-01 break-all">
+                    {userData.email}
                   </p>
+                </div>
+              </div>
+              {userData.phoneNumber && (
+                <div className="flex items-start gap-3">
+                  <Phone className="w-4 h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-neutral-white-02 mb-0.5">
+                      Telefone
+                    </p>
+                    <p className="text-sm text-neutral-white-01">
+                      {userData.phoneNumber}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
           </motion.div>
-        )}
 
-        {userData.address && (
+          {/* Informações Pessoais */}
           <motion.div
-            className="bg-neutral-dark-03 rounded-lg p-4 space-y-3"
+            className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+            transition={{ duration: 0.5, delay: 0.25 }}
           >
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="text-xs text-neutral-white-02 block mb-1">
-                  CEP
-                </span>
-                <span className="text-sm text-neutral-white-01">
-                  {userData.address.zipCode || "Não informado"}
-                </span>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <User className="w-4 h-4 text-primary" />
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Rua
-                  </span>
-                  <span className="text-sm text-neutral-white-01">
-                    {userData.address.addressLine || "Não informado"}
-                  </span>
+              <h3 className="font-semibold text-neutral-white-01">
+                Dados Pessoais
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {userData.dateOfBirth && (
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-4 h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-neutral-white-02 mb-0.5">
+                      Nascimento
+                    </p>
+                    <p className="text-sm text-neutral-white-01">
+                      {formatDate(userData.dateOfBirth)}
+                      {calculateAge(userData.dateOfBirth) &&
+                        ` • ${calculateAge(userData.dateOfBirth)} anos`}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Número
-                  </span>
-                  <span className="text-sm text-neutral-white-01">
-                    {userData.address.number || "Não informado"}
-                  </span>
+              )}
+              {userData.sex && (
+                <div className="flex items-start gap-3">
+                  <VenusAndMars className="w-4 h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-neutral-white-02 mb-0.5">Sexo</p>
+                    <p className="text-sm text-neutral-white-01">
+                      {getSexLabel(userData.sex)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Estado
-                  </span>
-                  <span className="text-sm text-neutral-white-01">
-                    {userData.address.state || "Não informado"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs text-neutral-white-02 block mb-1">
-                    Cidade
-                  </span>
-                  <span className="text-sm text-neutral-white-01">
-                    {userData.address.city || "Não informado"}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           </motion.div>
-        )}
 
+          {/* Endereço */}
+          {userData.address && (
+            <motion.div
+              className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5 md:col-span-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Home className="w-4 h-4 text-primary" />
+                </div>
+                <h3 className="font-semibold text-neutral-white-01">
+                  Endereço
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-xs text-neutral-white-02 mb-1">CEP</p>
+                  <p className="text-sm text-neutral-white-01">
+                    {userData.address.zipCode || "—"}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs text-neutral-white-02 mb-1">Rua</p>
+                  <p className="text-sm text-neutral-white-01">
+                    {userData.address.addressLine || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-white-02 mb-1">Número</p>
+                  <p className="text-sm text-neutral-white-01">
+                    {userData.address.number || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-white-02 mb-1">Cidade</p>
+                  <p className="text-sm text-neutral-white-01">
+                    {userData.address.city || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-white-02 mb-1">Estado</p>
+                  <p className="text-sm text-neutral-white-01">
+                    {userData.address.state || "—"}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Credenciais Profissionais */}
+          {userData.professionalCredential?.biography && (
+            <motion.div
+              className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5 md:col-span-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.35 }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-primary" />
+                </div>
+                <h3 className="font-semibold text-neutral-white-01">
+                  Sobre mim
+                </h3>
+              </div>
+              <p className="text-sm text-neutral-white-02 leading-relaxed">
+                {userData.professionalCredential.biography}
+              </p>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Footer info & logout */}
         <motion.div
-          className="text-xs text-neutral-white-02 text-center"
+          className="mt-6 space-y-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
         >
-          Conta criada em {formatDate(userData.createdAt)}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
-        >
+          <p className="text-xs text-center text-neutral-white-02">
+            Membro desde {formatDate(userData.createdAt)}
+          </p>
           <Button
             onClick={logout}
-            variant="destructive"
-            className="w-full bg-red-600 hover:bg-red-700 text-white"
+            variant="outline"
+            className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Sair
+            Sair da conta
           </Button>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }
