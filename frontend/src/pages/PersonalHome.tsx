@@ -114,7 +114,9 @@ export default function PersonalHome() {
           title="Agenda"
           icon={<Calendar size={22} />}
           description="Sua agenda"
-          onClick={() => {}}
+          onClick={() => {
+            navigate("/agenda");
+          }}
         />
         <BigButton
           title="Vínculos"

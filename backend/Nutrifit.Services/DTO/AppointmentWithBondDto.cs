@@ -20,6 +20,7 @@ public class BondInfoDto
     public Guid CustomerId { get; set; }
     public Guid ProfessionalId { get; set; }
     public ProfessionalInfoDto? Professional { get; set; }
+    public ProfessionalInfoDto? Customer { get; set; }
 }
 
 public class ProfessionalInfoDto

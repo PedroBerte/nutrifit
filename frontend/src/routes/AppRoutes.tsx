@@ -25,6 +25,7 @@ import ProfessionalsList from "@/pages/ProfessionalsList";
 import PersonalHome from "@/pages/PersonalHome";
 import ExerciseHistory from "@/pages/ExerciseHistory";
 import { Appointments } from "@/pages/Appointments";
+import ProfessionalAgenda from "@/pages/ProfessionalAgenda";
 
 export function AppRoutes() {
   return (
@@ -51,6 +52,7 @@ export function AppRoutes() {
               element={<ExerciseHistory />}
             />
             <Route path="appointments" element={<Appointments />} />
+            <Route path="agenda" element={<ProfessionalAgenda />} />
             <Route path="personal" element={<PersonalHome />} />
             <Route path="profile" element={<Profile />} />
             <Route path="professionalsList" element={<ProfessionalsList />} />

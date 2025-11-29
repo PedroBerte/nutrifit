@@ -58,6 +58,19 @@ export function useGetCustomerAppointments() {
   });
 }
 
+export function useGetProfessionalAppointments() {
+  return useQuery({
+    queryKey: ["getProfessionalAppointments"],
+    queryFn: async () => {
+      const request = await api.get<AppointmentType[]>(
+        "/appointment/professional/all"
+      );
+      return request.data;
+    },
+    retry: 1,
+  });
+}
+
 export function useCreateAppointment() {
   const queryClient = useQueryClient();
 
@@ -97,6 +110,9 @@ export function useUpdateAppointment() {
       });
       queryClient.invalidateQueries({
         queryKey: ["getCustomerAppointments"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["getProfessionalAppointments"],
       });
     },
   });
