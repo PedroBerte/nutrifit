@@ -5,28 +5,24 @@ import { uploadImage } from "@/services/api/storage";
 import { useUpdateUser } from "@/services/api/user";
 import { toast } from "sonner";
 import { getUserAvatarUrl } from "@/lib/avatar";
+import type { UserType } from "@/types/user";
 
 interface ProfileImageUploadProps {
-  userId: string;
-  currentImageUrl?: string | null;
-  userName?: string | null;
-  userEmail?: string | null;
+  user: UserType;
   onImageUpdate?: (newImageUrl: string) => void;
 }
 
 export function ProfileImageUpload({
-  userId,
-  currentImageUrl,
-  userName,
-  userEmail,
+  user,
   onImageUpdate,
 }: ProfileImageUploadProps) {
+  const { id: userId, imageUrl: currentImageUrl, name: userName } = user;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updateUserMutation = useUpdateUser();
 
   const isUploading = updateUserMutation.isPending;
-  const displayUrl = previewUrl || currentImageUrl || getUserAvatarUrl({ name: userName, id: userId });
+  const displayUrl = previewUrl || currentImageUrl || getUserAvatarUrl({ name: userName, id: userId || undefined });
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -53,15 +49,13 @@ export function ProfileImageUpload({
       console.log("[UPLOAD] Iniciando upload da imagem de perfil...");
 
       // Upload para MinIO
-      const uploadResult = await uploadImage(file, "profiles", userId);
+      const uploadResult = await uploadImage(file, "profiles", userId || "");
       
       console.log("[UPLOAD] ✅ Upload concluído:", uploadResult.url);
 
-      // Atualizar usuário com nova URL
+      // Atualizar usuário com nova URL (mantendo todos os campos obrigatórios)
       await updateUserMutation.mutateAsync({
-        id: userId,
-        name: userName || "",
-        email: userEmail || "",
+        ...user,
         imageUrl: uploadResult.url,
       });
 
@@ -97,11 +91,9 @@ export function ProfileImageUpload({
 
   const handleRemoveImage = async () => {
     try {
-      // Atualizar usuário removendo URL
+      // Atualizar usuário removendo URL (mantendo todos os campos obrigatórios)
       await updateUserMutation.mutateAsync({
-        id: userId,
-        name: userName || "",
-        email: userEmail || "",
+        ...user,
         imageUrl: null,
       });
 
@@ -125,7 +117,7 @@ export function ProfileImageUpload({
           className="w-full h-full object-cover"
           onError={(e) => {
             // Fallback para avatar gerado se a imagem falhar
-            e.currentTarget.src = getUserAvatarUrl({ name: userName, id: userId });
+            e.currentTarget.src = getUserAvatarUrl({ name: userName, id: userId || undefined });
           }}
         />
 
