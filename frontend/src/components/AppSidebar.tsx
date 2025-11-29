@@ -11,6 +11,7 @@ import {
   Settings,
   User2,
 } from "lucide-react";
+import { AvatarImage } from "@/components/ui/avatar-image";
 
 import {
   Sidebar,
@@ -56,13 +57,6 @@ export function AppSidebar() {
   const getFirstUserName = (name: string | null) => {
     if (!name) return "Usuário";
     return name.split(" ")[0];
-  };
-
-  const getInitials = (name: string | null) => {
-    if (!name) return "U";
-    const names = name.trim().split(" ");
-    if (names.length === 1) return names[0].charAt(0).toUpperCase();
-    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
   };
 
   const handleLogout = () => {
@@ -115,11 +109,13 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="h-14 hover:bg-neutral-dark-02 rounded-xl transition-colors">
                   <div className="flex items-center gap-3 w-full px-2">
-                    <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center">
-                      <span className="text-sm font-semibold text-white">
-                        {getInitials(user && user.name)}
-                      </span>
-                    </div>
+                    <AvatarImage
+                      imageUrl={user?.imageUrl}
+                      name={user?.name}
+                      email={user?.email}
+                      id={user?.id}
+                      size="sm"
+                    />
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium text-neutral-white-01 truncate">
                         {user && user.name ? user.name : "Usuário"}

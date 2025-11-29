@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { AttendanceMode } from "@/types/professional";
 import { addFavorite, removeFavorite } from "@/services/api/favorite";
 import { motion } from "motion/react";
-import { getUserAvatarUrl } from "@/lib/avatar";
+import { AvatarImage } from "@/components/ui/avatar-image";
 
 type ProfessionalCardProps = {
   subtitle: string;
@@ -135,10 +135,12 @@ export default function ProfessionalCard({
       <div className="flex gap-3 pr-8">
         <div className="flex-1 min-w-0">
           <div className="flex gap-3">
-            <img 
-              src={getUserAvatarUrl({ email, name, id })} 
-              alt={name || "Avatar"} 
-              className="w-12 h-12 flex-shrink-0 rounded-full object-cover bg-neutral-dark-02" 
+            <AvatarImage
+              imageUrl={undefined}
+              name={name}
+              email={email}
+              id={id}
+              size="md"
             />
             <div className="flex flex-col">
               <p className="text-sm font-semibold text-gray-400">{subtitle}</p>

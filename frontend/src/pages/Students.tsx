@@ -12,8 +12,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import genericPerson from "@/assets/generic-person.svg";
 import PersonalSemAlunos from "@/assets/personal/PersonalSemAlunos.png";
+import { AvatarImage } from "@/components/ui/avatar-image";
 
 export default function Students() {
   const navigate = useNavigate();
@@ -113,13 +113,13 @@ export default function Students() {
             >
               <div className="flex items-center gap-4">
                 {/* Avatar */}
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-neutral-dark-02 flex-shrink-0">
-                  <img
-                    src={genericPerson}
-                    alt={student.studentName}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <AvatarImage
+                  imageUrl={student.studentImageUrl}
+                  name={student.studentName}
+                  email={student.studentEmail}
+                  id={student.studentId}
+                  size="lg"
+                />
 
                 {/* Student Info */}
                 <div className="flex-1 min-w-0">

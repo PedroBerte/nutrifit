@@ -83,6 +83,7 @@ builder.Services.AddScoped<IWorkoutTemplateService, WorkoutTemplateService>();
 builder.Services.AddScoped<IWorkoutSessionService, WorkoutSessionService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IGeocodingService, GeocodingService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
 builder.Services.AddCors(o =>
 {

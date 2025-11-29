@@ -300,6 +300,7 @@ public class BondService : IBondService
                 studentPhone = b.Customer.PhoneNumber,
                 studentDateOfBirth = b.Customer.DateOfBirth,
                 studentSex = b.Customer.Sex,
+                studentImageUrl = b.Customer.ImageUrl,
                 bondCreatedAt = b.CreatedAt,
                 bondStatus = b.Status
             }).ToList();

@@ -21,8 +21,22 @@ import {
   Home,
   FileText,
   Loader2,
+  Users,
+  X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useGetBondAsCustomer, useUpdateBond } from "@/services/api/bond";
+import { AvatarImage } from "@/components/ui/avatar-image";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { FeedbackModal } from "@/components/feedback/FeedbackModal";
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -32,7 +46,15 @@ export default function Profile() {
     error,
     refetch,
   } = useGetUserById(user?.id);
+  const {
+    data: studentBond,
+    isLoading: loadingBond,
+    refetch: refetchBond,
+  } = useGetBondAsCustomer();
+  const updateBondMutation = useUpdateBond();
   const [isUpdateDrawerOpen, setIsUpdateDrawerOpen] = useState(false);
+  const [showUnbondDialog, setShowUnbondDialog] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   if (isLoading) {
     return (
@@ -120,71 +142,45 @@ export default function Profile() {
     }
   };
 
+  const handleUnbond = async () => {
+    if (!studentBond) return;
+
+    try {
+      await updateBondMutation.mutateAsync({
+        ...studentBond,
+        status: "C",
+      });
+
+      toast.success("Vínculo cancelado com sucesso!");
+      setShowUnbondDialog(false);
+      refetchBond();
+    } catch (error) {
+      toast.error("Erro ao cancelar vínculo. Tente novamente.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-dark-01">
       {/* Header com gradiente */}
-      <div className="relative pb-24 pt-6 px-4">
-        <motion.div
-          className="max-w-4xl mx-auto flex items-center justify-between"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+      <motion.div
+        className="max-w-4xl mx-auto flex items-center justify-between"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-2xl font-bold text-neutral-white-01">
+          Meu Perfil
+        </h1>
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-primary/30 hover:border-primary hover:bg-primary/10"
+          onClick={() => setIsUpdateDrawerOpen(true)}
         >
-          <h1 className="text-2xl font-bold text-neutral-white-01">
-            Meu Perfil
-          </h1>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-primary/30 hover:border-primary hover:bg-primary/10"
-            onClick={() => setIsUpdateDrawerOpen(true)}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Editar
-          </Button>
-        </motion.div>
-
-        {/* Card de perfil flutuante */}
-        <motion.div
-          className="max-w-4xl mx-auto mt-6 bg-neutral-dark-03 rounded-2xl shadow-xl border border-neutral-white-01/5 overflow-hidden"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          {/* Banner top - mais suave e com gradiente radial */}
-          <div className="h-24 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-t from-neutral-dark-03 via-transparent to-transparent" />
-          </div>
-
-          {/* Conteúdo do perfil */}
-          <div className="px-6 pb-6 -mt-16">
-            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end">
-              {/* Avatar */}
-              <div className="relative">
-                <ProfileImageUpload user={userData} onImageUpdate={() => refetch()} />
-              </div>
-
-              {/* Info principal */}
-              <div className="flex-1 space-y-3 pb-2">
-                <div>
-                  <h2 className="text-2xl font-bold text-neutral-white-01">
-                    {userData.name}
-                  </h2>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {userData.profile?.id !== UserProfiles.STUDENT && getProfileBadge()}
-                  {userData.professionalCredential && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium bg-amber-500/10 text-amber-400 border-amber-500/20">
-                      <Award className="w-4 h-4" />
-                      {userData.professionalCredential.type === "CRN" ? "CRN" : "CREF"} {userData.professionalCredential.credentialId}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
+          <Edit className="w-4 h-4 mr-2" />
+          Editar
+        </Button>
+      </motion.div>
 
       {/* Drawer de edição */}
       {userData && (
@@ -197,8 +193,138 @@ export default function Profile() {
       )}
 
       {/* Conteúdo principal */}
-      <div className="max-w-4xl mx-auto px-4 -mt-16 pb-8">
+      <div className="max-w-4xl mx-auto px-4 pb-8">
         <div className="grid gap-4 md:grid-cols-2">
+
+          {/* Card de perfil */}
+          <motion.div
+            className="max-w-4xl w-full mx-auto mt-6 bg-neutral-dark-03 rounded-2xl shadow-xl border border-neutral-white-01/5 overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            {/* Banner top - mais suave e com gradiente radial */}
+            <div className="h-24 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-t from-neutral-dark-03 via-transparent to-transparent" />
+            </div>
+
+            {/* Conteúdo do perfil */}
+            <div className="px-6 pb-6 -mt-16">
+              <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end">
+                {/* Avatar */}
+                <div className="relative">
+                  <ProfileImageUpload user={userData} onImageUpdate={() => refetch()} />
+                </div>
+
+                {/* Info principal */}
+                <div className="flex-1 space-y-3 pb-2">
+                  <div>
+                    <h2 className="text-2xl font-bold text-neutral-white-01">
+                      {userData.name}
+                    </h2>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {userData.profile?.id !== UserProfiles.STUDENT && getProfileBadge()}
+                    {userData.professionalCredential && (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium bg-amber-500/10 text-amber-400 border-amber-500/20">
+                        <Award className="w-4 h-4" />
+                        {userData.professionalCredential.type === "CRN" ? "CRN" : "CREF"} {userData.professionalCredential.credentialId}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Bond Management Section - Only for Students */}
+          {userData.profile?.id === UserProfiles.STUDENT && (
+            <motion.div
+              className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5 md:col-span-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-primary" />
+                </div>
+                <h3 className="font-semibold text-neutral-white-01">
+                  Vínculos
+                </h3>
+              </div>
+
+              {loadingBond ? (
+                <p className="text-sm text-neutral-white-02 text-center py-4">
+                  Carregando vínculo...
+                </p>
+              ) : studentBond && studentBond.status === "A" && studentBond.professional ? (
+                <div className="relative bg-gradient-to-br from-primary/5 via-primary/3 to-transparent rounded-lg p-4 border border-primary/20 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
+                  <div className="relative flex flex-col items-start gap-3 sm:gap-4">
+                    <div className="flex gap-3 items-start sm:gap-4 w-full">
+                      <div className="flex-shrink-0">
+                        <AvatarImage
+                          imageUrl={studentBond.professional.imageUrl}
+                          name={studentBond.professional.name}
+                          size="lg"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-neutral-white-01 truncate">
+                          {studentBond.professional.name}
+                        </h4>
+                        <p className="text-sm text-neutral-white-02 truncate overflow-hidden">
+                          {studentBond.professional.email}
+                        </p>
+                        {studentBond.professional.professionalCredential && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            <span className="px-2 py-1 bg-amber-500/10 text-amber-400 text-xs rounded-md border border-amber-500/20">
+                              {studentBond.professional.professionalCredential.type === "CRN" ? "CRN" : "CREF"}{" "}
+                              {studentBond.professional.professionalCredential.credentialId}
+                            </span>
+                          </div>
+                        )}
+                        {studentBond.createdAt && (
+                          <p className="text-xs text-neutral-white-02 mt-2">
+                            Vínculo desde{" "}
+                            {new Date(studentBond.createdAt).toLocaleDateString(
+                              "pt-BR"
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 w-full pt-2 border-t border-neutral-white-01/10">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowFeedbackModal(true)}
+                        className="flex-1 border-primary/30 hover:border-primary hover:bg-primary/10"
+                      >
+                        Avaliar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowUnbondDialog(true)}
+                        disabled={updateBondMutation.isPending}
+                        className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancelar vínculo
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-white-02 text-center py-4">
+                  Nenhum vínculo ativo no momento
+                </p>
+              )}
+            </motion.div>
+          )}
+
           {/* Informações de Contato */}
           <motion.div
             className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5"
@@ -237,6 +363,8 @@ export default function Profile() {
               )}
             </div>
           </motion.div>
+
+
 
           {/* Informações Pessoais */}
           <motion.div
@@ -355,6 +483,8 @@ export default function Profile() {
               </p>
             </motion.div>
           )}
+
+
         </div>
 
         {/* Footer info & logout */}
@@ -377,6 +507,54 @@ export default function Profile() {
           </Button>
         </motion.div>
       </div>
+
+      {/* Unbind Confirmation Dialog */}
+      <Dialog open={showUnbondDialog} onOpenChange={setShowUnbondDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar desvinculação</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja se desvincular de{" "}
+              <strong>{studentBond?.professional?.name}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              Ao desvincular, você perderá acesso às rotinas criadas por este
+              profissional e ele não poderá mais gerenciar seu treinamento.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowUnbondDialog(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleUnbond}
+              disabled={updateBondMutation.isPending}
+            >
+              {updateBondMutation.isPending
+                ? "Desvinculando..."
+                : "Desvincular"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Feedback Modal */}
+      {studentBond?.professional && (
+        <FeedbackModal
+          open={showFeedbackModal}
+          onOpenChange={setShowFeedbackModal}
+          professionalId={studentBond.professionalId!}
+          professionalName={studentBond.professional.name}
+          professionalImageUrl={studentBond.professional.imageUrl || undefined}
+          customerId={user?.id || ""}
+        />
+      )}
     </div>
   );
 }

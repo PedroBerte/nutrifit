@@ -16,6 +16,7 @@ import { useGetAppointmentsByBondId } from "@/services/api/appointment";
 import PendingAppointmentDrawer from "@/components/PendingAppointmentDrawer";
 import { Bell } from "lucide-react";
 import AlunoSemPersonal from "@/assets/aluno/AlunoSemPersonal.png";
+import { AvatarImage } from "@/components/ui/avatar-image";
 
 export default function Workout() {
   const navigate = useNavigate();
@@ -107,15 +108,6 @@ export default function Workout() {
 
   const bondWarning = getBondStatus();
 
-  function getInitials(name?: string) {
-    if (!name) return "";
-    const parts = name.trim().split(/\s+/);
-    return parts
-      .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase() ?? "")
-      .join("");
-  }
-
   return (
     <div className="flex flex-1 py-4 flex-col gap-4">
       <p className="font-bold text-2xl">Meus Treinos</p>
@@ -124,22 +116,33 @@ export default function Workout() {
         <div className="flex gap-2 mt-2">
           {pendingAppointment ? (
             <PendingAppointmentDrawer appointment={pendingAppointment}>
-              <div className="relative cursor-pointer">
-                <div className="bg-primary text-white rounded-full h-12 w-12 flex items-center justify-center font-semibold">
-                  {getInitials(studentBond.professional?.name)}
-                </div>
-                <div className="absolute -top-1 -right-1 bg-destructive text-white rounded-full h-5 w-5 flex items-center justify-center shadow-lg animate-pulse">
-                  <Bell className="h-3 w-3" />
-                </div>
+              <div className="cursor-pointer">
+                <AvatarImage
+                  imageUrl={studentBond.professional?.imageUrl}
+                  name={studentBond.professional?.name}
+                  email={studentBond.professional?.email}
+                  id={studentBond.professional?.id}
+                  size="md"
+                  showBadge
+                  badgeContent={
+                    <div className="bg-destructive text-white rounded-full h-5 w-5 flex items-center justify-center shadow-lg animate-pulse">
+                      <Bell className="h-3 w-3" />
+                    </div>
+                  }
+                />
               </div>
             </PendingAppointmentDrawer>
           ) : (
-            <div className="bg-primary text-white rounded-full h-12 w-12 flex items-center justify-center font-semibold">
-              {getInitials(studentBond.professional?.name)}
-            </div>
+            <AvatarImage
+              imageUrl={studentBond.professional?.imageUrl}
+              name={studentBond.professional?.name}
+              email={studentBond.professional?.email}
+              id={studentBond.professional?.id}
+              size="md"
+            />
           )}
           <div>
-            <p className="font-bold text-md">Personal Responsável:</p>
+            <p className="font-bold text-md">Personal Responsável</p>
             <p className="text-sm text-muted-foreground">
               {studentBond.professional?.name}
             </p>

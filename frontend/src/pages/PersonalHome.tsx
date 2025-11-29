@@ -16,10 +16,10 @@ import type { RoutineExpiryType } from "@/types/routine";
 import PersonalSemAtendimento from "@/assets/personal/PersonalSemAtendimento.png";
 import PersonalSemTreinosPertoValidade from "@/assets/personal/PersonalSemTreinosPertoValidade.png";
 import type { JSX } from "react/jsx-runtime";
-import GenericPerson from "@/assets/generic-person.svg";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import UpdateExpiryDialog from "@/components/UpdateExpiryDialog";
+import { AvatarImage } from "@/components/ui/avatar-image";
 
 export default function PersonalHome() {
   const { user } = useAuth();
@@ -62,19 +62,12 @@ export default function PersonalHome() {
           </p>
           <div className="flex flex-row items-center gap-3 border border-border w-full rounded-md p-3">
             <>
-              {item.customerImageUrl ? (
-                <img
-                  src={item.customerImageUrl}
-                  alt={item.customerName}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <img
-                  src={GenericPerson}
-                  alt="Avatar"
-                  className="w-10 h-10 rounded-full"
-                />
-              )}
+              <AvatarImage
+                imageUrl={item.customerImageUrl}
+                name={item.customerName}
+                id={item.customerId}
+                size="md"
+              />
               <div className="flex flex-col flex-1">
                 <p className="font-semibold">{item.customerName}</p>
                 <p className="text-sm text-muted-foreground">

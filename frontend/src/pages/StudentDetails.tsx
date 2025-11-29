@@ -34,8 +34,8 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import CreateAppointmentDrawer from "@/components/CreateAppointmentDrawer";
-import genericPerson from "@/assets/generic-person.svg";
 import { useToast } from "@/contexts/ToastContext";
+import { AvatarImage } from "@/components/ui/avatar-image";
 
 export default function StudentDetails() {
   const { id } = useParams<{ id: string }>();
@@ -224,13 +224,13 @@ export default function StudentDetails() {
             >
               {/* User Avatar and Basic Info */}
               <div className="flex flex-col items-center gap-3 bg-neutral-dark-03 p-4 rounded-lg">
-                <div className="w-20 h-20 rounded-full overflow-hidden bg-neutral-dark-02">
-                  <img
-                    src={genericPerson}
-                    alt={userData.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <AvatarImage
+                  imageUrl={userData.imageUrl}
+                  name={userData.name}
+                  email={userData.email}
+                  id={userData.id}
+                  size="xl"
+                />
 
                 <div className="text-center space-y-1">
                   <h2 className="text-lg font-semibold text-neutral-white-01">
