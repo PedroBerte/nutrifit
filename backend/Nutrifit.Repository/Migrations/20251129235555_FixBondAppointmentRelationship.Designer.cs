@@ -12,8 +12,8 @@ using Nutrifit.Repository;
 namespace Nutrifit.Repository.Migrations
 {
     [DbContext(typeof(NutrifitContext))]
-    [Migration("20251129231239_AppointmentTry")]
-    partial class AppointmentTry
+    [Migration("20251129235555_FixBondAppointmentRelationship")]
+    partial class FixBondAppointmentRelationship
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1824,7 +1824,7 @@ namespace Nutrifit.Repository.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", "CustomerProfessionalBond")
-                        .WithMany("Appointments")
+                        .WithMany()
                         .HasForeignKey("CustomerProfessionalBondId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2209,11 +2209,6 @@ namespace Nutrifit.Repository.Migrations
                         .IsRequired();
 
                     b.Navigation("Routine");
-                });
-
-            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", b =>
-                {
-                    b.Navigation("Appointments");
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.ExerciseCategoryEntity", b =>
