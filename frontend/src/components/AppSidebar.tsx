@@ -35,6 +35,7 @@ import {
 import { DropdownMenuItemIndicator } from "@radix-ui/react-dropdown-menu";
 import { Separator } from "./ui/separator";
 import { useNavigate } from "react-router-dom";
+import { useGetUserById } from "@/services/api/user";
 
 const items = [
   {
@@ -51,6 +52,7 @@ const items = [
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
+  const { data: userData } = useGetUserById(user?.id);
   const { toggleSidebar } = useSidebar();
   const navigate = useNavigate();
 
@@ -110,10 +112,8 @@ export function AppSidebar() {
                 <SidebarMenuButton className="h-14 hover:bg-neutral-dark-02 rounded-xl transition-colors">
                   <div className="flex items-center gap-3 w-full px-2">
                     <AvatarImage
-                      imageUrl={user?.imageUrl}
+                      imageUrl={userData?.imageUrl}
                       name={user?.name}
-                      email={user?.email}
-                      id={user?.id}
                       size="sm"
                     />
                     <div className="flex-1 text-left min-w-0">
