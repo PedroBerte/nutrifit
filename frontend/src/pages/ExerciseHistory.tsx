@@ -95,10 +95,10 @@ export default function ExerciseHistory() {
           </div>
 
           {/* Imagem do exercício */}
-          {history.imageUrl && (
+          {history.videoUrl && (
             <div className="mb-4 rounded-lg overflow-hidden bg-neutral-dark-02">
               <img
-                src={history.imageUrl}
+                src={history.videoUrl}
                 alt={history.exerciseName}
                 className="w-full h-48 object-cover"
               />
