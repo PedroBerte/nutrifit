@@ -71,7 +71,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao criar usu�rio.", ex);
+            throw new Exception("Erro ao criar usuário.", ex);
         }
     }
 
@@ -81,7 +81,7 @@ public class UserService : IUserService
         {
             var existing = await _context.Users.FindAsync(user.Id);
             if (existing == null)
-                throw new InvalidOperationException("Usu�rio n�o encontrado para atualiza��o.");
+                throw new InvalidOperationException("usuário não encontrado para atualização.");
             _context.Entry(existing).CurrentValues.SetValues(user);
             existing.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -89,7 +89,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao atualizar usu�rio.", ex);
+            throw new Exception("Erro ao atualizar usuário.", ex);
         }
     }
 

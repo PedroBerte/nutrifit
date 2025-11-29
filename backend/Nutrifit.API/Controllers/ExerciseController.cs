@@ -18,7 +18,7 @@ public class ExerciseController : ControllerBase
     }
 
     /// <summary>
-    /// Lista todos os exerc�cios dispon�veis
+    /// Lista todos os exercícios disponíveis
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetAllExercises([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
@@ -35,12 +35,12 @@ public class ExerciseController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao buscar exerc�cios: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao buscar exercícios: {ex.Message}" });
         }
     }
 
     /// <summary>
-    /// Busca um exerc�cio por ID
+    /// Busca um exercício por ID
     /// </summary>
     [HttpGet("{exerciseId}")]
     public async Task<IActionResult> GetExerciseById(Guid exerciseId)
@@ -56,12 +56,12 @@ public class ExerciseController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao buscar exerc�cio: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao buscar exercício: {ex.Message}" });
         }
     }
 
     /// <summary>
-    /// Pesquisa exerc�cios por nome ou categoria
+    /// Pesquisa exercícios por nome ou categoria
     /// </summary>
     [HttpGet("search")]
     public async Task<IActionResult> SearchExercises(
@@ -82,12 +82,12 @@ public class ExerciseController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao pesquisar exerc�cios: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao pesquisar exercícios: {ex.Message}" });
         }
     }
 
     /// <summary>
-    /// Lista todas as categorias de exerc�cios
+    /// Lista todas as categorias de exercícios
     /// </summary>
     [HttpGet("categories")]
     public async Task<IActionResult> GetExerciseCategories()
@@ -108,7 +108,7 @@ public class ExerciseController : ControllerBase
     }
 
     /// <summary>
-    /// Lista todos os grupos musculares com seus m�sculos
+    /// Lista todos os grupos musculares com seus músculos
     /// </summary>
     [HttpGet("muscle-groups")]
     public async Task<IActionResult> GetMuscleGroups()
@@ -129,7 +129,7 @@ public class ExerciseController : ControllerBase
     }
 
     /// <summary>
-    /// Lista exerc�cios que trabalham um grupo muscular espec�fico
+    /// Lista exercícios que trabalham um grupo muscular específico
     /// </summary>
     [HttpGet("muscle-groups/{muscleGroupId}/exercises")]
     public async Task<IActionResult> GetExercisesByMuscleGroup(Guid muscleGroupId)
@@ -145,7 +145,7 @@ public class ExerciseController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao buscar exerc�cios: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao buscar exercícios: {ex.Message}" });
         }
     }
 

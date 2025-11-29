@@ -61,7 +61,7 @@ public class ProfileController : ControllerBase
     public async Task<ActionResult<ProfileDto>> Create([FromBody] ProfileDto profileDto)
     {
         if (profileDto == null)
-            return BadRequest("Perfil inv·lido.");
+            return BadRequest("Perfil inv√°lido.");
 
         try
         {
@@ -79,7 +79,7 @@ public class ProfileController : ControllerBase
     public async Task<ActionResult<ProfileDto>> Update(Guid id, [FromBody] ProfileDto profileDto)
     {
         if (id != profileDto.Id)
-            return BadRequest("Id do perfil n„o corresponde ao par‚metro.");
+            return BadRequest("Id do perfil n√£o corresponde ao par√¢metro.");
 
         try
         {

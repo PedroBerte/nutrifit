@@ -5,6 +5,7 @@ import { useGetUserById } from "@/services/api/user";
 import { Button } from "@/components/ui/button";
 import { UserProfiles } from "@/types/user";
 import { UpdateProfileDrawer } from "@/components/profile/UpdateProfileDrawer";
+import { ProfileImageUpload } from "@/components/profile/ProfileImageUpload";
 import {
   Calendar,
   Mail,
@@ -17,7 +18,6 @@ import {
   Edit,
   VenusAndMars,
 } from "lucide-react";
-import { getPresignedUrl } from "@/services/api/storage";
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -27,19 +27,7 @@ export default function Profile() {
     error,
     refetch,
   } = useGetUserById(user?.id);
-  const [profileImageUrl, setProfileImageUrl] = React.useState("");
   const [isUpdateDrawerOpen, setIsUpdateDrawerOpen] = useState(false);
-
-  useEffect(() => {
-    async function fetchProfileImage() {
-      if (userData?.id) {
-        const url = await getPresignedUrl(`profiles/${userData.id}.jpg`);
-        console.log("Presigned URL:", url);
-        setProfileImageUrl(url);
-      }
-    }
-    fetchProfileImage();
-  }, [userData?.id]);
 
   if (isLoading) {
     return (
@@ -154,26 +142,19 @@ export default function Profile() {
       <div className="flex-1 overflow-y-auto flex gap-3 flex-col">
         {/* User Avatar and Basic Info */}
         <motion.div
-          className="flex flex-col items-center gap-3 bg-neutral-dark-03 p-4 rounded-lg"
+          className="flex flex-col items-center gap-4 bg-neutral-dark-03 p-6 rounded-lg"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <motion.div
-            className="w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <span className="text-2xl font-bold text-white">
-              {userData.name?.charAt(0)?.toUpperCase() || "U"}
-            </span>
-            <img
-              src={profileImageUrl}
-              alt=""
-              className="absolute w-20 h-20 rounded-full object-cover"
-            />
-          </motion.div>
+          {/* Profile Image Upload Component */}
+          <ProfileImageUpload
+            userId={userData.id}
+            currentImageUrl={userData.imageUrl}
+            userName={userData.name}
+            userEmail={userData.email}
+            onImageUpdate={() => refetch()}
+          />
 
           <div className="text-center space-y-2">
             <h2 className="text-lg font-semibold text-neutral-white-01">

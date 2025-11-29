@@ -125,7 +125,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserDto>> Create([FromBody] UserDto userDto)
     {
         if (userDto == null)
-            return BadRequest("Usu�rio inv�lido.");
+            return BadRequest("usuário inválido.");
 
         try
         {
@@ -145,7 +145,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserDto>> Update(Guid id, [FromBody] UserDto userDto)
     {
         if (userDto == null || id != userDto.Id)
-            return BadRequest("Id do usu�rio n�o corresponde ao par�metro.");
+            return BadRequest("Id do usuário não corresponde ao parâmetro.");
 
         try
         {

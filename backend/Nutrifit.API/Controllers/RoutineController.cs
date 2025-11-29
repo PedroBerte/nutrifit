@@ -156,7 +156,7 @@ public class RoutineController : ControllerBase
     }
 
     /// <summary>
-    /// Remove a atribui��o de uma rotina de um cliente
+    /// Remove a atribuição de uma rotina de um cliente
     /// </summary>
     [HttpDelete("{routineId}/customer/{customerId}")]
     public async Task<IActionResult> UnassignRoutineFromCustomer(Guid routineId, Guid customerId)
@@ -173,12 +173,12 @@ public class RoutineController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Erro ao remover atribui��o: {ex.Message}" });
+            return StatusCode(500, new { message = $"Erro ao remover atribuição: {ex.Message}" });
         }
     }
 
     /// <summary>
-    /// Lista todas as rotinas atribu�das ao cliente logado
+    /// Lista todas as rotinas atribuídas ao cliente logado
     /// </summary>
     [HttpGet("my-assigned-routines")]
     public async Task<IActionResult> GetMyAssignedRoutines([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
@@ -200,7 +200,7 @@ public class RoutineController : ControllerBase
     }
 
     /// <summary>
-    /// Lista rotinas atribu�das a um cliente espec�fico (para Personal)
+    /// Lista rotinas atribuídas a um cliente específico (para Personal)
     /// </summary>
     [HttpGet("customer/{customerId}")]
     public async Task<IActionResult> GetCustomerRoutines(Guid customerId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)

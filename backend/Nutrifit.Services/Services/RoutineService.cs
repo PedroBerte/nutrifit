@@ -25,7 +25,7 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(u => u.Id == personalId);
 
             if (personal == null)
-                return ApiResponse.CreateFailure("Personal n�o encontrado");
+                return ApiResponse.CreateFailure("Personal não encontrado");
 
             if (personal.Profile.Name != "Personal")
                 return ApiResponse.CreateFailure("Apenas Personal Trainers podem criar rotinas");
@@ -76,7 +76,7 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(r => r.Id == routineId && r.PersonalId == personalId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina n�o encontrada ou voc� n�o tem permiss�o para edit�-la");
+                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão para editá-la");
 
             if (!string.IsNullOrEmpty(request.Title))
                 routine.Title = request.Title;
@@ -178,7 +178,7 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(r => r.Id == routineId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina n�o encontrada");
+                return ApiResponse.CreateFailure("Rotina não encontrada");
 
             var response = new RoutineDetailResponse
             {
@@ -278,13 +278,13 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(r => r.Id == request.RoutineId && r.PersonalId == personalId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina n�o encontrada ou voc� n�o tem permiss�o");
+                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão");
 
             var customer = await _context.Users
                 .FirstOrDefaultAsync(u => u.Id == request.CustomerId);
 
             if (customer == null)
-                return ApiResponse.CreateFailure("Cliente n�o encontrado");
+                return ApiResponse.CreateFailure("Cliente não encontrado");
 
             var existingAssignment = await _context.CustomerRoutines
                 .FirstOrDefaultAsync(cr => cr.RoutineId == request.RoutineId
@@ -292,7 +292,7 @@ public class RoutineService : IRoutineService
                     && cr.Status == "A");
 
             if (existingAssignment != null)
-                return ApiResponse.CreateFailure("Esta rotina j� est� atribu�da a este cliente");
+                return ApiResponse.CreateFailure("Esta rotina já está atribuída a este cliente");
 
             var customerRoutine = new CustomerRoutineEntity
             {
@@ -307,7 +307,7 @@ public class RoutineService : IRoutineService
             _context.CustomerRoutines.Add(customerRoutine);
             await _context.SaveChangesAsync();
 
-            return ApiResponse.CreateSuccess("Rotina atribu�da ao cliente com sucesso");
+            return ApiResponse.CreateSuccess("Rotina atribuída ao cliente com sucesso");
         }
         catch (Exception ex)
         {
@@ -323,7 +323,7 @@ public class RoutineService : IRoutineService
                 .FirstOrDefaultAsync(r => r.Id == routineId && r.PersonalId == personalId);
 
             if (routine == null)
-                return ApiResponse.CreateFailure("Rotina n�o encontrada ou voc� n�o tem permiss�o");
+                return ApiResponse.CreateFailure("Rotina não encontrada ou você não tem permissão");
 
             var assignment = await _context.CustomerRoutines
                 .FirstOrDefaultAsync(cr => cr.RoutineId == routineId
@@ -331,7 +331,7 @@ public class RoutineService : IRoutineService
                     && cr.Status == "A");
 
             if (assignment == null)
-                return ApiResponse.CreateFailure("Atribui��o n�o encontrada");
+                return ApiResponse.CreateFailure("Atribuição não encontrada");
 
             assignment.Status = "I";
             assignment.UpdatedAt = DateTime.UtcNow;
@@ -342,7 +342,7 @@ public class RoutineService : IRoutineService
         }
         catch (Exception ex)
         {
-            return ApiResponse.CreateFailure($"Erro ao remover atribui��o: {ex.Message}");
+            return ApiResponse.CreateFailure($"Erro ao remover atribuição: {ex.Message}");
         }
     }
 

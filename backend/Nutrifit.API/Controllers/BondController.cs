@@ -26,7 +26,7 @@ public class BondController : ControllerBase
         {
             var bonds = await _service.GetAllAsync();
             if (bonds == null)
-                return StatusCode(500, "Erro ao buscar v�nculos cliente-profissional.");
+                return StatusCode(500, "Erro ao buscar vínculos cliente-profissional.");
 
             if (bonds.Count == 0)
                 return NoContent();
@@ -40,7 +40,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna os v�nculos enviados pelo usu�rio autenticado
+    /// Retorna os vínculos enviados pelo usuário autenticado
     /// </summary>
     [HttpGet("sent")]
     public async Task<ActionResult<List<BondDto>>> GetSent()
@@ -62,7 +62,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna os v�nculos recebidos pelo usu�rio autenticado (onde ele n�o � o sender)
+    /// Retorna os vínculos recebidos pelo usuário autenticado (onde ele não é o sender)
     /// </summary>
     [HttpGet("received")]
     public async Task<ActionResult<List<BondDto>>> GetReceived()
@@ -84,7 +84,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna os v�nculos onde o usu�rio autenticado � o cliente
+    /// Retorna os vínculos onde o usuário autenticado é o cliente
     /// </summary>
     [HttpGet("as-customer")]
     public async Task<ActionResult<List<BondDto>>> GetAsCustomer()
@@ -106,7 +106,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna os v�nculos onde o usu�rio autenticado � o profissional
+    /// Retorna os vínculos onde o usuário autenticado é o profissional
     /// </summary>
     [HttpGet("as-professional")]
     public async Task<ActionResult<List<BondDto>>> GetAsProfessional()
@@ -128,7 +128,7 @@ public class BondController : ControllerBase
     }
 
     /// <summary>
-    /// Retorna todos os v�nculos do usu�rio autenticado (como cliente ou profissional)
+    /// Retorna todos os vínculos do usuário autenticado (como cliente ou profissional)
     /// </summary>
     [HttpGet("my-bonds")]
     public async Task<ActionResult<List<BondDto>>> GetMyBonds()
@@ -197,7 +197,7 @@ public class BondController : ControllerBase
     public async Task<ActionResult<BondDto>> Create([FromBody] BondDto bondDto)
     {
         if (bondDto == null)
-            return BadRequest("V�nculo cliente-profissional inv�lido.");
+            return BadRequest("vínculo cliente-profissional inválido.");
 
         try
         {
@@ -215,7 +215,7 @@ public class BondController : ControllerBase
     public async Task<ActionResult<BondDto>> Update(Guid id, [FromBody] BondDto bondDto)
     {
         if (bondDto == null || id != bondDto.Id)
-            return BadRequest("Id do v�nculo cliente-profissional n�o corresponde ao par�metro.");
+            return BadRequest("Id do vínculo cliente-profissional não corresponde ao parâmetro.");
 
         try
         {

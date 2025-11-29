@@ -5,7 +5,7 @@ namespace Nutrifit.Services.ViewModel.Request;
 
 public class CreateRoutineRequest
 {
-    [Required(ErrorMessage = "T�tulo � obrigat�rio")]
+    [Required(ErrorMessage = "Título é obrigatório")]
     [MaxLength(200)]
     public string Title { get; set; } = string.Empty;
 
@@ -55,7 +55,7 @@ public class UpdateRoutineRequest
     {
         if (!RoutineConstants.Goal.IsValid(Goal))
             yield return new ValidationResult(
-                "Objetivo inv�lido. Use: HYP, WLS, DEF, CON, STR ou END",
+                "Objetivo inválido. Use: HYP, WLS, DEF, CON, STR ou END",
                 new[] { nameof(Goal) });
 
         if (!RoutineConstants.Difficulty.IsValid(Difficulty))
