@@ -24,7 +24,7 @@ import { useCreateBond, useGetBondsSent } from "@/services/api/bond";
 import { motion, AnimatePresence } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
 import { useGetProfessionalFeedbacks } from "@/services/api/feedback";
-import { getUserAvatarUrl } from "@/lib/avatar";
+import { AvatarImage } from "@/components/ui/avatar-image";
 
 export default function Professional() {
   const { user, logout } = useAuth();
@@ -181,10 +181,12 @@ export default function Professional() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center gap-3 bg-neutral-dark-03 p-4 rounded-lg"
         >
-          <img
-            src={getUserAvatarUrl(userData)}
-            alt={userData.name || "Avatar"}
-            className="w-20 h-20 rounded-full object-cover bg-neutral-dark-02"
+          <AvatarImage
+            imageUrl={userData.imageUrl}
+            name={userData.name}
+            email={userData.email}
+            id={userData.id}
+            size="xl"
           />
 
           <div className="text-center space-y-2">

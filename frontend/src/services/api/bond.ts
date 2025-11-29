@@ -11,6 +11,7 @@ export interface ActiveStudentResponse {
   studentPhone?: string;
   studentDateOfBirth?: string;
   studentSex?: string;
+  studentImageUrl?: string;
   bondCreatedAt: string;
   bondStatus: string;
 }

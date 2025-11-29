@@ -41,21 +41,21 @@ export default function AssignedRoutineCard({
         {routine.difficulty && (
           <section className="flex gap-2 items-center">
             <ChartColumnBig size={18} />
-            <p className="font-bold text-sm">Dificuldade:</p>
+            <p className="font-bold text-sm">Dificuldade</p>
             <p className="text-sm">{getDifficultyLabel(routine.difficulty)}</p>
           </section>
         )}
         {routine.goal && (
           <section className="flex gap-2 items-center">
             <Target size={18} />
-            <p className="font-bold text-sm">Objetivo:</p>
+            <p className="font-bold text-sm">Objetivo</p>
             <p className="text-sm">{getGoalLabel(routine.goal)}</p>
           </section>
         )}
         {routine.weeks && (
           <section className="flex gap-2 items-center">
             <Calendar size={18} />
-            <p className="font-bold text-sm">Duração:</p>
+            <p className="font-bold text-sm">Duração</p>
             <p className="text-sm">{routine.weeks} semanas</p>
           </section>
         )}

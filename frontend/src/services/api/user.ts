@@ -1,6 +1,6 @@
 import { api } from "@/lib/axios";
 import { UserProfiles, type UserType } from "@/types/user";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useCreateUser() {
   return useMutation({
@@ -98,12 +98,24 @@ export function useGetAllUsers(
 }
 
 export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationKey: ["updateUser"],
     retry: 0,
     mutationFn: async (user: UserType) => {
       const request = await api.put<UserType>(`/user/${user.id}`, user);
       return request.data;
+    },
+    onSuccess: (data) => {
+      // Invalidar cache do usuário atualizado
+      queryClient.invalidateQueries({ queryKey: ["getUserById", data.id] });
+      // Invalidar lista de todos os usuários
+      queryClient.invalidateQueries({ queryKey: ["getAllUsers"] });
+      // Invalidar lista de alunos ativos
+      queryClient.invalidateQueries({ queryKey: ["getActiveStudents"] });
+      // Invalidar rotinas próximas ao vencimento (contém imagem do aluno)
+      queryClient.invalidateQueries({ queryKey: ["getRoutinesNearExpiry"] });
     },
     onError: (e) => {
       console.error("Erro ao atualizar usuário", e);

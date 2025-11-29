@@ -11,6 +11,7 @@ import {
   Settings,
   User2,
 } from "lucide-react";
+import { AvatarImage } from "@/components/ui/avatar-image";
 
 import {
   Sidebar,
@@ -35,6 +36,7 @@ import { DropdownMenuItemIndicator } from "@radix-ui/react-dropdown-menu";
 import { Separator } from "./ui/separator";
 import { useNavigate } from "react-router-dom";
 import { UserProfiles } from "@/types/user";
+import { useGetUserById } from "@/services/api/user";
 
 const items = [
   {
@@ -67,6 +69,7 @@ const items = [
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
+  const { data: userData } = useGetUserById(user?.id);
   const { toggleSidebar } = useSidebar();
   const navigate = useNavigate();
 
@@ -148,11 +151,11 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="h-14 hover:bg-neutral-dark-02 rounded-xl transition-colors">
                   <div className="flex items-center gap-3 w-full px-2">
-                    <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center">
-                      <span className="text-sm font-semibold text-white">
-                        {getInitials(user && user.name)}
-                      </span>
-                    </div>
+                    <AvatarImage
+                      imageUrl={userData?.imageUrl}
+                      name={user?.name}
+                      size="sm"
+                    />
                     <div className="flex-1 text-left min-w-0">
                       <p className="text-sm font-medium text-neutral-white-01 truncate">
                         {user && user.name ? user.name : "Usuário"}

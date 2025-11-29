@@ -19,9 +19,11 @@ export function getUserAvatarUrl(user: {
   name?: string | null;
   id?: string | null;
 }): string {
-  // Se tiver imagem customizada, usa ela
+  // Se tiver imagem customizada, adiciona timestamp para evitar cache
   if (user.imageUrl) {
-    return user.imageUrl;
+    const url = new URL(user.imageUrl, window.location.origin);
+    url.searchParams.set('t', Date.now().toString());
+    return url.toString();
   }
 
   // Usa nome como preferência (UI Avatars funciona melhor com nomes)

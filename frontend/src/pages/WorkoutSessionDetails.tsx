@@ -141,7 +141,7 @@ export default function WorkoutSessionDetails() {
 
         {session.notes && (
           <div className="pt-2 border-t border-neutral-dark-02">
-            <p className="text-xs text-neutral-white-02 mb-1">Observações:</p>
+            <p className="text-xs text-neutral-white-02 mb-1">Observações</p>
             <p className="text-sm">{session.notes}</p>
           </div>
         )}
@@ -180,7 +180,7 @@ export default function WorkoutSessionDetails() {
               {/* Exercise Notes */}
               {exercise.notes && (
                 <div className="text-sm text-neutral-white-02 bg-neutral-dark-02 p-2 rounded">
-                  <p className="text-xs mb-1">Observações:</p>
+                  <p className="text-xs mb-1">Observações</p>
                   <p>{exercise.notes}</p>
                 </div>
               )}
@@ -268,7 +268,7 @@ export default function WorkoutSessionDetails() {
                 exercise.targetRepsMin ||
                 exercise.suggestedLoad) && (
                 <div className="text-xs text-neutral-white-02 bg-neutral-dark-02 p-2 rounded">
-                  <p className="font-semibold mb-1">Meta planejada:</p>
+                  <p className="font-semibold mb-1">Meta planejada</p>
                   <div className="flex gap-3">
                     {exercise.targetSets && (
                       <span>{exercise.targetSets} séries</span>

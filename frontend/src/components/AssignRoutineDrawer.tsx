@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import {
   useAssignRoutine,
   useUnassignRoutine,
@@ -208,17 +209,13 @@ export default function AssignRoutineDrawer({
                           key={customer.id}
                           className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5"
                         >
-                          {customer.imageUrl ? (
-                            <img
-                              src={customer.imageUrl}
-                              alt={customer.name}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                              <UserCheck size={20} className="text-primary" />
-                            </div>
-                          )}
+                          <AvatarImage
+                            imageUrl={customer.imageUrl}
+                            name={customer.name}
+                            email={customer.email}
+                            id={customer.id}
+                            size="md"
+                          />
                           <div className="flex-1">
                             <p className="font-semibold">{customer.name}</p>
                             <p className="text-sm text-muted-foreground">
@@ -308,20 +305,13 @@ export default function AssignRoutineDrawer({
                                   size={24}
                                 />
                               )}
-                              {customer.imageUrl ? (
-                                <img
-                                  src={customer.imageUrl}
-                                  alt={customer.name}
-                                  className="w-10 h-10 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                                  <UserCheck
-                                    size={20}
-                                    className="text-muted-foreground"
-                                  />
-                                </div>
-                              )}
+                              <AvatarImage
+                                imageUrl={customer.imageUrl}
+                                name={customer.name}
+                                email={customer.email}
+                                id={customer.id}
+                                size="md"
+                              />
                               <div className="flex-1">
                                 <p className="font-semibold">{customer.name}</p>
                                 <p className="text-sm text-muted-foreground">

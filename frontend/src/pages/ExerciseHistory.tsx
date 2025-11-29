@@ -246,17 +246,17 @@ function LoadProgressionChart({ sessions }: LoadProgressionChartProps) {
           <div className="space-y-1 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-primary" />
-              <span className="text-muted-foreground">Carga Máx:</span>
+              <span className="text-muted-foreground">Carga Máx</span>
               <span className="font-bold">{payload[0].value} kg</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-green-500" />
-              <span className="text-muted-foreground">Carga Média:</span>
+              <span className="text-muted-foreground">Carga Média</span>
               <span className="font-bold">{payload[1].value} kg</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-0.5 bg-orange-500" />
-              <span className="text-muted-foreground">Volume:</span>
+              <span className="text-muted-foreground">Volume</span>
               <span className="font-bold">{payload[2].value}t</span>
             </div>
           </div>
