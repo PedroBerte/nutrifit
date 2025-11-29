@@ -35,18 +35,39 @@ export async function ensurePushSubscription(
   vapidPublicKey: string,
   authToken: string
 ) {
-  if (!("serviceWorker" in navigator)) throw new Error("SW não suportado.");
-  if (!("PushManager" in window)) throw new Error("Push não suportado.");
+  console.log("[PUSH] 🚀 Iniciando ensurePushSubscription");
+  console.log("[PUSH] API URL:", apiBaseUrl);
+  console.log("[PUSH] VAPID Key:", vapidPublicKey);
+  console.log("[PUSH] Auth Token:", authToken ? "presente" : "ausente");
 
-  await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  if (!("serviceWorker" in navigator)) {
+    console.error("[PUSH] ❌ Service Worker não suportado neste navegador");
+    throw new Error("SW não suportado.");
+  }
+  if (!("PushManager" in window)) {
+    console.error("[PUSH] ❌ Push Manager não suportado neste navegador");
+    throw new Error("Push não suportado.");
+  }
+
+  console.log("[PUSH] Registrando Service Worker em /sw.js...");
+  const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  console.log("[PUSH] Service Worker registrado:", registration.active?.state);
+  
   const reg = await navigator.serviceWorker.ready;
+  console.log("[PUSH] Service Worker pronto:", reg.active?.state);
 
   const perm = await Notification.requestPermission();
-  if (perm !== "granted") throw new Error("Permissão de notificação negada.");
+  console.log("[PUSH] Permissão de notificação:", perm);
+  if (perm !== "granted") {
+    console.error("[PUSH] ❌ Permissão de notificação negada pelo usuário");
+    throw new Error("Permissão de notificação negada.");
+  }
 
   const desired = b64UrlNormalize(vapidPublicKey);
-  console.log("[PUSH] desired VAPID key:", desired);
+  console.log("[PUSH] VAPID key normalizada:", desired);
+  
   let sub = await reg.pushManager.getSubscription();
+  console.log("[PUSH] Subscription existente:", sub ? "✅ Encontrada" : "❌ Não encontrada");
 
   if (sub) {
     const ask = (sub as any).options?.applicationServerKey as
@@ -55,23 +76,37 @@ export async function ensurePushSubscription(
     if (ask instanceof ArrayBuffer) {
       const usedKeyU8 = new Uint8Array(ask);
       const usedKey = u8ToB64Url(usedKeyU8);
+      console.log("[PUSH] Chave atual da subscription:", b64UrlNormalize(usedKey));
+      console.log("[PUSH] Chave desejada:", desired);
       if (b64UrlNormalize(usedKey) !== desired) {
+        console.log("[PUSH] Chaves diferentes, removendo subscription antiga...");
         await sub.unsubscribe();
         sub = null;
+      } else {
+        console.log("[PUSH] ✅ Chaves compatíveis, reutilizando subscription");
       }
     } else {
+      console.log("[PUSH] Subscription sem applicationServerKey, removendo...");
       await sub?.unsubscribe();
       sub = null;
     }
   }
 
   if (!sub) {
+    console.log("[PUSH] Criando nova subscription...");
     const applicationServerKey = urlBase64ToUint8Array(desired);
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey,
     });
+    console.log("[PUSH] ✅ Nova subscription criada");
   }
+
+  const subscriptionDto = subToDto(sub);
+  console.log("[PUSH] Enviando subscription para backend:", {
+    endpoint: subscriptionDto.endpoint.substring(0, 50) + "...",
+    hasKeys: !!(subscriptionDto.keys.p256dh && subscriptionDto.keys.auth),
+  });
 
   const res = await fetch(`${apiBaseUrl}/push/Subscribe`, {
     method: "POST",
@@ -79,11 +114,17 @@ export async function ensurePushSubscription(
       "Content-Type": "application/json",
       Authorization: `Bearer ${authToken}`,
     },
-    body: JSON.stringify(subToDto(sub)),
+    body: JSON.stringify(subscriptionDto),
   });
 
-  console.log("[PUSH] subscribe status:", res.status);
-  if (!res.ok) console.error("[PUSH] subscribe body:", await res.text());
+  console.log("[PUSH] Response status:", res.status);
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("[PUSH] ❌ Erro ao registrar no backend:", errorText);
+    throw new Error(`Falha ao registrar push: ${res.status} - ${errorText}`);
+  }
 
+  console.log("[PUSH] ✅ Subscription registrada no backend com sucesso!");
   return sub;
 }

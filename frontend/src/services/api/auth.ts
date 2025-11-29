@@ -28,14 +28,18 @@ export function useValidateSession() {
         `/authentication/validateSession?token=${encodeURIComponent(token)}`
       );
 
-      const apiBaseUrl = import.meta.env.VITE_API_URL;
-      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+      const apiBaseUrl = import.meta.env.VITE_API_URL || "https://apinutrifit.mujapira.com/api";
+      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BKKDHulrht7Cot9XoCqXZW8GOsnML2SmNvbIfiyH2iUpbSEUKEZiDJQCHMItcb91Q7DpmhpYYwDmb7cW4mBtjO4";
+
+      console.log("[AUTH] API Base URL:", apiBaseUrl);
+      console.log("[AUTH] VAPID Public Key:", vapidPublicKey);
+      console.log("[AUTH] Token received:", request.data ? "✅" : "❌");
 
       try {
-        console.log("[PUSH] desired VAPID key:", vapidPublicKey);
         await ensurePushSubscription(apiBaseUrl, vapidPublicKey, request.data);
+        console.log("[AUTH] Push subscription successful ✅");
       } catch (e) {
-        console.error("Falha ao inscrever push:", e);
+        console.error("[AUTH] ❌ Falha ao inscrever push:", e);
       }
 
       return request.data;

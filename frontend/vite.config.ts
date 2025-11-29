@@ -15,11 +15,13 @@ export default defineConfig({
       registerType: "autoUpdate",
       devOptions: { enabled: false },
       includeAssets: ["favicon.svg", "vite.svg"],
-      injectRegister: false, // Desabilita o registro automático
+      injectRegister: false, // Desabilita o registro automático (registramos manualmente no login)
+      strategies: "injectManifest",
       injectManifest: {
         swSrc: "public/sw.js",
-        swDest: "sw.js",
-        globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+        swDest: "dist/sw.js",
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,webp}"],
+        globIgnores: ["**/node_modules/**/*"],
       },
       manifest: {
         name: "Nutrifit",
