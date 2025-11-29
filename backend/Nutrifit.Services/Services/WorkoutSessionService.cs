@@ -356,7 +356,7 @@ namespace Nutrifit.Services.Services
                 {
                     ExerciseId = exerciseId,
                     ExerciseName = exercise.Name,
-                    ImageUrl = exercise.ImageUrl,
+                    VideoUrl = exercise.VideoUrl,
                     Stats = stats,
                     Sessions = sessions
                 };
