@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useMemo } from "react";
+import { motion } from "motion/react";
 
 export function Appointments() {
   const { data: appointments, isLoading } = useGetCustomerAppointments();
@@ -101,8 +102,11 @@ export function Appointments() {
     appointment: AppointmentType,
     showActions = false
   ) => (
-    <div
+    <motion.div
       key={appointment.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
       className="bg-neutral-dark-03 rounded-lg overflow-hidden"
     >
       {/* Header */}
@@ -139,11 +143,18 @@ export function Appointments() {
               Pendente
             </div>
           )}
-          {appointment.status === "A" && (
-            <div className="px-3 py-1 rounded-full border border-green-500/50 text-green-500 text-xs font-medium whitespace-nowrap flex-shrink-0">
-              Confirmada
-            </div>
-          )}
+          {appointment.status === "A" &&
+            new Date(appointment.scheduledAt) < new Date() && (
+              <div className="px-3 py-1 rounded-full border border-yellow-500/50 text-yellow-500 text-xs font-medium whitespace-nowrap flex-shrink-0">
+                Vencida
+              </div>
+            )}
+          {appointment.status === "A" &&
+            new Date(appointment.scheduledAt) >= new Date() && (
+              <div className="px-3 py-1 rounded-full border border-green-500/50 text-green-500 text-xs font-medium whitespace-nowrap flex-shrink-0">
+                Agendada
+              </div>
+            )}
         </div>
       </div>
 
@@ -227,14 +238,19 @@ export function Appointments() {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 
   return (
-    <div className="space-y-8 p-3 pb-20 max-w-4xl mx-auto">
+    <div className="space-y-8 p-4 pb-20 max-w-4xl mx-auto">
       {/* Consultas Pendentes */}
       {categorizedAppointments.pending.length > 0 && (
-        <div className="space-y-4">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-neutral-white-01">
               Consultas Pendentes
@@ -251,12 +267,17 @@ export function Appointments() {
               renderAppointmentCard(appointment, true)
             )}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Próximos Agendamentos */}
       {categorizedAppointments.upcoming.length > 0 && (
-        <div className="space-y-4">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-neutral-white-01">
               Próximos Agendamentos
@@ -273,12 +294,17 @@ export function Appointments() {
               renderAppointmentCard(appointment, false)
             )}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Agendamentos Anteriores */}
       {categorizedAppointments.past.length > 0 && (
-        <div className="space-y-4">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-neutral-white-01">
               Agendamentos Anteriores
@@ -295,7 +321,7 @@ export function Appointments() {
               renderAppointmentCard(appointment, false)
             )}
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
