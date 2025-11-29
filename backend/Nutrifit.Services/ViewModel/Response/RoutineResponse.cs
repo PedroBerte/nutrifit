@@ -52,7 +52,7 @@ public class CustomerBasicInfo
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string? ImageUrl { get; set; }
+    public string? VideoUrl { get; set; }
     public DateTime? AssignedAt { get; set; }
     public DateTime? ExpiresAt { get; set; }
 }

@@ -41,7 +41,7 @@ public class ExerciseService : IExerciseService
             Name = e.Name,
             Url = e.Instruction,
             Instruction = e.Instruction,
-            ImageUrl = e.ImageUrl,
+            VideoUrl = e.VideoUrl,
             CreatedByUserId = e.CreatedByUserId,
             IsPublished = e.IsPublished,
             IsCustom = e.CreatedByUserId != null,
@@ -84,7 +84,7 @@ public class ExerciseService : IExerciseService
             Name = exercise.Name,
             Url = exercise.Instruction,
             Instruction = exercise.Instruction,
-            ImageUrl = exercise.ImageUrl,
+            VideoUrl = exercise.VideoUrl,
             CreatedByUserId = exercise.CreatedByUserId,
             IsPublished = exercise.IsPublished,
             IsCustom = exercise.CreatedByUserId != null,
@@ -138,7 +138,7 @@ public class ExerciseService : IExerciseService
             Name = e.Name,
             Url = e.Instruction,
             Instruction = e.Instruction,
-            ImageUrl = e.ImageUrl,
+            VideoUrl = e.VideoUrl,
             CreatedByUserId = e.CreatedByUserId,
             IsPublished = e.IsPublished,
             IsCustom = e.CreatedByUserId != null,
@@ -230,7 +230,7 @@ public class ExerciseService : IExerciseService
             Name = e.Name,
             Url = e.Instruction,
             Instruction = e.Instruction,
-            ImageUrl = e.ImageUrl,
+            VideoUrl = e.VideoUrl,
             CreatedByUserId = e.CreatedByUserId,
             IsPublished = e.IsPublished,
             IsCustom = e.CreatedByUserId != null,
@@ -300,7 +300,7 @@ public class ExerciseService : IExerciseService
             CategoryId = request.CategoryId,
             Name = request.Name,
             Instruction = request.Instruction,
-            ImageUrl = request.ImageUrl,
+            VideoUrl = request.VideoUrl,
             CreatedByUserId = userId,
             IsPublished = request.IsPublished,
             CreatedAt = DateTime.UtcNow,
@@ -414,7 +414,7 @@ public class ExerciseService : IExerciseService
         exercise.CategoryId = request.CategoryId;
         exercise.Name = request.Name;
         exercise.Instruction = request.Instruction;
-        exercise.ImageUrl = request.ImageUrl;
+        exercise.VideoUrl = request.VideoUrl;
         exercise.IsPublished = request.IsPublished;
         exercise.UpdatedAt = DateTime.UtcNow;
 
@@ -510,7 +510,7 @@ public class ExerciseService : IExerciseService
             Name = e.Name,
             Url = e.Instruction,
             Instruction = e.Instruction,
-            ImageUrl = e.ImageUrl,
+            VideoUrl = e.VideoUrl,
             CreatedByUserId = e.CreatedByUserId,
             IsPublished = e.IsPublished,
             IsCustom = true,

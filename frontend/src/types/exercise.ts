@@ -3,7 +3,7 @@ export interface ExerciseType {
   name: string;
   url?: string;
   instruction?: string;
-  imageUrl?: string;
+  videoUrl?: string;
   categoryName?: string;
   primaryMuscles?: string[];
   secondaryMuscles?: string[];
@@ -33,7 +33,7 @@ export interface CreateExerciseRequest {
   categoryId: string;
   name: string;
   instruction?: string;
-  imageUrl?: string;
+  videoUrl?: string;
   isPublished?: boolean;
   primaryMuscleIds: string[];
   secondaryMuscleIds: string[];

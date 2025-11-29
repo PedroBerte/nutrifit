@@ -436,7 +436,7 @@ public class RoutineService : IRoutineService
                     Id = cr.Customer.Id,
                     Name = cr.Customer.Name,
                     Email = cr.Customer.Email,
-                    ImageUrl = cr.Customer.ImageUrl,
+                    VideoUrl = cr.Customer.ImageUrl,
                     AssignedAt = cr.CreatedAt,
                     ExpiresAt = cr.ExpiresAt
                 })
@@ -451,7 +451,7 @@ public class RoutineService : IRoutineService
                     Id = b.Customer.Id,
                     Name = b.Customer.Name,
                     Email = b.Customer.Email,
-                    ImageUrl = b.Customer.ImageUrl,
+                    VideoUrl = b.Customer.ImageUrl,
                     AssignedAt = null
                 })
                 .OrderBy(c => c.Name)

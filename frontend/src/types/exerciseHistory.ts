@@ -1,7 +1,7 @@
 export interface ExerciseHistoryType {
   exerciseId: string;
   exerciseName: string;
-  imageUrl?: string;
+  videoUrl?: string;
   stats: ExerciseStats;
   sessions: ExerciseSessionHistoryItem[];
 }

@@ -7,7 +7,7 @@ namespace Nutrifit.Services.ViewModel.Response
     {
         public Guid ExerciseId { get; set; }
         public string ExerciseName { get; set; } = string.Empty;
-        public string? ImageUrl { get; set; }
+        public string? VideoUrl { get; set; }
         public ExerciseStats Stats { get; set; } = new();
         public List<ExerciseSessionHistoryItem> Sessions { get; set; } = new();
     }

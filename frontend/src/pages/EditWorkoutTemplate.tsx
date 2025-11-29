@@ -137,7 +137,7 @@ export function EditWorkoutTemplate() {
   const handleExerciseSelect = (
     exerciseId: string,
     exerciseName: string,
-    exerciseImageUrl?: string
+    exerciseVideoUrl?: string
   ) => {
     setSelectedExercise({ id: exerciseId, name: exerciseName });
     setEditingExerciseTemplate(null);

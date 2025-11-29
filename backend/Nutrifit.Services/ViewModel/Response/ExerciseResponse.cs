@@ -6,7 +6,7 @@ public class ExerciseResponse
     public string Name { get; set; } = string.Empty;
     public string? Url { get; set; }
     public string? Instruction { get; set; }
-    public string? ImageUrl { get; set; }
+    public string? VideoUrl { get; set; }
     public Guid? CreatedByUserId { get; set; }
     public bool IsPublished { get; set; }
     public bool IsCustom { get; set; }
