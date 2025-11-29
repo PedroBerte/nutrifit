@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import App from "@/App";
 import { PrivateRoute } from "./PrivateRoute";
+import { RoleGuard } from "./RoleGuard";
+import { UserProfiles } from "@/types/user";
 import Login from "@/pages/login/Login";
 import Callback from "@/pages/login/CallbackLogin";
 import Home from "@/pages/Home";
@@ -41,40 +43,149 @@ export function AppRoutes() {
         </Route>
         <Route element={<PrivateRoute />}>
           <Route element={<AppDefaultLayout />}>
+            {/* Shared Routes - Both profiles can access */}
             <Route path="home" element={<Home />} />
-            <Route path="workout" element={<Workout />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="diet" element={<Diet />} />
+
+            {/* Student-Only Routes */}
+            <Route
+              path="workout"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                  <Workout />
+                </RoleGuard>
+              }
+            />
             <Route
               path="workout/session/:templateId"
-              element={<WorkoutSession />}
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                  <WorkoutSession />
+                </RoleGuard>
+              }
             />
             <Route
               path="exercise/:exerciseId/history"
-              element={<ExerciseHistory />}
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                  <ExerciseHistory />
+                </RoleGuard>
+              }
             />
-            <Route path="appointments" element={<Appointments />} />
-            <Route path="agenda" element={<ProfessionalAgenda />} />
-            <Route path="personal" element={<PersonalHome />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="professionalsList" element={<ProfessionalsList />} />
-            <Route path="professional/:id" element={<Professional />} />
-            <Route path="students" element={<Students />} />
-            <Route path="students/:id" element={<StudentDetails />} />
+            <Route
+              path="appointments"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                  <Appointments />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="professionalsList"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                  <ProfessionalsList />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="professional/:id"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                  <Professional />
+                </RoleGuard>
+              }
+            />
+
+            {/* Professional-Only Routes */}
+            <Route
+              path="personal"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <PersonalHome />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="agenda"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <ProfessionalAgenda />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="students"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <Students />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="students/:id"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <StudentDetails />
+                </RoleGuard>
+              }
+            />
             <Route
               path="students/:id/workouts/:sessionId"
-              element={<WorkoutSessionDetails />}
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <WorkoutSessionDetails />
+                </RoleGuard>
+              }
             />
-            <Route path="diet" element={<Diet />} />
-            <Route path="bond" element={<Bond />} />
-            <Route path="routines" element={<RoutinesList />} />
-            <Route path="routines/new" element={<NewRoutine />} />
-            <Route path="routines/:routineId" element={<RoutineDetails />} />
+            <Route
+              path="bond"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <Bond />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="routines"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <RoutinesList />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="routines/new"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <NewRoutine />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="routines/:routineId"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <RoutineDetails />
+                </RoleGuard>
+              }
+            />
             <Route
               path="routines/:routineId/workouts/new"
-              element={<NewWorkoutTemplate />}
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <NewWorkoutTemplate />
+                </RoleGuard>
+              }
             />
             <Route
               path="routines/:routineId/workouts/:templateId"
-              element={<EditWorkoutTemplate />}
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                  <EditWorkoutTemplate />
+                </RoleGuard>
+              }
             />
           </Route>
         </Route>
