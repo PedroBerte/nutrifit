@@ -78,9 +78,10 @@ services:
       Vapid__PrivateKey: ${VAPID_PRIVATE_KEY}
 
       MinIO__Endpoint: minio:9000
+      MinIO__PublicEndpoint: ${MINIO_PUBLIC_ENDPOINT:-minio:9000}
       MinIO__AccessKey: ${MINIO_ROOT_USER:-admin}
       MinIO__SecretKey: ${MINIO_ROOT_PASSWORD:-admin123}
-      MinIO__BucketName: nutrifit-images
+      MinIO__BucketName: ${MINIO_BUCKET_NAME:-nutrifit-images}
       MinIO__UseSSL: "false"
 
       Serilog__WriteTo__0__Args__connectionString: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}

@@ -14,6 +14,7 @@ public class StorageService : IStorageService
     private readonly ILogger<StorageService> _logger;
     private readonly bool _useSSL;
     private readonly string _endpoint;
+    private readonly string _publicEndpoint;
 
     public StorageService(IConfiguration configuration, ILogger<StorageService> logger)
     {
@@ -23,6 +24,9 @@ public class StorageService : IStorageService
         var secretKey = configuration["MinIO:SecretKey"] ?? throw new ArgumentNullException("MinIO:SecretKey");
         _bucketName = configuration["MinIO:BucketName"] ?? throw new ArgumentNullException("MinIO:BucketName");
         _useSSL = bool.Parse(configuration["MinIO:UseSSL"] ?? "false");
+        
+        // Endpoint público para URLs (pode ser diferente do endpoint interno)
+        _publicEndpoint = configuration["MinIO:PublicEndpoint"] ?? _endpoint;
 
         _minioClient = new MinioClient()
             .WithEndpoint(_endpoint)
@@ -121,11 +125,15 @@ public class StorageService : IStorageService
 
             await _minioClient.PutObjectAsync(putObjectArgs);
 
-            // Construir URL pública
-            var protocol = _useSSL ? "https" : "http";
-            var publicUrl = $"{protocol}://{_endpoint}/{_bucketName}/{objectName}";
+            // Construir URL pública usando o endpoint público
+            // Se MinIO:PublicEndpoint está configurado (ex: cdn.mujapira.com), usa HTTPS
+            // Senão, usa o endpoint interno com o protocolo configurado
+            var isPublicEndpoint = _publicEndpoint != _endpoint;
+            var protocol = isPublicEndpoint ? "https" : (_useSSL ? "https" : "http");
+            var publicUrl = $"{protocol}://{_publicEndpoint}/{_bucketName}/{objectName}";
 
-            _logger.LogInformation("Imagem {FileName} enviada com sucesso como {ObjectName}", fileName, objectName);
+            _logger.LogInformation("Imagem {FileName} enviada com sucesso como {ObjectName}. URL pública: {PublicUrl}", 
+                fileName, objectName, publicUrl);
 
             return new ImageUploadResponseDTO
             {

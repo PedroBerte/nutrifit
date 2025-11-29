@@ -33,7 +33,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar v�nculos cliente-profissional.", ex);
+            throw new Exception("Erro ao buscar vínculos cliente-profissional.", ex);
         }
     }
 
@@ -52,13 +52,13 @@ public class BondService : IBondService
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (bond is null)
-                throw new InvalidOperationException("V�nculo cliente-profissional n�o encontrado.");
+                throw new InvalidOperationException("Vínculo cliente-profissional não encontrado.");
 
             return bond;
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar v�nculo cliente-profissional.", ex);
+            throw new Exception("Erro ao buscar vínculo cliente-profissional.", ex);
         }
     }
 
@@ -69,7 +69,7 @@ public class BondService : IBondService
 
             var validation = await _context.CustomerProfessionalBonds.FirstOrDefaultAsync(x => x.CustomerId == bond.CustomerId && x.ProfessionalId == bond.ProfessionalId);
             if (validation is not null)
-                throw new InvalidDataException("J� existe uma solicita��o/v�nculo entre os associados.");
+                throw new InvalidDataException("Já existe uma solicitação/vínculo entre os associados.");
 
             bond.Id = Guid.NewGuid();
             bond.CreatedAt = DateTime.UtcNow;
@@ -80,8 +80,8 @@ public class BondService : IBondService
 
             var pushMessage = new
             {
-                title = "Nova solicita��o!",
-                body = $"Voc� tem uma nova proposta!"
+                title = "Nova solicitação!",
+                body = $"Você tem uma nova proposta!"
             };
 
             await _pushService.SendToUserAsync(bond.ProfessionalId, pushMessage);
@@ -90,7 +90,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao criar v�nculo cliente-profissional.", ex);
+            throw new Exception("Erro ao criar vínculo cliente-profissional.", ex);
         }
     }
 
@@ -137,14 +137,14 @@ public class BondService : IBondService
         {
             var bond = await _context.CustomerProfessionalBonds.FindAsync(id);
             if (bond == null)
-                throw new InvalidOperationException("V�nculo cliente-profissional n�o encontrado para exclus�o.");
+                throw new InvalidOperationException("Vínculo cliente-profissional não encontrado para exclusão.");
 
             _context.CustomerProfessionalBonds.Remove(bond);
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao excluir v�nculo cliente-profissional.", ex);
+            throw new Exception("Erro ao excluir vínculo cliente-profissional.", ex);
         }
     }
 
@@ -166,7 +166,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar v�nculos enviados pelo usu�rio.", ex);
+            throw new Exception("Erro ao buscar vínculos enviados pelo usuário.", ex);
         }
     }
 
@@ -188,7 +188,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar v�nculos do cliente.", ex);
+            throw new Exception("Erro ao buscar vínculos do cliente.", ex);
         }
     }
 
@@ -210,7 +210,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar v�nculos do profissional.", ex);
+            throw new Exception("Erro ao buscar vínculos do profissional.", ex);
         }
     }
 
@@ -232,7 +232,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar v�nculos do usu�rio.", ex);
+            throw new Exception("Erro ao buscar vínculos do usuário.", ex);
         }
     }
 
@@ -254,7 +254,7 @@ public class BondService : IBondService
         }
         catch (Exception ex)
         {
-            throw new Exception("Erro ao buscar v�nculos recebidos pelo usu�rio.", ex);
+            throw new Exception("Erro ao buscar vínculos recebidos pelo usuário.", ex);
         }
     }
 
