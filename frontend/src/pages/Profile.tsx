@@ -170,11 +170,6 @@ export default function Profile() {
                   <h2 className="text-2xl font-bold text-neutral-white-01">
                     {userData.name}
                   </h2>
-                  {userData.professionalCredential?.biography ? (
-                    <p className="text-sm text-neutral-white-02 mt-1 max-w-2xl">
-                      {userData.professionalCredential.biography}
-                    </p>
-                  ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {userData.profile?.id !== UserProfiles.STUDENT && getProfileBadge()}
