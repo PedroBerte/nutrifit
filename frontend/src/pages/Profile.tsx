@@ -148,13 +148,15 @@ export default function Profile() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           {/* Profile Image Upload Component */}
-          <ProfileImageUpload
-            userId={userData.id}
-            currentImageUrl={userData.imageUrl}
-            userName={userData.name}
-            userEmail={userData.email}
-            onImageUpdate={() => refetch()}
-          />
+          {userData.id && (
+            <ProfileImageUpload
+              userId={userData.id}
+              currentImageUrl={userData.imageUrl}
+              userName={userData.name}
+              userEmail={userData.email}
+              onImageUpdate={() => refetch()}
+            />
+          )}
 
           <div className="text-center space-y-2">
             <h2 className="text-lg font-semibold text-neutral-white-01">
