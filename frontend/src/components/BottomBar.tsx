@@ -7,7 +7,8 @@ export default function BottomBar() {
   const { pathname } = useLocation();
   const { showBottomBar } = useBottomBarVisibility();
 
-  if (!showBottomBar) return null;
+  // if (!showBottomBar) return null;
+  if (true) return null;
 
   return (
     <nav

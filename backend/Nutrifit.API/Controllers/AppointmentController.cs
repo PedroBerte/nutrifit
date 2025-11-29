@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Repository.Entities;
 using Nutrifit.Services.Services.Interfaces;
+using System.Security.Claims;
 
 namespace Nutrifit.API.Controllers;
 
@@ -26,6 +27,44 @@ public class AppointmentController : ControllerBase
         {
             var appointments = await _service.GetByBondIdAsync(bondId);
             return Ok(appointments);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("customer/pending")]
+    public async Task<IActionResult> GetCustomerPendingAppointments()
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")?.Value ?? throw new UnauthorizedAccessException());
+            var appointments = await _service.GetCustomerPendingAppointmentsAsync(userId);
+            return Ok(appointments);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized(new { message = "Usuário não autenticado." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("customer/all")]
+    public async Task<IActionResult> GetCustomerAppointments()
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst("id")?.Value ?? throw new UnauthorizedAccessException());
+            var appointments = await _service.GetCustomerAppointmentsAsync(userId);
+            return Ok(appointments);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized(new { message = "Usuário não autenticado." });
         }
         catch (Exception ex)
         {

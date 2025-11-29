@@ -32,6 +32,32 @@ export function useGetAppointmentById(id: string) {
   });
 }
 
+export function useGetCustomerPendingAppointments() {
+  return useQuery({
+    queryKey: ["getCustomerPendingAppointments"],
+    queryFn: async () => {
+      const request = await api.get<AppointmentType[]>(
+        "/appointment/customer/pending"
+      );
+      return request.data;
+    },
+    retry: 1,
+  });
+}
+
+export function useGetCustomerAppointments() {
+  return useQuery({
+    queryKey: ["getCustomerAppointments"],
+    queryFn: async () => {
+      const request = await api.get<AppointmentType[]>(
+        "/appointment/customer/all"
+      );
+      return request.data;
+    },
+    retry: 1,
+  });
+}
+
 export function useCreateAppointment() {
   const queryClient = useQueryClient();
 
@@ -66,6 +92,12 @@ export function useUpdateAppointment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["getAppointmentsByBondId"] });
       queryClient.invalidateQueries({ queryKey: ["getAppointmentById"] });
+      queryClient.invalidateQueries({
+        queryKey: ["getCustomerPendingAppointments"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["getCustomerAppointments"],
+      });
     },
   });
 }

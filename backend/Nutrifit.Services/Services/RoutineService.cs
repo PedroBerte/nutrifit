@@ -10,10 +10,12 @@ namespace Nutrifit.Services.Services;
 public class RoutineService : IRoutineService
 {
     private readonly NutrifitContext _context;
+    private readonly IPushService _pushService;
 
-    public RoutineService(NutrifitContext context)
+    public RoutineService(NutrifitContext context, IPushService pushService)
     {
         _context = context;
+        _pushService = pushService;
     }
 
     public async Task<ApiResponse> CreateRoutineAsync(Guid personalId, CreateRoutineRequest request)
@@ -283,6 +285,9 @@ public class RoutineService : IRoutineService
             var customer = await _context.Users
                 .FirstOrDefaultAsync(u => u.Id == request.CustomerId);
 
+            var personal = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == personalId);
+
             if (customer == null)
                 return ApiResponse.CreateFailure("Cliente não encontrado");
 
@@ -307,6 +312,13 @@ public class RoutineService : IRoutineService
             _context.CustomerRoutines.Add(customerRoutine);
             await _context.SaveChangesAsync();
 
+            var pushMessage = new
+            {
+                title = "Nova rotina de treinos! 💪🏻",
+                body = $"{personal?.Name ?? ""} atribuiu uma nova rotina para você!"
+            };
+
+            await _pushService.SendToUserAsync(customer.Id, pushMessage);
             return ApiResponse.CreateSuccess("Rotina atribuída ao cliente com sucesso");
         }
         catch (Exception ex)

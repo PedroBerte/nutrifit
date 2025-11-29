@@ -24,6 +24,7 @@ import WorkoutSessionDetails from "@/pages/WorkoutSessionDetails";
 import ProfessionalsList from "@/pages/ProfessionalsList";
 import PersonalHome from "@/pages/PersonalHome";
 import ExerciseHistory from "@/pages/ExerciseHistory";
+import { Appointments } from "@/pages/Appointments";
 
 export function AppRoutes() {
   return (
@@ -49,6 +50,7 @@ export function AppRoutes() {
               path="exercise/:exerciseId/history"
               element={<ExerciseHistory />}
             />
+            <Route path="appointments" element={<Appointments />} />
             <Route path="personal" element={<PersonalHome />} />
             <Route path="profile" element={<Profile />} />
             <Route path="professionalsList" element={<ProfessionalsList />} />

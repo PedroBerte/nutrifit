@@ -67,7 +67,7 @@ public class BondService : IBondService
         try
         {
 
-            var validation = await _context.CustomerProfessionalBonds.FirstOrDefaultAsync(x => x.CustomerId == bond.CustomerId && x.ProfessionalId == bond.ProfessionalId);
+            var validation = await _context.CustomerProfessionalBonds.FirstOrDefaultAsync(x => x.CustomerId == bond.CustomerId && x.ProfessionalId == bond.ProfessionalId && bond.Status == "A");
             if (validation is not null)
                 throw new InvalidDataException("Já existe uma solicitação/vínculo entre os associados.");
 
@@ -78,10 +78,12 @@ public class BondService : IBondService
             _context.CustomerProfessionalBonds.Add(bond);
             await _context.SaveChangesAsync();
 
+            var customer = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == bond.SenderId);
+
             var pushMessage = new
             {
-                title = "Nova solicitação!",
-                body = $"Você tem uma nova proposta!"
+                title = "Nova proposta!",
+                body = customer is null ? $"Você tem uma nova proposta!" : $"{customer.Name} te enviou uma proposta!"
             };
 
             await _pushService.SendToUserAsync(bond.ProfessionalId, pushMessage);
@@ -121,6 +123,31 @@ public class BondService : IBondService
                     routine.UpdatedAt = DateTime.UtcNow;
                 }
             }
+
+
+            var personalId = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == bond.ProfessionalId);
+            var action = string.Empty;
+
+            switch (bond.Status)
+            {
+                case "C":
+                    action = "cancelou";
+                    break;
+                case "A":
+                    action = "aceitou";
+                    break;
+                case "R":
+                    action = "rejeitou";
+                    break;
+            }
+
+            var pushMessage = new
+            {
+                title = "Atualização de vínculo.",
+                body = personalId is null ? $"Seu personal {action} o vínculo!" : $"{personalId.Name} {action} o vínculo!"
+            };
+
+            await _pushService.SendToUserAsync(bond.CustomerId, pushMessage);
 
             await _context.SaveChangesAsync();
             return existing;

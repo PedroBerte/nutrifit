@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Nutrifit.Repository;
 using Nutrifit.Repository.Entities;
 using Nutrifit.Services.Services.Interfaces;
@@ -10,10 +11,14 @@ namespace Nutrifit.Services.Services
     public class WorkoutSessionService : IWorkoutSessionService
     {
         private readonly NutrifitContext _context;
+        private readonly IPushService _pushService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public WorkoutSessionService(NutrifitContext context)
+        public WorkoutSessionService(NutrifitContext context, IPushService pushService, IServiceScopeFactory serviceScopeFactory)
         {
             _context = context;
+            _pushService = pushService;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         public async Task<ApiResponse> CompleteWorkoutSessionAsync(Guid customerId, CompleteWorkoutSessionRequest request)
@@ -106,12 +111,45 @@ namespace Nutrifit.Services.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                _ = SendWorkoutCompletionNotificationAsync(customerId, request.WorkoutTemplateId);
+
                 return ApiResponse.CreateSuccess("Treino finalizado com sucesso!", session.Id);
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 return ApiResponse.CreateFailure($"Erro ao finalizar treino: {ex.Message}");
+            }
+        }
+
+        private async Task SendWorkoutCompletionNotificationAsync(Guid customerId, Guid workoutTemplateId)
+        {
+            try
+            {
+                using var scope = _serviceScopeFactory.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<NutrifitContext>();
+                var pushService = scope.ServiceProvider.GetRequiredService<IPushService>();
+
+                var customer = await context.Users.FirstOrDefaultAsync(x => x.Id == customerId);
+                if (customer is null) return;
+
+                var workoutTemplate = await context.WorkoutTemplates.FirstOrDefaultAsync(x => x.Id == workoutTemplateId);
+                if (workoutTemplate is null) return;
+
+                var routine = await context.Routines.FirstOrDefaultAsync(x => x.Id == workoutTemplate.RoutineId);
+                if (routine is null) return;
+
+                var pushMessage = new
+                {
+                    title = $"{customer.Name} Finalizou um treino! 🚀",
+                    body = $"Venha analisar o treinão registrado."
+                };
+
+                await pushService.SendToUserAsync(routine.PersonalId, pushMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to send workout completion notification: {ex.Message}");
             }
         }
 
