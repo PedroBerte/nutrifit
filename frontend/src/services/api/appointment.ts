@@ -71,6 +71,31 @@ export function useGetProfessionalAppointments() {
   });
 }
 
+export function useGetProfessionalUpcomingAppointments(limit?: number) {
+  return useQuery({
+    queryKey: ["getProfessionalUpcomingAppointments", limit],
+    queryFn: async () => {
+      const request = await api.get<AppointmentType[]>(
+        "/appointment/professional/all"
+      );
+      const now = new Date();
+      const upcoming = request.data
+        .filter((apt) => {
+          const aptDate = new Date(apt.scheduledAt);
+          return aptDate > now && apt.status !== "C" && apt.status !== "R";
+        })
+        .sort(
+          (a, b) =>
+            new Date(a.scheduledAt).getTime() -
+            new Date(b.scheduledAt).getTime()
+        );
+
+      return limit ? upcoming.slice(0, limit) : upcoming;
+    },
+    retry: 1,
+  });
+}
+
 export function useCreateAppointment() {
   const queryClient = useQueryClient();
 
