@@ -16,6 +16,7 @@ import { useGetCustomerPendingAppointments } from "@/services/api/appointment";
 import { Bell } from "lucide-react";
 import AlunoSemPersonal from "@/assets/aluno/AlunoSemPersonal.png";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { cn } from "@/lib/utils";
 
 export default function Workout() {
   const navigate = useNavigate();
@@ -142,41 +143,49 @@ export default function Workout() {
 
       {studentBond && studentBond.status === "A" && (
         <div className="flex gap-2 mt-2">
-          {pendingAppointment ? (
-            <PendingAppointmentDrawer appointment={pendingAppointment}>
-              <div className="cursor-pointer">
-                <AvatarImage
-                  imageUrl={studentBond.professional?.imageUrl}
-                  name={studentBond.professional?.name}
-                  email={studentBond.professional?.email}
-                  id={studentBond.professional?.id}
-                  size="md"
-                  showBadge
-                  badgeContent={
-                    <div className="bg-destructive text-white rounded-full h-5 w-5 flex items-center justify-center shadow-lg animate-pulse">
-                      <Bell className="h-3 w-3" />
-                    </div>
-                  }
-                />
-              </div>
-            </PendingAppointmentDrawer>
-          ) : (
+          <div
+            className={cn(
+              pendingAppointments &&
+                pendingAppointments.length > 0 &&
+                "cursor-pointer"
+            )}
+            onClick={() => {
+              if (pendingAppointments && pendingAppointments.length > 0) {
+                navigate("/appointments");
+              }
+            }}
+          >
             <AvatarImage
               imageUrl={studentBond.professional?.imageUrl}
               name={studentBond.professional?.name}
               email={studentBond.professional?.email}
               id={studentBond.professional?.id}
               size="md"
+              showBadge={pendingAppointments && pendingAppointments.length > 0}
+              badgeContent={
+                <div className="bg-destructive text-white rounded-full h-5 w-5 flex items-center justify-center shadow-lg animate-pulse">
+                  <Bell className="h-3 w-3" />
+                </div>
+              }
             />
-          )}
+          </div>
           <div>
-            <p className="font-bold text-md">Personal Responsável</p>
+            <p className="font-bold text-md">Personal Responsável:</p>
             <p className="text-sm text-muted-foreground">
               {studentBond.professional?.name}
             </p>
             {pendingAppointments && pendingAppointments.length > 0 && (
-              <p className="text-xs text-primary font-semibold mt-1">
-                Nova solicitação de agendamento
+              <p
+                className="text-xs text-primary font-semibold mt-1"
+                onClick={() => {
+                  if (pendingAppointments && pendingAppointments.length > 0) {
+                    navigate("/appointments");
+                  }
+                }}
+              >
+                {pendingAppointments.length === 1
+                  ? "Nova solicitação de agendamento"
+                  : `${pendingAppointments.length} solicitações de agendamento`}
               </p>
             )}
           </div>
