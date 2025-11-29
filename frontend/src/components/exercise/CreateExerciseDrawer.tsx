@@ -53,7 +53,7 @@ const exerciseSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
   categoryId: z.string().min(1, "Selecione uma categoria"),
   instruction: z.string(),
-  imageUrl: z.string(),
+  videoUrl: z.string(),
   isPublished: z.boolean(),
   primaryMuscleIds: z
     .array(z.string())
@@ -94,7 +94,7 @@ export function CreateExerciseDrawer({
       name: "",
       categoryId: "",
       instruction: "",
-      imageUrl: "",
+      videoUrl: "",
       isPublished: false,
       primaryMuscleIds: [],
       secondaryMuscleIds: [],
@@ -129,13 +129,13 @@ export function CreateExerciseDrawer({
         name: exerciseToEdit.name,
         categoryId,
         instruction: exerciseToEdit.instruction || "",
-        imageUrl: exerciseToEdit.imageUrl || "",
+        videoUrl: exerciseToEdit.videoUrl || "",
         isPublished: exerciseToEdit.isPublished || false,
         primaryMuscleIds: primaryIds,
         secondaryMuscleIds: secondaryIds,
       });
 
-      setUploadedMediaUrl(exerciseToEdit.imageUrl || null);
+      setUploadedMediaUrl(exerciseToEdit.videoUrl || null);
     } else if (!open) {
       form.reset();
       setUploadedMediaUrl(null);
@@ -284,7 +284,7 @@ export function CreateExerciseDrawer({
                     currentMediaUrl={uploadedMediaUrl || undefined}
                     onMediaChange={(url) => {
                       setUploadedMediaUrl(url);
-                      form.setValue("imageUrl", url || "");
+                      form.setValue("videoUrl", url || "");
                     }}
                     disabled={
                       createExercise.isPending || updateExercise.isPending

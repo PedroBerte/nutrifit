@@ -19,7 +19,7 @@ interface ExerciseDrawerProps {
   onExerciseSelect: (
     exerciseId: string,
     exerciseName: string,
-    exerciseImageUrl?: string
+    exercisevideoUrl?: string
   ) => void;
   selectedExerciseIds?: string[];
   onLongPress?: (exercise: ExerciseType) => void;
@@ -149,7 +149,7 @@ export function ExerciseDrawer({
     handlePressEnd();
     const isAdded = selectedExerciseIds.includes(exercise.id);
     if (!isAdded) {
-      onExerciseSelect(exercise.id, exercise.name, exercise.imageUrl);
+      onExerciseSelect(exercise.id, exercise.name, exercise.videoUrl);
     }
   };
 
@@ -330,10 +330,10 @@ export function ExerciseDrawer({
                       disabled={isAdded}
                     >
                       {/* Thumbnail da imagem/GIF */}
-                      {exercise.imageUrl && (
+                      {exercise.videoUrl && (
                         <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-muted mr-3">
                           <img
-                            src={exercise.imageUrl}
+                            src={exercise.videoUrl}
                             alt={exercise.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
