@@ -49,7 +49,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, Trash2, GripVertical, Loader2, Edit, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  GripVertical,
+  Loader2,
+  Edit,
+  AlertTriangle,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
 

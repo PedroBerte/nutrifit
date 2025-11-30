@@ -131,8 +131,8 @@ export default function CreateAppointmentDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] overflow-y-auto">
-        <DrawerHeader>
+      <DrawerContent className="max-h-[95vh] flex flex-col">
+        <DrawerHeader className="flex-shrink-0">
           <DrawerTitle>Novo Agendamento</DrawerTitle>
           <DrawerDescription>
             Agende uma consulta com seu aluno
@@ -142,158 +142,163 @@ export default function CreateAppointmentDrawer({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="px-4 space-y-4"
+            className="flex flex-col flex-1 min-h-0"
           >
-            {/* Data e Hora */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex-1 overflow-y-auto px-4 space-y-4 pb-4">
+              {/* Data e Hora */}
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  name="scheduledDate"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  name="scheduledTime"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hora</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Tipo */}
               <FormField
-                name="scheduledDate"
+                name="type"
                 control={form.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Data</FormLabel>
+                    <FormLabel>Tipo de Consulta</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ON">Online</SelectItem>
+                          <SelectItem value="PR">Presencial</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                name="scheduledTime"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hora</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Endereço (apenas se presencial) */}
+              {appointmentType === "PR" && (
+                <>
+                  <FormField
+                    name="zip"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CEP</FormLabel>
+                        <FormControl>
+                          <MaskedInput
+                            value={field.value ?? ""}
+                            onChange={field.onChange}
+                            placeholder="00000-000"
+                            formatter={formatCEP}
+                          />
+                        </FormControl>
+                        {isFetching && (
+                          <span className="text-xs text-muted">
+                            Buscando endereço...
+                          </span>
+                        )}
+                        {isError && (
+                          <span className="text-xs text-red-500">
+                            CEP não encontrado
+                          </span>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    name="street"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Rua</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Rua das Consultas" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    name="number"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    name="city"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cidade</FormLabel>
+                        <FormControl>
+                          <Input placeholder="São Paulo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    name="state"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estado</FormLabel>
+                        <FormControl>
+                          <Combobox
+                            options={brazilianStates}
+                            placeholder="Selecione o estado"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
             </div>
 
-            {/* Tipo */}
-            <FormField
-              name="type"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo de Consulta</FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ON">Online</SelectItem>
-                        <SelectItem value="PR">Presencial</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Endereço (apenas se presencial) */}
-            {appointmentType === "PR" && (
-              <>
-                <FormField
-                  name="zip"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CEP</FormLabel>
-                      <FormControl>
-                        <MaskedInput
-                          value={field.value ?? ""}
-                          onChange={field.onChange}
-                          placeholder="00000-000"
-                          formatter={formatCEP}
-                        />
-                      </FormControl>
-                      {isFetching && (
-                        <span className="text-xs text-muted">
-                          Buscando endereço...
-                        </span>
-                      )}
-                      {isError && (
-                        <span className="text-xs text-red-500">
-                          CEP não encontrado
-                        </span>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  name="street"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Rua</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Rua das Consultas" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  name="number"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Número</FormLabel>
-                      <FormControl>
-                        <Input placeholder="123" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  name="city"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cidade</FormLabel>
-                      <FormControl>
-                        <Input placeholder="São Paulo" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  name="state"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado</FormLabel>
-                      <FormControl>
-                        <Combobox
-                          options={brazilianStates}
-                          placeholder="Selecione o estado"
-                          {...field}
-                          value={field.value ?? ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-
-            <DrawerFooter className="px-0">
+            <DrawerFooter className="flex-shrink-0 px-4 border-t bg-background">
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Criando..." : "Criar Agendamento"}
               </Button>
