@@ -156,7 +156,6 @@ export default function Professional() {
       customer: null,
       professional: null,
       sender: null,
-      appointments: null,
     };
 
     createProposal(newProposal, {

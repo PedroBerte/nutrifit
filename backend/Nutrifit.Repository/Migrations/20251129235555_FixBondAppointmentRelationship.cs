@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Nutrifit.Repository.Migrations
 {
     /// <inheritdoc />
-    public partial class AppointmentTry : Migration
+    public partial class FixBondAppointmentRelationship : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

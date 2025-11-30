@@ -13,5 +13,4 @@ public class BondDto
     public UserDto? Customer { get; set; }
     public UserDto? Professional { get; set; }
     public UserDto? Sender { get; set; }
-    public List<AppointmentDto>? Appointments { get; set; }
 }

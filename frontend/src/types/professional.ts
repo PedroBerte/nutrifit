@@ -44,7 +44,6 @@ export interface CustomerProfessionalBondType {
   customer: UserType | null;
   professional: UserType | null;
   sender: UserType | null;
-  appointments: AppointmentType[] | null;
 }
 
 export interface AppointmentType {

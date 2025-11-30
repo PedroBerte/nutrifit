@@ -1821,7 +1821,7 @@ namespace Nutrifit.Repository.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", "CustomerProfessionalBond")
-                        .WithMany("Appointments")
+                        .WithMany()
                         .HasForeignKey("CustomerProfessionalBondId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2206,11 +2206,6 @@ namespace Nutrifit.Repository.Migrations
                         .IsRequired();
 
                     b.Navigation("Routine");
-                });
-
-            modelBuilder.Entity("Nutrifit.Repository.Entities.CustomerProfessionalBondEntity", b =>
-                {
-                    b.Navigation("Appointments");
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.ExerciseCategoryEntity", b =>
