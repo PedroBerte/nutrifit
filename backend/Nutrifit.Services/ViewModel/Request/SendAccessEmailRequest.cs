@@ -9,5 +9,7 @@ namespace Nutrifit.Services.ViewModel.Request
     public class SendAccessEmailRequest
     {
         public string Email { get; set; }
+        public bool Invited { get; set; } = false;
+        public Guid? ProfessionalInviterId { get; set; }
     }
 }

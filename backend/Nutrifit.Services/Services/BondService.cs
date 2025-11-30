@@ -71,21 +71,30 @@ public class BondService : IBondService
 
             bond.Id = Guid.NewGuid();
             bond.CreatedAt = DateTime.UtcNow;
-            bond.Status = "P";
 
             _context.CustomerProfessionalBonds.Add(bond);
             await _context.SaveChangesAsync();
 
             var customer = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == bond.SenderId);
-
-            var pushMessage = new
+            var pushMessage = new object { };
+            if (bond.Status == "A")
             {
-                title = "Nova proposta!",
-                body = customer is null ? $"Você tem uma nova proposta!" : $"{customer.Name} te enviou uma proposta!"
-            };
+                pushMessage = new
+                {
+                    title = "Convite aceito!",
+                    body = customer is null ? $"O convite enviado foi aceito!" : $"{customer.Name} aceitou o seu convite!"
+                };
+            }
+            else
+            {
+                pushMessage = new
+                {
+                    title = "Nova proposta!",
+                    body = customer is null ? $"Você tem uma nova proposta!" : $"{customer.Name} te enviou uma proposta!"
+                };
+            }
 
-            await _pushService.SendToUserAsync(bond.ProfessionalId, pushMessage);
-
+                await _pushService.SendToUserAsync(bond.ProfessionalId, pushMessage);
             return bond;
         }
         catch (Exception ex)

@@ -32,7 +32,7 @@ namespace Nutrifit.API.Controllers
                 var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
                 var ua = Request.Headers.UserAgent.ToString();
 
-                await _authService.SendAccessEmailAsync(request.Email, baseAppUrl, ip, ua);
+                await _authService.SendAccessEmailAsync(request.Email, baseAppUrl, ip, ua, request.Invited, request.ProfessionalInviterId);
                 return Ok("Email de acesso enviado com sucesso.");
             }
             catch (Exception ex)

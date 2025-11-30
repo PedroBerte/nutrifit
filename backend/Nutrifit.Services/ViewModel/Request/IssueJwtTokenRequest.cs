@@ -7,5 +7,7 @@
         public string Email { get; set; } = null!;
         public Guid Profile { get; set; }
         public bool IsAdmin { get; set; }
+        public bool Invited { get; set; } = false;
+        public Guid? ProfessionalInviterId { get; set; }
     }
 }
