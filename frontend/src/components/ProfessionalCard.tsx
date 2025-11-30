@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Verified from "@/assets/verified.svg";
-import { MapPin, Bookmark, Award, Monitor, Video, Users } from "lucide-react";
+import { MapPin, Bookmark, Award, Monitor, Video, Users, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AttendanceMode } from "@/types/professional";
 import { addFavorite, removeFavorite } from "@/services/api/favorite";
@@ -13,6 +13,7 @@ type ProfessionalCardProps = {
   description: string;
   id: string;
   email?: string | null;
+  imageUrl?: string | null;
   rating?: number | null;
   totalFeedbacks?: number | null;
   tags?: (string | null | undefined)[];
@@ -21,6 +22,7 @@ type ProfessionalCardProps = {
   state?: string | null;
   isFavorite?: boolean | null;
   onFavoriteChange?: () => void;
+  isMyProfessional?: boolean;
 };
 
 export default function ProfessionalCard({
@@ -29,6 +31,7 @@ export default function ProfessionalCard({
   description,
   id,
   email,
+  imageUrl,
   rating,
   totalFeedbacks,
   tags,
@@ -37,10 +40,16 @@ export default function ProfessionalCard({
   state,
   isFavorite: initialIsFavorite,
   onFavoriteChange,
+  isMyProfessional = false,
 }: ProfessionalCardProps) {
   const navigate = useNavigate();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite || false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
+  // Sincroniza o estado local quando a prop initialIsFavorite mudar
+  useEffect(() => {
+    setIsFavorite(initialIsFavorite || false);
+  }, [initialIsFavorite]);
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Evitar navegar para o perfil
@@ -113,9 +122,19 @@ export default function ProfessionalCard({
 
   return (
     <div
-      className="bg-neutral-dark-03 p-4 rounded-xl cursor-pointer hover:bg-neutral-dark-02 transition-colors relative"
+      className={`bg-neutral-dark-03 p-4 rounded-xl cursor-pointer hover:bg-neutral-dark-02 transition-colors relative ${
+        isMyProfessional ? "ring-2 ring-primary/50" : ""
+      }`}
       onClick={() => navigate(`/professional/${id}`)}
     >
+      {/* Badge "Seu Personal" */}
+      {isMyProfessional && (
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-primary/20 text-primary px-2.5 py-1 rounded-full text-xs font-semibold border border-primary/30">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Seu Personal
+        </div>
+      )}
+
       {/* Botão de Favorito */}
       <motion.button
         className="absolute top-3 right-3 z-10"
@@ -132,11 +151,11 @@ export default function ProfessionalCard({
         />
       </motion.button>
 
-      <div className="flex gap-3 pr-8">
+      <div className={`flex gap-3 pr-8 ${isMyProfessional ? "mt-8" : ""}`}>
         <div className="flex-1 min-w-0">
           <div className="flex gap-3">
             <AvatarImage
-              imageUrl={undefined}
+              imageUrl={imageUrl}
               name={name}
               email={email}
               id={id}

@@ -2,6 +2,7 @@ import ProfessionalCard from "@/components/ProfessionalCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useGetAllUsers, useGetUserById, useGeocodeAllAddresses } from "@/services/api/user";
+import { useGetBondAsCustomer } from "@/services/api/bond";
 import { AttendanceMode } from "@/types/professional";
 import { motion } from "motion/react";
 import { Filter, X, MapPin, AlertCircle, Bookmark } from "lucide-react";
@@ -22,6 +23,7 @@ import {
 export default function ProfessionalsList() {
   const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
   const { data: currentUserData } = useGetUserById(currentUserId);
+  const { data: activeBond } = useGetBondAsCustomer();
   const geocodeMutation = useGeocodeAllAddresses();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -396,6 +398,8 @@ export default function ProfessionalsList() {
 
       {filteredProfessionals?.map((professional) => {
         if (professional.id) {
+          const isMyProfessional = activeBond?.professionalId === professional.id && activeBond?.status === "A";
+          
           return (
             <ProfessionalCard
               id={professional.id}
@@ -403,6 +407,7 @@ export default function ProfessionalsList() {
               subtitle="Personal Trainer"
               name={professional.name}
               email={professional.email}
+              imageUrl={professional.imageUrl}
               description={
                 professional.professionalCredential?.biography ||
                 "Sem descrição"
@@ -419,6 +424,7 @@ export default function ProfessionalsList() {
               state={professional.address?.state}
               isFavorite={professional.isFavorite}
               onFavoriteChange={() => refetch()}
+              isMyProfessional={isMyProfessional}
             />
           );
         }

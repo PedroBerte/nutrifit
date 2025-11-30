@@ -142,7 +142,7 @@ export default function Workout() {
       <p className="font-bold text-2xl">Meus Treinos</p>
 
       {studentBond && studentBond.status === "A" && (
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-3 mt-2 items-start">
           <div
             className={cn(
               pendingAppointments &&
@@ -169,14 +169,14 @@ export default function Workout() {
               }
             />
           </div>
-          <div>
-            <p className="font-bold text-md">Personal Responsável:</p>
+          <div className="flex-1">
+            <p className="font-bold text-md">Personal Responsável</p>
             <p className="text-sm text-muted-foreground">
               {studentBond.professional?.name}
             </p>
             {pendingAppointments && pendingAppointments.length > 0 && (
               <p
-                className="text-xs text-primary font-semibold mt-1"
+                className="text-xs text-primary font-semibold mt-1 cursor-pointer hover:underline"
                 onClick={() => {
                   if (pendingAppointments && pendingAppointments.length > 0) {
                     navigate("/appointments");
@@ -189,6 +189,14 @@ export default function Workout() {
               </p>
             )}
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/professional/${studentBond.professional?.id}`)}
+            className="self-start"
+          >
+            Ver Perfil
+          </Button>
         </div>
       )}
 

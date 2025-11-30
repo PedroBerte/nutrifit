@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { useQuery } from "@tanstack/react-query";
 
 export const addFavorite = async (professionalId: string) => {
   const response = await api.post(`/Favorite/${professionalId}`);
@@ -17,5 +18,13 @@ export const getFavorites = async () => {
 
 export const checkFavorite = async (professionalId: string) => {
   const response = await api.get(`/Favorite/check/${professionalId}`);
-  return response.data;
+  return response.data.isFavorite; // Retorna apenas o boolean
+};
+
+export const useCheckFavorite = (professionalId: string | undefined) => {
+  return useQuery({
+    queryKey: ["favorite", professionalId],
+    queryFn: () => professionalId ? checkFavorite(professionalId) : Promise.resolve(false),
+    enabled: !!professionalId,
+  });
 };

@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useDeleteBond } from "@/services/api/bond";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById } from "@/services/api/user";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import { UserProfiles } from "@/types/user";
 import {
   Calendar,
@@ -18,22 +28,30 @@ import {
   Star,
   ChevronDown,
   ChevronUp,
+  Bookmark,
+  MessageCircle,
 } from "lucide-react";
 import type { CustomerProfessionalBondType } from "@/types/professional";
-import { useCreateBond, useGetBondsSent } from "@/services/api/bond";
+import { useCreateBond, useGetBondsSent, useGetBondAsCustomer } from "@/services/api/bond";
 import { motion, AnimatePresence } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
 import { useGetProfessionalFeedbacks } from "@/services/api/feedback";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { addFavorite, removeFavorite, useCheckFavorite } from "@/services/api/favorite";
 
 export default function Professional() {
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const { mutate: deleteBond, isPending: isDeleting } = useDeleteBond();
   const { user, logout } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const { data: bondsSent } = useGetBondsSent();
+  const { data: activeBond } = useGetBondAsCustomer();
   const { mutate: createProposal } = useCreateBond();
   const { data: feedbacks } = useGetProfessionalFeedbacks(id);
+  const { data: isFavoriteData, refetch: refetchFavorite } = useCheckFavorite(id);
 
   const [expandedSections, setExpandedSections] = useState({
     personalInfo: true,
@@ -50,19 +68,35 @@ export default function Professional() {
 
   if (!id) navigate("/home");
 
-  const initialAlreadySent = bondsSent
+  // Verifica se já existe vínculo ativo com este professional
+  const hasActiveBond = activeBond?.professionalId === id && activeBond?.status === "A";
+
+  // Verifica se já tem vínculo ativo com OUTRO profissional
+  const hasAnyActiveBond = activeBond?.status === "A" && activeBond?.professionalId !== id;
+
+  // Verifica se já enviou proposta pendente
+  const hasPendingProposal = bondsSent
     ? bondsSent?.some(
-        (bond) => bond.professionalId === id && bond.status === "A"
-      ) ?? false
+      (bond) => bond.professionalId === id && bond.status === "P"
+    ) ?? false
     : false;
 
+  // Pega o bond pendente para cancelar
+  const pendingBond = bondsSent?.find(
+    (bond) => bond.professionalId === id && bond.status === "P"
+  );
+
   const [alreadySentProposal, setAlreadySentProposal] =
-    useState(initialAlreadySent);
+    useState(hasPendingProposal);
   const [isSending, setIsSending] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
+  // Usa o valor do hook, não precisa de state local
+  const isFavorite = isFavoriteData ?? false;
 
   useEffect(() => {
-    setAlreadySentProposal(initialAlreadySent);
-  }, [initialAlreadySent]);
+    setAlreadySentProposal(hasPendingProposal);
+  }, [hasPendingProposal]);
 
   const { data: userData, isLoading, error } = useGetUserById(id);
 
@@ -141,7 +175,8 @@ export default function Professional() {
   };
 
   const sendProposal = async (professionalId: string) => {
-    if (isSending || alreadySentProposal) return;
+    // Não permite enviar proposta se já tem vínculo ativo (com este ou outro profissional)
+    if (isSending || alreadySentProposal || hasActiveBond || hasAnyActiveBond) return;
 
     setIsSending(true);
 
@@ -172,6 +207,31 @@ export default function Professional() {
     });
   };
 
+  const handleFavoriteClick = async () => {
+    if (isTogglingFavorite || !id) return;
+
+    setIsTogglingFavorite(true);
+
+    try {
+      if (isFavorite) {
+        await removeFavorite(id);
+        toast.success("Removido dos favoritos!");
+      } else {
+        await addFavorite(id);
+        toast.success("Adicionado aos favoritos!");
+      }
+      // Atualiza o status do favorito
+      refetchFavorite();
+      // Invalida o cache da lista de profissionais para atualizar isFavorite
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    } catch (error) {
+      console.error("Erro ao alterar favorito:", error);
+      toast.error("Erro ao alterar favorito");
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col h-full bg-neutral-dark-01">
       <div className="flex-1 mt-6 overflow-y-auto flex gap-3 flex-col">
@@ -179,8 +239,24 @@ export default function Professional() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center gap-3 bg-neutral-dark-03 p-4 rounded-lg"
+          className="flex flex-col items-center gap-3 bg-neutral-dark-03 p-4 rounded-lg relative"
         >
+          {/* Botão de Favorito no topo direito */}
+          <motion.button
+            className="absolute top-3 right-3 z-10"
+            onClick={handleFavoriteClick}
+            disabled={isTogglingFavorite}
+            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.1 }}
+          >
+            <Bookmark
+              className={`w-5 h-5 transition-all ${isFavorite
+                ? "fill-primary text-primary"
+                : "text-gray-400 hover:text-gray-300"
+                }`}
+            />
+          </motion.button>
+
           <AvatarImage
             imageUrl={userData.imageUrl}
             name={userData.name}
@@ -206,14 +282,89 @@ export default function Professional() {
               </div>
             )}
           </div>
+
+          {/* Seção de Contato */}
+          {userData.phoneNumber && (
+            <div className="mt-3 w-full flex justify-center">
+              <a
+                href={`https://wa.me/55${userData.phoneNumber.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20 transition-colors group shadow"
+              >
+                <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium">WhatsApp: {userData.phoneNumber}</span>
+              </a>
+            </div>
+          )}
         </motion.div>
 
         <Button
           onClick={() => id && sendProposal(id)}
-          disabled={alreadySentProposal || isSending}
+          disabled={hasActiveBond || hasAnyActiveBond || alreadySentProposal || isSending}
         >
-          {alreadySentProposal ? "Proposta Enviada" : "Enviar Proposta"}
+          {hasActiveBond
+            ? "Seu Personal"
+            : hasAnyActiveBond
+              ? "Você já tem um Personal"
+              : alreadySentProposal
+                ? "Proposta Pendente"
+                : "Enviar Proposta"}
         </Button>
+
+        {alreadySentProposal && (
+          <>
+            <Button
+              variant="outline"
+              className="border-red-500 text-red-500 hover:bg-red-500/10 focus:ring-red-500"
+              onClick={() => setShowCancelDialog(true)}
+              disabled={isDeleting}
+            >
+              Cancelar proposta
+            </Button>
+
+            <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="text-red-500">Cancelar proposta?</DialogTitle>
+                  <DialogDescription>
+                    Tem certeza que deseja cancelar sua proposta para <strong>{userData.name}</strong>?<br />
+                    Esta ação não pode ser desfeita.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCancelDialog(false)}
+                    disabled={isDeleting}
+                  >
+                    Voltar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      if (!pendingBond?.id) return;
+                      deleteBond(pendingBond.id, {
+                        onSuccess: () => {
+                          toast.success("Proposta cancelada com sucesso!");
+                          setShowCancelDialog(false);
+                          setAlreadySentProposal(false);
+                          queryClient.invalidateQueries({ queryKey: ["getBondsSent"] });
+                        },
+                        onError: () => {
+                          toast.error("Erro ao cancelar proposta. Tente novamente.");
+                        },
+                      });
+                    }}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Cancelando..." : "Sim, cancelar"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
 
         <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
           <button
@@ -229,6 +380,8 @@ export default function Professional() {
               <ChevronDown className="w-5 h-5 text-neutral-white-02" />
             )}
           </button>
+
+
           <AnimatePresence>
             {expandedSections.personalInfo && (
               <motion.div
@@ -244,12 +397,7 @@ export default function Professional() {
                     <span className="text-sm">{userData.email}</span>
                   </div>
 
-                  {userData.phoneNumber && (
-                    <div className="flex items-center space-x-2 text-neutral-white-01">
-                      <Phone className="w-5 h-5" />
-                      <span className="text-sm">{userData.phoneNumber}</span>
-                    </div>
-                  )}
+
 
                   {userData.dateOfBirth && (
                     <div className="flex items-center space-x-2 text-neutral-white-01">
@@ -313,7 +461,7 @@ export default function Professional() {
                         </p>
                       </div>
 
-                      {userData.professionalCredential.biography && (
+                      {/* {userData.professionalCredential.biography && (
                         <div className="mt-3">
                           <span className="text-xs text-neutral-white-02 block mb-1">
                             Biografia
@@ -322,7 +470,7 @@ export default function Professional() {
                             {userData.professionalCredential.biography}
                           </p>
                         </div>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 </motion.div>

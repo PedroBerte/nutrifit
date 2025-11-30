@@ -1,3 +1,4 @@
+import MyProfessionals from "@/pages/MyProfessionals";
 import { Routes, Route, Navigate } from "react-router-dom";
 import App from "@/App";
 import { PrivateRoute } from "./PrivateRoute";
@@ -54,6 +55,7 @@ export function AppRoutes() {
             <Route path="personal" element={<PersonalHome />} />
             <Route path="profile" element={<Profile />} />
             <Route path="professionalsList" element={<ProfessionalsList />} />
+            <Route path="myProfessionals" element={<MyProfessionals />} />
             <Route path="professional/:id" element={<Professional />} />
             <Route path="students" element={<Students />} />
             <Route path="students/:id" element={<StudentDetails />} />

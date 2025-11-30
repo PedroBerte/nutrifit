@@ -160,7 +160,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-dark-01">
+    <div className="min-h-screen bg-neutral-dark-01 pt-2">
       {/* Header com gradiente */}
       <motion.div
         className="max-w-4xl mx-auto flex items-center justify-between"
@@ -258,6 +258,29 @@ export default function Profile() {
                 <p className="text-sm text-neutral-white-02 text-center py-4">
                   Carregando vínculo...
                 </p>
+              ) : studentBond && studentBond.status === "P" && studentBond.professional ? (
+                <div className="relative bg-yellow-500/10 rounded-lg p-4 border border-yellow-500/30 overflow-hidden">
+                  <div className="flex gap-3 items-center">
+                    <AvatarImage
+                      imageUrl={studentBond.professional.imageUrl}
+                      name={studentBond.professional.name}
+                      size="lg"
+                    />
+                    <div>
+                      <h4 className="font-semibold text-yellow-700 truncate">
+                        {studentBond.professional.name}
+                      </h4>
+                      <p className="text-xs text-yellow-700 mt-1">
+                        Proposta de vínculo pendente
+                      </p>
+                      {studentBond.createdAt && (
+                        <p className="text-xs text-yellow-700 mt-1">
+                          Enviada em {new Date(studentBond.createdAt).toLocaleDateString("pt-BR")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ) : studentBond && studentBond.status === "A" && studentBond.professional ? (
                 <div className="relative bg-gradient-to-br from-primary/5 via-primary/3 to-transparent rounded-lg p-4 border border-primary/20 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />

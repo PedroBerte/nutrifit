@@ -2,20 +2,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useGetExerciseHistory } from "@/services/api/workoutSession";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   ChevronLeft,
   TrendingUp,
-  Calendar,
   Dumbbell,
   BarChart3,
   Activity,
-  Target,
   Flame,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -23,7 +14,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import {
-  BarChart,
   Bar,
   XAxis,
   YAxis,
@@ -81,87 +71,77 @@ export default function ExerciseHistory() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="flex flex-1 flex-col pb-6"
+      className="flex flex-1 flex-col pb-6 pt-4"
     >
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-transparent backdrop-blur-sm rouded-b-md">
-        <div className="p-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold truncate">
-                {history.exerciseName}
-              </h1>
+      {/* Header Fixo Simplificado */}
+      <div className="sticky top-0 z-10 px-4 pt-4 pb-3">
+        <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-lg border border-primary/20 backdrop-blur-sm overflow-hidden">
+          <div className="p-4">
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => navigate(-1)}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-primary/20"
+              >
+                <ChevronLeft size={18} />
+              </Button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg font-bold truncate">
+                  {history.exerciseName}
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  {history.stats.totalSessions} sessões • {history.stats.totalSets} séries
+                </p>
+              </div>
             </div>
-          </div>
-
-          {/* Imagem do exercício */}
-          {history.videoUrl && (
-            <div className="mb-4 rounded-lg overflow-hidden bg-neutral-dark-02">
-              <img
-                src={history.videoUrl}
-                alt={history.exerciseName}
-                className="w-full h-48 object-cover"
-              />
-            </div>
-          )}
-
-          {/* Stats Cards - Grid 2x2 */}
-          <div className="grid grid-cols-2 gap-3">
-            <StatsCard
-              icon={<Calendar size={16} />}
-              label="Sessões"
-              value={history.stats.totalSessions.toString()}
-              color="text-blue-500"
-              bgColor="bg-blue-500/10"
-            />
-            <StatsCard
-              icon={<Target size={16} />}
-              label="Séries Total"
-              value={history.stats.totalSets.toString()}
-              color="text-green-500"
-              bgColor="bg-green-500/10"
-            />
-            <StatsCard
-              icon={<Dumbbell size={16} />}
-              label="Carga Máx"
-              value={`${history.stats.maxLoad.toFixed(1)} kg`}
-              color="text-purple-500"
-              bgColor="bg-purple-500/10"
-            />
-            <StatsCard
-              icon={<Flame size={16} />}
-              label="Volume Total"
-              value={`${(history.stats.totalVolume / 1000).toFixed(1)}t`}
-              color="text-orange-500"
-              bgColor="bg-orange-500/10"
-            />
           </div>
         </div>
       </div>
 
+      {/* Stats Cards - Grid horizontal compacto */}
+      <div className="px-4 pt-4 pb-2">
+        <div className="grid grid-cols-2 gap-3">
+          <StatsCard
+            icon={<Dumbbell size={14} />}
+            label="Carga Máxima"
+            value={`${history.stats.maxLoad.toFixed(1)} kg`}
+            color="text-primary"
+            bgColor="bg-primary/10"
+          />
+          <StatsCard
+            icon={<Flame size={14} />}
+            label="Volume Total"
+            value={`${(history.stats.totalVolume / 1000).toFixed(1)}t`}
+            color="text-orange-500"
+            bgColor="bg-orange-500/10"
+          />
+        </div>
+      </div>
+
       {/* Chart de Evolução */}
-      <div className="px-4 pt-6 pb-4">
-        <Card>
-          <CardHeader>
+      <div className="px-4 pt-4 pb-4">
+        <div className="bg-neutral-dark-03 rounded-lg border border-neutral-dark-02 overflow-hidden">
+          <div className="p-4 pb-3 border-b border-neutral-dark-02">
             <div className="flex items-center gap-2">
-              <TrendingUp className="text-primary" size={20} />
-              <CardTitle className="text-lg">Evolução de Carga</CardTitle>
+              <TrendingUp className="text-primary" size={18} />
+              <h2 className="text-base font-bold">Evolução de Carga</h2>
             </div>
-            <CardDescription>
+            <p className="text-xs text-muted-foreground mt-1">
               Acompanhe sua progressão ao longo do tempo
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-4 pt-2">
             <LoadProgressionChart sessions={history.sessions} />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Histórico de Sessões */}
-      <div className="px-4">
-        <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="text-primary" size={20} />
-          <h2 className="text-lg font-bold">Histórico Detalhado</h2>
+      <div className="px-4 pt-2">
+        <div className="flex items-center gap-2 mb-3">
+          <BarChart3 className="text-primary" size={18} />
+          <h2 className="text-base font-bold">Histórico Detalhado</h2>
         </div>
 
         <div className="space-y-3">
@@ -196,12 +176,12 @@ interface StatsCardProps {
 
 function StatsCard({ icon, label, value, color, bgColor }: StatsCardProps) {
   return (
-    <div className={`${bgColor} rounded-lg p-4 border border-${color}/20`}>
-      <div className={`flex items-center gap-2 ${color} mb-1`}>
+    <div className={`${bgColor} rounded-lg p-3 border border-neutral-dark-02`}>
+      <div className={`flex items-center gap-2 ${color} mb-1.5`}>
         {icon}
-        <span className="text-xs font-medium">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
       </div>
-      <p className="text-2xl font-bold">{value}</p>
+      <p className={`text-xl font-bold ${color}`}>{value}</p>
     </div>
   );
 }

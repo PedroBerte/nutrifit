@@ -10,9 +10,9 @@ import {
   Search,
   Settings,
   User2,
+  Users,
 } from "lucide-react";
 import { AvatarImage } from "@/components/ui/avatar-image";
-
 import {
   Sidebar,
   SidebarContent,
@@ -32,7 +32,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { DropdownMenuItemIndicator } from "@radix-ui/react-dropdown-menu";
 import { Separator } from "./ui/separator";
 import { useNavigate } from "react-router-dom";
 import { UserProfiles } from "@/types/user";
@@ -63,6 +62,18 @@ const items = [
     title: "Consultas",
     url: "/appointments",
     icon: Calendar,
+    profiles: [UserProfiles.STUDENT],
+  },
+  {
+    title: "Encontrar profissionais",
+    url: "/professionalsList",
+    icon: Users,
+    profiles: [UserProfiles.STUDENT],
+  },
+  {
+    title: "Meus profissionais",
+    url: "/myProfessionals",
+    icon: Users,
     profiles: [UserProfiles.STUDENT],
   },
 ];
@@ -104,7 +115,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <section className="flex flex-row justify-between items-center mb-6 p-4 text-base font-medium w-full">
             <p className="text-neutral-white-01">
-              Olá, {getFirstUserName(user && user.name)} 👋🏻
+              Olá, {getFirstUserName(user && user.name)}
             </p>
             <button
               onClick={() => toggleSidebar()}

@@ -62,6 +62,8 @@ import {
   GripVertical,
   HelpCircle,
   ChartBar,
+  Video,
+  X,
 } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion, AnimatePresence } from "motion/react";
@@ -110,7 +112,24 @@ export default function WorkoutSession() {
 
     // Se já existe um workout no localStorage e é do mesmo template
     if (existingWorkout && existingWorkout.workoutTemplateId === template.id) {
-      setLocalWorkout(existingWorkout);
+      // Atualiza os exercícios com dados mais recentes do template (como exerciseUrl)
+      const updatedExercises = existingWorkout.exercises.map((localEx) => {
+        const templateEx = template.exerciseTemplates?.find(
+          (te) => te.id === localEx.exerciseTemplateId
+        );
+        
+        if (templateEx) {
+          return {
+            ...localEx,
+            exerciseUrl: templateEx.exerciseUrl, // Atualiza com URL do template
+            exerciseName: templateEx.exerciseName, // Atualiza nome se mudou
+          };
+        }
+        
+        return localEx;
+      });
+
+      setLocalWorkout({ ...existingWorkout, exercises: updatedExercises });
       // Calcula tempo decorrido
       const startedAt = new Date(existingWorkout.startedAt);
       const elapsed = Math.floor((Date.now() - startedAt.getTime()) / 1000);
@@ -129,6 +148,7 @@ export default function WorkoutSession() {
             exerciseTemplateId: et.id,
             exerciseId: et.exerciseId,
             exerciseName: et.exerciseName,
+            exerciseUrl: et.exerciseUrl,
             order: et.order,
             status: "IP",
             sets: [],
@@ -890,6 +910,7 @@ function ExerciseCard({
   const [isExerciseRestRunning, setIsExerciseRestRunning] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!isExpanded);
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   // Timer de descanso do exercício
   useEffect(() => {
@@ -952,6 +973,9 @@ function ExerciseCard({
   const completedSetsCount = exercise.sets.filter(
     (set) => set.completed
   ).length;
+
+  // Debug log temporário
+  console.log(`[${exercise.exerciseName}] exerciseUrl:`, exercise.exerciseUrl, '| disabled:', !exercise.exerciseUrl);
 
   return (
     <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
@@ -1078,6 +1102,16 @@ function ExerciseCard({
                   variant="outline"
                   size="sm"
                   className="flex-shrink-0 px-3"
+                  onClick={() => setShowVideoModal(true)}
+                  disabled={!exercise.exerciseUrl}
+                >
+                  <Video size={16} />
+                  <span>Vídeo</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-shrink-0 px-3"
                   onClick={() =>
                     navigate(`/exercise/${exercise.exerciseId}/history`)
                   }
@@ -1120,6 +1154,52 @@ function ExerciseCard({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modal de Vídeo do YouTube */}
+      <Drawer open={showVideoModal} onOpenChange={setShowVideoModal}>
+        <DrawerContent>
+          <DrawerHeader>
+            <div className="flex items-center justify-between">
+              <DrawerTitle>{exercise.exerciseName}</DrawerTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowVideoModal(false)}
+              >
+                <X size={20} />
+              </Button>
+            </div>
+            <DrawerDescription>
+              Assista ao vídeo demonstrativo do exercício
+            </DrawerDescription>
+          </DrawerHeader>
+
+          <div className="px-4 pb-4">
+            <div className="relative w-full pb-[56.25%] bg-neutral-dark-02 rounded-lg overflow-hidden">
+              {exercise.exerciseUrl && (
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full"
+                  src={
+                    exercise.exerciseUrl.includes('youtube.com/watch?v=')
+                      ? exercise.exerciseUrl.replace('watch?v=', 'embed/')
+                      : exercise.exerciseUrl.includes('youtu.be/')
+                      ? exercise.exerciseUrl.replace('youtu.be/', 'youtube.com/embed/')
+                      : exercise.exerciseUrl
+                  }
+                  title={exercise.exerciseName}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
+            </div>
+          </div>
+
+          <DrawerFooter>
+            <Button onClick={() => setShowVideoModal(false)}>Fechar</Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

@@ -12,30 +12,6 @@ type NavbarProps = {
   isMenuButtonVisible?: boolean;
 };
 
-// Mapa de navegação: define para onde cada rota deve voltar
-const getBackRoute = (currentPath: string, profileId?: string): string => {
-  // Rotas de workout
-  if (currentPath.startsWith("/workout/session/")) return "/workout";
-
-  // Rotas de rotinas
-  if (currentPath.match(/^\/routines\/[^/]+\/workouts\/(new|[^/]+)$/)) {
-    const routineId = currentPath.split("/")[2];
-    return `/routines/${routineId}`;
-  }
-  if (currentPath.match(/^\/routines\/[^/]+$/)) return "/routines";
-  if (currentPath === "/routines/new") return "/routines";
-
-  // Rotas de profissional
-  if (currentPath.match(/^\/professional\/[^/]+$/)) return "/professionalsList";
-
-  // Home padrão baseado no perfil
-  const homeRoute =
-    profileId === UserProfiles.PERSONAL ? "/personal" : "/workout";
-
-  // Rotas gerais voltam para home
-  return homeRoute;
-};
-
 export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -53,11 +29,7 @@ export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
   };
 
   const handleBackClick = () => {
-    const backRoute = getBackRoute(
-      location.pathname,
-      user?.profile ?? undefined
-    );
-    navigate(backRoute);
+    navigate(-1);
   };
 
   return (
