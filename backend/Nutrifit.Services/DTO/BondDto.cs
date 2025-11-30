@@ -9,7 +9,7 @@ public class BondDto
     public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public string? Status { get; set; }
-    
+
     public UserDto? Customer { get; set; }
     public UserDto? Professional { get; set; }
     public UserDto? Sender { get; set; }
