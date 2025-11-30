@@ -14,5 +14,4 @@ public class CustomerProfessionalBondEntity
     public UserEntity Customer { get; set; } = null!;
     public UserEntity Professional { get; set; } = null!;
     public UserEntity Sender { get; set; } = null!;
-    public ICollection<AppointmentEntity> Appointments { get; set; } = new List<AppointmentEntity>();
 }

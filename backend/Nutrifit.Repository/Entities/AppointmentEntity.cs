@@ -13,5 +13,7 @@ public class AppointmentEntity
     public DateTime? UpdatedAt { get; set; }
     public string Status { get; set; } = "P"; // P = Pendente, A = Aceito, R = Rejeitado, C = Cancelado
 
+    // Navigation properties
     public AddressEntity? Address { get; set; }
+    public CustomerProfessionalBondEntity? CustomerProfessionalBond { get; set; }
 }

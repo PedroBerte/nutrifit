@@ -21,6 +21,15 @@ export interface AppointmentType {
     id: string;
     customerId: string;
     professionalId: string;
+    status: string;
+    createdAt: string;
+    updatedAt?: string;
+    customer?: {
+      id: string;
+      name: string;
+      email: string;
+      imageUrl?: string;
+    };
     professional?: {
       id: string;
       name: string;

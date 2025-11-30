@@ -28,7 +28,6 @@ public class BondService : IBondService
                     .ThenInclude(p => p.Profile)
                 .Include(x => x.Sender)
                     .ThenInclude(s => s.Profile)
-                .Include(x => x.Appointments)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -48,7 +47,6 @@ public class BondService : IBondService
                     .ThenInclude(p => p.Profile)
                 .Include(x => x.Sender)
                     .ThenInclude(s => s.Profile)
-                .Include(x => x.Appointments)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (bond is null)
@@ -186,7 +184,6 @@ public class BondService : IBondService
                     .ThenInclude(p => p.Profile)
                 .Include(x => x.Sender)
                     .ThenInclude(s => s.Profile)
-                .Include(x => x.Appointments)
                 .Where(x => x.SenderId == senderId)
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
@@ -208,7 +205,6 @@ public class BondService : IBondService
                     .ThenInclude(p => p.Profile)
                 .Include(x => x.Sender)
                     .ThenInclude(s => s.Profile)
-                .Include(x => x.Appointments)
                 .Where(x => x.CustomerId == customerId)
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
@@ -230,7 +226,6 @@ public class BondService : IBondService
                     .ThenInclude(p => p.Profile)
                 .Include(x => x.Sender)
                     .ThenInclude(s => s.Profile)
-                .Include(x => x.Appointments)
                 .Where(x => x.ProfessionalId == professionalId)
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
@@ -252,7 +247,6 @@ public class BondService : IBondService
                     .ThenInclude(p => p.Profile)
                 .Include(x => x.Sender)
                     .ThenInclude(s => s.Profile)
-                .Include(x => x.Appointments)
                 .Where(x => x.CustomerId == userId || x.ProfessionalId == userId)
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
@@ -274,7 +268,6 @@ public class BondService : IBondService
                     .ThenInclude(p => p.Profile)
                 .Include(x => x.Sender)
                     .ThenInclude(s => s.Profile)
-                .Include(x => x.Appointments)
                 .Where(x => (x.CustomerId == userId || x.ProfessionalId == userId) && x.SenderId != userId)
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
