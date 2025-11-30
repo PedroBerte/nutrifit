@@ -30,7 +30,7 @@ export default function Login() {
   });
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
-    await sendEmail.mutateAsync(data.email);
+    await sendEmail.mutateAsync({ email: data.email });
     setSent(data.email);
   };
 

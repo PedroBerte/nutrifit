@@ -298,7 +298,7 @@ export default function CreateAppointmentDrawer({
               )}
             </div>
 
-            <DrawerFooter className="flex-shrink-0 px-4 border-t bg-background">
+            <DrawerFooter className="flex-shrink-0 px-4 border-t">
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Criando..." : "Criar Agendamento"}
               </Button>

@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 
 namespace Nutrifit.Services.Services
 {
-    record MagicLinkPayload(string Email, string? Ip, string? Ua, DateTimeOffset CreatedAt);
+    record MagicLinkPayload(string Email, string? Ip, string? Ua, DateTimeOffset CreatedAt, bool Invited = false, Guid? ProfessionalInviterId = null);
     public class AuthenticationService : IAuthenticationService
     {
         private readonly IConfiguration _cfg;
@@ -37,7 +37,7 @@ namespace Nutrifit.Services.Services
             _mailService = mailService;
         }
 
-        public async Task SendAccessEmailAsync(string email, string baseAppUrl, string ip, string ua)
+        public async Task SendAccessEmailAsync(string email, string baseAppUrl, string ip, string ua, bool invited = false, Guid? professionalInviterId = null)
         {
             var tokenBytes = RandomNumberGenerator.GetBytes(32);
             var token = WebEncoders.Base64UrlEncode(tokenBytes);
@@ -47,7 +47,9 @@ namespace Nutrifit.Services.Services
                 Email: email.Trim().ToLowerInvariant(),
                 Ip: ip,
                 Ua: ua,
-                CreatedAt: DateTimeOffset.UtcNow
+                CreatedAt: DateTimeOffset.UtcNow,
+                Invited: invited,
+                ProfessionalInviterId: professionalInviterId
             );
             var val = JsonSerializer.Serialize(payload);
             var ttl = TimeSpan.FromMinutes(_cfg.GetValue<int>("MagicLink:ExpiresMinutes", 10));
@@ -215,7 +217,9 @@ namespace Nutrifit.Services.Services
                 Name = "",
                 Email = payload.Email,
                 Profile = Guid.Empty,
-                IsAdmin = user?.IsAdmin ?? false
+                IsAdmin = user?.IsAdmin ?? false,
+                Invited = payload.Invited,
+                ProfessionalInviterId = payload.ProfessionalInviterId
             };
 
             if(user is not null)
@@ -234,16 +238,24 @@ namespace Nutrifit.Services.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(cfg["Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claimsList = new List<Claim>
             {
                 new Claim("id", request.Id.ToString()),
                 new Claim("name", request.Name),
                 new Claim("isAdmin", request.IsAdmin.ToString()),
                 new Claim("profile", request.Profile == Guid.Empty ? string.Empty : request.Profile.ToString()),
+                new Claim("invited", request.Invited.ToString()),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Sub, request.Id.ToString()),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Email, request.Email),
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            if (request.ProfessionalInviterId.HasValue)
+            {
+                claimsList.Add(new Claim("professionalInviterId", request.ProfessionalInviterId.Value.ToString()));
+            }
+
+            var claims = claimsList.ToArray();
 
             var token = new JwtSecurityToken(
                 issuer: cfg["Issuer"],

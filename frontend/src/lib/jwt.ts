@@ -6,6 +6,8 @@ export type DecodedJwtRaw = {
   name?: string;
   isAdmin?: boolean | string;
   profile?: string;
+  invited?: boolean | string;
+  professionalInviterId?: string;
   sub?: string;
   email?: string;
   exp?: number;
@@ -21,6 +23,8 @@ export type DecodedJwt = {
   email: string | null;
   isAdmin: boolean;
   profile: string | null;
+  invited: boolean;
+  professionalInviterId: string | null;
   expMs: number | null;
   raw: DecodedJwtRaw;
 };
@@ -37,6 +41,13 @@ export function decodeAndNormalizeJwt(token: string | null): DecodedJwt | null {
         ? raw.isAdmin.toLowerCase() === "true"
         : false;
 
+    const invitedBool =
+      typeof raw.invited === "boolean"
+        ? raw.invited
+        : typeof raw.invited === "string"
+        ? raw.invited.toLowerCase() === "true"
+        : false;
+
     const expMs = typeof raw.exp === "number" ? raw.exp * 1000 : null;
 
     return {
@@ -45,6 +56,8 @@ export function decodeAndNormalizeJwt(token: string | null): DecodedJwt | null {
       email: raw.email ?? raw.sub ?? null,
       isAdmin: isAdminBool,
       profile: raw.profile ?? null,
+      invited: invitedBool,
+      professionalInviterId: raw.professionalInviterId ?? null,
       expMs,
       raw,
     };

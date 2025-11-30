@@ -14,10 +14,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetMyBonds, useUpdateBond } from "@/services/api/bond";
 import type { CustomerProfessionalBondType } from "@/types/professional";
-import { Check, X } from "lucide-react";
+import { Check, X, UserPlus } from "lucide-react";
 import React, { useState } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion } from "motion/react";
+import InviteStudentDrawer from "@/components/InviteStudentDrawer";
 
 import PersonalSemVinculo from "@/assets/personal/PersonalSemVinculo.png";
 
@@ -28,6 +29,7 @@ export default function Bond() {
   const toast = useToast();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isInviteDrawerOpen, setIsInviteDrawerOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
     bond: CustomerProfessionalBondType;
     action: "accept" | "reject" | "cancel";
@@ -96,7 +98,16 @@ export default function Bond() {
       transition={{ duration: 0.4 }}
       className="flex flex-1 py-4 flex-col gap-3"
     >
-      <p className="font-bold text-2xl">Vínculos</p>
+      <div className="flex items-center justify-between">
+        <p className="font-bold text-2xl">Vínculos</p>
+        <Button
+          onClick={() => setIsInviteDrawerOpen(true)}
+          className="gap-2"
+        >
+          <UserPlus className="h-4 w-4" />
+          Convidar Aluno
+        </Button>
+      </div>
       <p className="font-bold">Vínculos ativos</p>
       <section className="bg-neutral-dark-03 rounded-sm p-4 space-y-3">
         {isLoading ? (
@@ -204,6 +215,11 @@ export default function Bond() {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      <InviteStudentDrawer
+        open={isInviteDrawerOpen}
+        onOpenChange={setIsInviteDrawerOpen}
+      />
     </motion.div>
   );
 }
