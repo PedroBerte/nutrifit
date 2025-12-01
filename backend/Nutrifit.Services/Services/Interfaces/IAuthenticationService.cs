@@ -8,7 +8,7 @@ namespace Nutrifit.Services.Services.Interfaces
 {
     public interface IAuthenticationService
     {
-        Task SendAccessEmailAsync(string email, string baseAppUrl, string ip, string ua);
+        Task SendAccessEmailAsync(string email, string baseAppUrl, string ip, string ua, bool invited = false, Guid? professionalInviterId = null);
         Task<string> ValidateSession(string token);
     }
 }

@@ -9,7 +9,7 @@ public class CustomerProfessionalBondEntity
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
-    public string Status { get; set; }
+    public string Status { get; set; } = "P";
 
     public UserEntity Customer { get; set; } = null!;
     public UserEntity Professional { get; set; } = null!;

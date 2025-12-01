@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useMemo, useState, useEffect } from "react";
 import { useForm, type UseFormReturn, type Resolver } from "react-hook-form";
 import { date, z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,7 @@ import { decodeAndNormalizeJwt } from "@/lib/jwt";
 import type { ProfessionalCredentialType } from "@/types/professional";
 import { uploadImage } from "@/services/api/storage";
 import { useToast } from "../ToastContext";
+import { useCreateBond } from "@/services/api/bond";
 
 export type AccountType = "student" | "nutritionist" | "personal";
 
@@ -82,6 +83,23 @@ export function RegisterFormProvider({
   const { user } = useAuth();
   const createUser = useCreateUser();
   const validationSession = useValidateSession();
+  const createBond = useCreateBond();
+
+  // Verificar se é um convite ao carregar
+  useEffect(() => {
+    const inviteDataStr = sessionStorage.getItem("inviteData");
+    if (inviteDataStr) {
+      try {
+        const inviteData = JSON.parse(inviteDataStr);
+        if (inviteData.invited) {
+          setAccountTypeState("student");
+          setStep("generic"); // Pular seleção de tipo de conta
+        }
+      } catch (e) {
+        console.error("Erro ao ler dados de convite:", e);
+      }
+    }
+  }, []);
 
   const defaultValues = useMemo<RegisterFormValues>(() => {
     return {
@@ -356,6 +374,34 @@ export function RegisterFormProvider({
       }
 
       dispatch(signInFromJwt({ accessToken: jwt! }));
+
+      // Se for convite, criar vínculo automaticamente
+      const inviteDataStr = sessionStorage.getItem("inviteData");
+      if (inviteDataStr && newUser?.id) {
+        try {
+          const inviteData = JSON.parse(inviteDataStr);
+          if (inviteData.invited && inviteData.professionalInviterId) {
+            console.log("Criando vínculo automático com professional:", inviteData.professionalInviterId);
+            await createBond.mutateAsync({
+              id: null,
+              customerId: newUser.id,
+              professionalId: inviteData.professionalInviterId,
+              senderId: inviteData.professionalInviterId,
+              status: "A", // Aceito automaticamente
+              customer: null,
+              professional: null,
+              sender: null,
+            });
+            console.log("Vínculo criado com sucesso!");
+            // Limpar dados de convite
+            sessionStorage.removeItem("inviteData");
+          }
+        } catch (bondError) {
+          console.error("Erro ao criar vínculo automático:", bondError);
+          // Não falhar o cadastro se o vínculo falhar
+          toast.warning("Usuário criado, mas houve um problema ao criar o vínculo com o profissional");
+        }
+      }
 
       return newUser; // Retornar o usuário criado
     } catch (error) {

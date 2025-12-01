@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   useGetWorkoutTemplateById,
   useUpdateWorkoutTemplate,
+  useDeleteWorkoutTemplate,
   useAddExerciseToTemplate,
   useUpdateExerciseTemplate,
   useRemoveExerciseFromTemplate,
@@ -48,7 +49,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, Trash2, GripVertical, Loader2, Edit } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  GripVertical,
+  Loader2,
+  Edit,
+  AlertTriangle,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
 
@@ -91,11 +99,13 @@ export function EditWorkoutTemplate() {
     useState<ExerciseTemplateResponse | null>(null);
   const [exerciseToRemove, setExerciseToRemove] =
     useState<ExerciseTemplateResponse | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: templateResponse, isLoading: loadingTemplate } =
     useGetWorkoutTemplateById(templateId);
   const { data: exercises, isLoading: exercisesLoading } = useGetExercises();
   const updateTemplate = useUpdateWorkoutTemplate();
+  const deleteTemplate = useDeleteWorkoutTemplate();
   const addExercise = useAddExerciseToTemplate();
   const updateExercise = useUpdateExerciseTemplate();
   const removeExercise = useRemoveExerciseFromTemplate();
@@ -230,6 +240,21 @@ export function EditWorkoutTemplate() {
     }
   };
 
+  const handleDeleteTemplate = async () => {
+    if (!templateId) return;
+
+    try {
+      await deleteTemplate.mutateAsync(templateId);
+      toast.success("Treino deletado com sucesso!");
+      navigate(`/routines/${routineId}`);
+    } catch (error) {
+      console.error("Erro ao deletar template:", error);
+      toast.error("Erro ao deletar treino");
+    } finally {
+      setShowDeleteDialog(false);
+    }
+  };
+
   const handleSubmit = async (data: UpdateTemplateForm) => {
     if (!templateId) return;
 
@@ -315,6 +340,15 @@ export function EditWorkoutTemplate() {
                   <h1 className="text-2xl font-semibold text-neutral-white-01">
                     Editar treino
                   </h1>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => setShowDeleteDialog(true)}
+                    title="Deletar treino"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
                 <FormField
                   control={templateForm.control}
@@ -661,7 +695,7 @@ export function EditWorkoutTemplate() {
         </DrawerContent>
       </Drawer>
 
-      {/* Dialog de Confirmação de Remoção */}
+      {/* Dialog de Confirmação de Remoção de Exercício */}
       <Dialog
         open={!!exerciseToRemove}
         onOpenChange={(open) => !open && setExerciseToRemove(null)}
@@ -694,6 +728,49 @@ export function EditWorkoutTemplate() {
                 </>
               ) : (
                 "Remover"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Deleção do Treino */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Deletar Treino
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja deletar o treino{" "}
+              <strong>{template?.title}</strong>?
+              <br />
+              <br />
+              Todos os exercícios configurados serão perdidos. Esta ação não
+              pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={deleteTemplate.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteTemplate}
+              disabled={deleteTemplate.isPending}
+            >
+              {deleteTemplate.isPending ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                  Deletando...
+                </>
+              ) : (
+                "Deletar Treino"
               )}
             </Button>
           </DialogFooter>

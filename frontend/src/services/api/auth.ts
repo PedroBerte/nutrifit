@@ -2,12 +2,18 @@ import { api } from "@/lib/axios";
 import { ensurePushSubscription } from "@/registerPush";
 import { useMutation } from "@tanstack/react-query";
 
+export interface SendAccessEmailRequest {
+  email: string;
+  invited?: boolean;
+  professionalInviterId?: string;
+}
+
 export function useSendAccessEmail() {
   return useMutation({
-    mutationFn: async (email: string) => {
+    mutationFn: async (data: SendAccessEmailRequest) => {
       await api.post(
         "/authentication/sendAccessEmail",
-        { email },
+        data,
         {
           headers: {
             "X-App-BaseUrl": window.location.origin,
