@@ -67,7 +67,7 @@ export default function RoutineCard({
 
   return (
     <div
-      className="w-full bg-neutral-dark-03 rounded-sm p-4 space-y-4 cursor-pointer hover:bg-neutral-dark-02/50 transition-colors"
+      className="w-full bg-neutral-dark-03 rounded-sm p-4 space-y-4 cursor-pointer hover:bg-neutral-dark-03/50 transition-colors"
       onClick={() => handleDetails()}
     >
       <div className="flex justify-between items-center">

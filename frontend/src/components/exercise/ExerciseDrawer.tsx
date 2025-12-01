@@ -196,7 +196,7 @@ export function ExerciseDrawer({
               {/* Header de Filtros - Clicável */}
               <button
                 onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                className="w-full flex items-center justify-between px-3 py-2 bg-neutral-dark-02/50 hover:bg-neutral-dark-02 rounded-lg transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2 bg-neutral-dark-02/50 hover:bg-neutral-dark-03 rounded-lg transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Filter size={14} className="text-muted-foreground" />

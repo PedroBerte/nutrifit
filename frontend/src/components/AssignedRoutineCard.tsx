@@ -31,7 +31,7 @@ export default function AssignedRoutineCard({
         <p className="text-xl font-bold">{routine.title}</p>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-2 hover:bg-neutral-dark-02 rounded-full transition-colors"
+          className="p-2 hover:bg-neutral-dark-03 rounded-full transition-colors"
         >
           {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>

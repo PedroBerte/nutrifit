@@ -376,7 +376,7 @@ function SessionCard({ session, isExpanded, onToggle }: SessionCardProps) {
     >
       {/* Header - Clicável */}
       <div
-        className="p-4 cursor-pointer hover:bg-neutral-dark-02/50 transition-colors"
+        className="p-4 cursor-pointer hover:bg-neutral-dark-03/50 transition-colors"
         onClick={onToggle}
       >
         <div className="flex items-start justify-between mb-2">

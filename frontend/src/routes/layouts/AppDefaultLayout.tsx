@@ -14,7 +14,7 @@ export default function AppDefaultLayout({
   isMenuButtonVisible,
 }: AppLayoutWithNavbarProps) {
   return (
-    <div className="flex flex-1 flex-col bg-neutral-dark-01">
+    <div className="flex flex-col w-full bg-neutral-dark-01">
       <AppSidebar />
       <Navbar isMenuButtonVisible={isMenuButtonVisible} />
       <main className="flex-1 pb-20">

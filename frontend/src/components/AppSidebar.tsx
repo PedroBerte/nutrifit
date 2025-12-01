@@ -133,7 +133,7 @@ export function AppSidebar() {
             </p>
             <button
               onClick={() => toggleSidebar()}
-              className="p-2 hover:bg-neutral-dark-02 rounded-lg transition-colors"
+              className="p-2 hover:bg-neutral-dark-03 rounded-lg transition-colors"
             >
               <ArrowRightFromLine size={22} className="text-neutral-white-02" />
             </button>
@@ -151,7 +151,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className="h-12 text-base font-medium hover:bg-neutral-dark-02 rounded-xl transition-colors"
+                      className="h-12 text-base font-medium hover:bg-neutral-dark-03 rounded-xl transition-colors"
                     >
                       <a
                         href={item.url}
@@ -174,7 +174,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="h-14 hover:bg-neutral-dark-02 rounded-xl transition-colors">
+                <SidebarMenuButton className="h-14 hover:bg-neutral-dark-03 rounded-xl transition-colors">
                   <div className="flex items-center gap-3 w-full px-2">
                     <AvatarImage
                       imageUrl={userData?.imageUrl}

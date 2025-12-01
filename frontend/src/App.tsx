@@ -10,7 +10,7 @@ function App() {
 
   return (
     <ToastProvider>
-      <div className="flex min-h-screen bg-neutral-dark-01 px-4 py-4">
+      <div className="flex min-h-screen bg-neutral-dark-01 px-4 py-4 w-full max-w-screen-lg mx-auto">
         <SidebarProvider>
           <Outlet />
         </SidebarProvider>

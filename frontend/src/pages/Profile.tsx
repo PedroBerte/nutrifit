@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById } from "@/services/api/user";
@@ -39,6 +40,7 @@ import {
 import { FeedbackModal } from "@/components/feedback/FeedbackModal";
 
 export default function Profile() {
+    const navigate = useNavigate();
   const { user, logout } = useAuth();
   const {
     data: userData,
@@ -68,7 +70,7 @@ export default function Profile() {
   if (error || !userData) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3">
-        <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-500/10">
           <User className="w-6 h-6 text-red-500" />
         </div>
         <p className="text-red-500">Erro ao carregar perfil</p>
@@ -160,10 +162,10 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-dark-01 pt-2">
+    <div className="min-h-screen pt-2 bg-neutral-dark-01">
       {/* Header com gradiente */}
       <motion.div
-        className="max-w-4xl mx-auto flex items-center justify-between"
+        className="flex items-center justify-between max-w-4xl mx-auto"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -193,31 +195,31 @@ export default function Profile() {
       )}
 
       {/* Conteúdo principal */}
-      <div className="max-w-4xl mx-auto px-4 pb-8">
+      <div className="max-w-4xl px-4 pb-8 mx-auto">
         <div className="grid gap-4 md:grid-cols-2">
 
           {/* Card de perfil */}
           <motion.div
-            className="max-w-4xl w-full mx-auto mt-6 bg-neutral-dark-03 rounded-2xl shadow-xl border border-neutral-white-01/5 overflow-hidden"
+            className="w-full max-w-4xl mx-auto mt-6 overflow-hidden border shadow-xl bg-neutral-dark-03 rounded-2xl border-neutral-white-01/5"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             {/* Banner top - mais suave e com gradiente radial */}
-            <div className="h-24 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 relative overflow-hidden">
+            <div className="relative h-24 overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5">
               <div className="absolute inset-0 bg-gradient-to-t from-neutral-dark-03 via-transparent to-transparent" />
             </div>
 
             {/* Conteúdo do perfil */}
             <div className="px-6 pb-6 -mt-16">
-              <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end">
+              <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-end">
                 {/* Avatar */}
                 <div className="relative">
                   <ProfileImageUpload user={userData} onImageUpdate={() => refetch()} />
                 </div>
 
                 {/* Info principal */}
-                <div className="flex-1 space-y-3 pb-2">
+                <div className="flex-1 pb-2 space-y-3">
                   <div>
                     <h2 className="text-2xl font-bold text-neutral-white-01">
                       {userData.name}
@@ -240,13 +242,13 @@ export default function Profile() {
           {/* Bond Management Section - Only for Students */}
           {userData.profile?.id === UserProfiles.STUDENT && (
             <motion.div
-              className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5 md:col-span-2"
+              className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
                   <Users className="w-4 h-4 text-primary" />
                 </div>
                 <h3 className="font-semibold text-neutral-white-01">
@@ -255,12 +257,20 @@ export default function Profile() {
               </div>
 
               {loadingBond ? (
-                <p className="text-sm text-neutral-white-02 text-center py-4">
+                <p className="py-4 text-sm text-center text-neutral-white-02">
                   Carregando vínculo...
                 </p>
               ) : studentBond && studentBond.status === "P" && studentBond.professional ? (
-                <div className="relative bg-yellow-500/10 rounded-lg p-4 border border-yellow-500/30 overflow-hidden">
-                  <div className="flex gap-3 items-center">
+                <div
+                  className="relative p-4 overflow-hidden transition border rounded-lg cursor-pointer bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20"
+                  onClick={() => {
+                    if (studentBond.professional?.id) {
+                      navigate(`/professional/${studentBond.professional.id}`);
+                    }
+                  }}
+                  title={`Ver perfil de ${studentBond.professional?.name ?? "Profissional"}`}
+                >
+                  <div className="flex items-center gap-3">
                     <AvatarImage
                       imageUrl={studentBond.professional.imageUrl}
                       name={studentBond.professional.name}
@@ -270,11 +280,11 @@ export default function Profile() {
                       <h4 className="font-semibold text-yellow-700 truncate">
                         {studentBond.professional.name}
                       </h4>
-                      <p className="text-xs text-yellow-700 mt-1">
+                      <p className="mt-1 text-xs text-yellow-700">
                         Proposta de vínculo pendente
                       </p>
                       {studentBond.createdAt && (
-                        <p className="text-xs text-yellow-700 mt-1">
+                        <p className="mt-1 text-xs text-yellow-700">
                           Enviada em {new Date(studentBond.createdAt).toLocaleDateString("pt-BR")}
                         </p>
                       )}
@@ -282,10 +292,10 @@ export default function Profile() {
                   </div>
                 </div>
               ) : studentBond && studentBond.status === "A" && studentBond.professional ? (
-                <div className="relative bg-gradient-to-br from-primary/5 via-primary/3 to-transparent rounded-lg p-4 border border-primary/20 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
+                <div className="relative p-4 overflow-hidden border rounded-lg bg-gradient-to-br from-primary/5 via-primary/3 to-transparent border-primary/20">
+                  <div className="absolute inset-0 opacity-50 bg-gradient-to-br from-primary/5 to-transparent" />
                   <div className="relative flex flex-col items-start gap-3 sm:gap-4">
-                    <div className="flex gap-3 items-start sm:gap-4 w-full">
+                    <div className="flex items-start w-full gap-3 sm:gap-4">
                       <div className="flex-shrink-0">
                         <AvatarImage
                           imageUrl={studentBond.professional.imageUrl}
@@ -294,22 +304,22 @@ export default function Profile() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-neutral-white-01 truncate">
+                        <h4 className="font-semibold truncate text-neutral-white-01">
                           {studentBond.professional.name}
                         </h4>
-                        <p className="text-sm text-neutral-white-02 truncate overflow-hidden">
+                        <p className="overflow-hidden text-sm truncate text-neutral-white-02">
                           {studentBond.professional.email}
                         </p>
                         {studentBond.professional.professionalCredential && (
                           <div className="flex flex-wrap gap-1.5 mt-2">
-                            <span className="px-2 py-1 bg-amber-500/10 text-amber-400 text-xs rounded-md border border-amber-500/20">
+                            <span className="px-2 py-1 text-xs border rounded-md bg-amber-500/10 text-amber-400 border-amber-500/20">
                               {studentBond.professional.professionalCredential.type === "CRN" ? "CRN" : "CREF"}{" "}
                               {studentBond.professional.professionalCredential.credentialId}
                             </span>
                           </div>
                         )}
                         {studentBond.createdAt && (
-                          <p className="text-xs text-neutral-white-02 mt-2">
+                          <p className="mt-2 text-xs text-neutral-white-02">
                             Vínculo desde{" "}
                             {new Date(studentBond.createdAt).toLocaleDateString(
                               "pt-BR"
@@ -318,7 +328,7 @@ export default function Profile() {
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 w-full pt-2 border-t border-neutral-white-01/10">
+                    <div className="flex flex-wrap w-full gap-2 pt-2 border-t border-neutral-white-01/10">
                       <Button
                         variant="outline"
                         size="sm"
@@ -332,16 +342,16 @@ export default function Profile() {
                         size="sm"
                         onClick={() => setShowUnbondDialog(true)}
                         disabled={updateBondMutation.isPending}
-                        className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
+                        className="flex-1 text-red-400 border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50"
                       >
-                        <X className="h-4 w-4 mr-1" />
+                        <X className="w-4 h-4 mr-1" />
                         Cancelar vínculo
                       </Button>
                     </div>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-neutral-white-02 text-center py-4">
+                <p className="py-4 text-sm text-center text-neutral-white-02">
                   Nenhum vínculo ativo no momento
                 </p>
               )}
@@ -350,13 +360,13 @@ export default function Profile() {
 
           {/* Informações de Contato */}
           <motion.div
-            className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5"
+            className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
                 <Mail className="w-4 h-4 text-primary" />
               </div>
               <h3 className="font-semibold text-neutral-white-01">Contato</h3>
@@ -366,7 +376,7 @@ export default function Profile() {
                 <Mail className="w-4 h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-neutral-white-02 mb-0.5">Email</p>
-                  <p className="text-sm text-neutral-white-01 break-all">
+                  <p className="text-sm break-all text-neutral-white-01">
                     {userData.email}
                   </p>
                 </div>
@@ -391,13 +401,13 @@ export default function Profile() {
 
           {/* Informações Pessoais */}
           <motion.div
-            className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5"
+            className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.25 }}
           >
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
                 <User className="w-4 h-4 text-primary" />
               </div>
               <h3 className="font-semibold text-neutral-white-01">
@@ -437,46 +447,46 @@ export default function Profile() {
           {/* Endereço */}
           {userData.address && (
             <motion.div
-              className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5 md:col-span-2"
+              className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
                   <Home className="w-4 h-4 text-primary" />
                 </div>
                 <h3 className="font-semibold text-neutral-white-01">
                   Endereço
                 </h3>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div>
-                  <p className="text-xs text-neutral-white-02 mb-1">CEP</p>
+                  <p className="mb-1 text-xs text-neutral-white-02">CEP</p>
                   <p className="text-sm text-neutral-white-01">
                     {userData.address.zipCode || "—"}
                   </p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-xs text-neutral-white-02 mb-1">Rua</p>
+                  <p className="mb-1 text-xs text-neutral-white-02">Rua</p>
                   <p className="text-sm text-neutral-white-01">
                     {userData.address.addressLine || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-neutral-white-02 mb-1">Número</p>
+                  <p className="mb-1 text-xs text-neutral-white-02">Número</p>
                   <p className="text-sm text-neutral-white-01">
                     {userData.address.number || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-neutral-white-02 mb-1">Cidade</p>
+                  <p className="mb-1 text-xs text-neutral-white-02">Cidade</p>
                   <p className="text-sm text-neutral-white-01">
                     {userData.address.city || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-neutral-white-02 mb-1">Estado</p>
+                  <p className="mb-1 text-xs text-neutral-white-02">Estado</p>
                   <p className="text-sm text-neutral-white-01">
                     {userData.address.state || "—"}
                   </p>
@@ -488,20 +498,20 @@ export default function Profile() {
           {/* Credenciais Profissionais */}
           {userData.professionalCredential?.biography && (
             <motion.div
-              className="bg-neutral-dark-03 rounded-xl p-5 border border-neutral-white-01/5 md:col-span-2"
+              className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.35 }}
             >
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
                   <FileText className="w-4 h-4 text-primary" />
                 </div>
                 <h3 className="font-semibold text-neutral-white-01">
                   Sobre mim
                 </h3>
               </div>
-              <p className="text-sm text-neutral-white-02 leading-relaxed">
+              <p className="text-sm leading-relaxed text-neutral-white-02">
                 {userData.professionalCredential.biography}
               </p>
             </motion.div>
@@ -523,7 +533,7 @@ export default function Profile() {
           <Button
             onClick={logout}
             variant="outline"
-            className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
+            className="w-full text-red-400 border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Sair da conta

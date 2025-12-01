@@ -368,7 +368,7 @@ export default function Professional() {
         <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
           <button
             onClick={() => toggleSection("personalInfo")}
-            className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-02 transition-colors"
+            className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-03 transition-colors"
           >
             <h3 className="text-lg font-semibold text-neutral-white-01">
               Informações Pessoais
@@ -427,7 +427,7 @@ export default function Professional() {
           <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
             <button
               onClick={() => toggleSection("credentials")}
-              className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-02 transition-colors"
+              className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-03 transition-colors"
             >
               <h3 className="text-lg font-semibold text-neutral-white-01">
                 Credenciais
@@ -482,7 +482,7 @@ export default function Professional() {
           <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
             <button
               onClick={() => toggleSection("address")}
-              className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-02 transition-colors"
+              className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-03 transition-colors"
             >
               <h3 className="text-lg font-semibold text-neutral-white-01">
                 Endereço

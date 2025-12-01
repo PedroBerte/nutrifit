@@ -122,22 +122,23 @@ export default function ProfessionalCard({
 
   return (
     <div
-      className={`bg-neutral-dark-03 p-4 rounded-xl cursor-pointer hover:bg-neutral-dark-02 transition-colors relative ${
+      className={`bg-neutral-dark-03 p-3 xs:p-4 rounded-xl cursor-pointer hover:bg-neutral-dark-03 transition-colors relative ${
         isMyProfessional ? "ring-2 ring-primary/50" : ""
       }`}
       onClick={() => navigate(`/professional/${id}`)}
     >
       {/* Badge "Seu Personal" */}
       {isMyProfessional && (
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-primary/20 text-primary px-2.5 py-1 rounded-full text-xs font-semibold border border-primary/30">
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          Seu Personal
+        <div className="absolute top-2 xs:top-3 left-2 xs:left-3 z-10 flex items-center gap-1 xs:gap-1.5 bg-primary/20 text-primary px-2 xs:px-2.5 py-0.5 xs:py-1 rounded-full text-[10px] xs:text-xs font-semibold border border-primary/30">
+          <CheckCircle2 className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
+          <span className="hidden xs:inline">Seu Personal</span>
+          <span className="xs:hidden">Seu</span>
         </div>
       )}
 
       {/* Botão de Favorito */}
       <motion.button
-        className="absolute top-3 right-3 z-10"
+        className="absolute z-10 top-2 xs:top-3 right-2 xs:right-3"
         onClick={handleFavoriteClick}
         disabled={isTogglingFavorite}
         whileTap={{ scale: 0.9 }}
@@ -151,9 +152,9 @@ export default function ProfessionalCard({
         />
       </motion.button>
 
-      <div className={`flex gap-3 pr-8 ${isMyProfessional ? "mt-8" : ""}`}>
-        <div className="flex-1 min-w-0">
-          <div className="flex gap-3">
+      <div className={`flex gap-2 xs:gap-3 ${isMyProfessional ? "mt-6 xs:mt-8" : ""}`}>
+        <div className="flex-1 min-w-0 pr-5 xs:pr-6">
+          <div className="flex gap-2 xs:gap-3">
             <AvatarImage
               imageUrl={imageUrl}
               name={name}
@@ -161,22 +162,22 @@ export default function ProfessionalCard({
               id={id}
               size="md"
             />
-            <div className="flex flex-col">
-              <p className="text-sm font-semibold text-gray-400">{subtitle}</p>
+            <div className="flex flex-col flex-1 min-w-0">
+              <p className="text-xs font-semibold text-gray-400 xs:text-sm">{subtitle}</p>
 
-              <div className="flex gap-1 items-center">
-                <img src={Verified} alt="" className="w-4 h-4" />
-                <p className="text-lg font-semibold truncate">{name}</p>
+              <div className="flex items-center min-w-0 gap-1">
+                <img src={Verified} alt="" className="flex-shrink-0 w-3 h-3 xs:w-4 xs:h-4" />
+                <p className="text-base font-semibold truncate xs:text-lg">{name}</p>
               </div>
             </div>
           </div>
 
           {/* Tags */}
-          <div className="flex flex-wrap items-center gap-2 mt-2">
+          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 mt-2">
             {tags && tags.filter(Boolean).map((tag, index) => (
               <span
                 key={index}
-                className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full whitespace-nowrap"
+                className="text-[10px] xs:text-xs bg-primary/20 text-primary px-1.5 xs:px-2 py-0.5 xs:py-1 rounded-full whitespace-nowrap"
               >
                 {tag}
               </span>
@@ -184,7 +185,7 @@ export default function ProfessionalCard({
           </div>
 
           {/* Localização, Modalidade e Rating Badge */}
-          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+          <div className="flex flex-wrap items-center gap-2 xs:gap-3 mt-2 text-[10px] xs:text-xs text-gray-400">
             {rating && rating > 0 && (() => {
               const badge = getRatingBadge(rating, totalFeedbacks);
               if (!badge) return null;
@@ -192,7 +193,8 @@ export default function ProfessionalCard({
               return (
                 <span className="flex items-center gap-1">
                   <Award className="w-3 h-3" />
-                  {badge.text}
+                  <span className="hidden xs:inline">{badge.text}</span>
+                  <span className="xs:hidden">⭐</span>
                 </span>
               );
             })()}
@@ -200,18 +202,18 @@ export default function ProfessionalCard({
             {attendanceMode !== null && attendanceMode !== undefined && (
               <span className="flex items-center gap-1">
                 {getAttendanceModeIcon(attendanceMode)}
-                {getAttendanceModeName(attendanceMode)}
+                <span className="hidden xs:inline">{getAttendanceModeName(attendanceMode)}</span>
               </span>
             )}
             {city && state && (
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {city}, {state}
+              <span className="flex items-center min-w-0 gap-1">
+                <MapPin className="flex-shrink-0 w-3 h-3" />
+                <span className="truncate">{city}, {state}</span>
               </span>
             )}
           </div>
 
-          <p className="text-xs text-gray-500 line-clamp-4 mt-1">
+          <p className="mt-1 text-[10px] xs:text-xs text-gray-500 line-clamp-2 xs:line-clamp-4">
             {description}
           </p>
         </div>

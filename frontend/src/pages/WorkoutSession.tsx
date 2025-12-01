@@ -469,7 +469,7 @@ export default function WorkoutSession() {
       <div className="sticky rounded-lg top-0 z-10 bg-primary/30 backdrop-blur-sm border-b border-neutral-dark-02/30">
         {/* Header principal - clicável */}
         <div
-          className="px-4 pt-3 pb-3 cursor-pointer hover:bg-neutral-dark-02/30 transition-colors"
+          className="px-4 pt-3 pb-3 cursor-pointer hover:bg-neutral-dark-03/30 transition-colors"
           onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
         >
           <div className="flex items-center justify-between">
@@ -981,7 +981,7 @@ function ExerciseCard({
     <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
       {/* Cabeçalho do Exercício - Clicável para colapsar */}
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-neutral-dark-02/50 transition-colors"
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-neutral-dark-03/50 transition-colors"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1101,32 +1101,32 @@ function ExerciseCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-shrink-0 px-3"
+                  className="flex-shrink-0 px-2 xs:px-3"
                   onClick={() => setShowVideoModal(true)}
                   disabled={!exercise.exerciseUrl}
                 >
                   <Video size={16} />
-                  <span>Vídeo</span>
+                  <span className="hidden xs:inline">Vídeo</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-shrink-0 px-3"
+                  className="flex-shrink-0 px-2 xs:px-3"
                   onClick={() =>
                     navigate(`/exercise/${exercise.exerciseId}/history`)
                   }
                 >
                   <ChartBar size={16} />
-                  <span>Evolução</span>
+                  <span className="hidden xs:inline">Evolução</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-shrink-0 px-3"
+                  className="flex-shrink-0 px-2 xs:px-3"
                   onClick={() => setShowNotes(!showNotes)}
                 >
                   <Edit2 size={16} />
-                  <span>Notas</span>
+                  <span className="hidden xs:inline">Notas</span>
                 </Button>
               </div>
 

@@ -62,24 +62,23 @@ export default function Students() {
 
       {/* Search Bar */}
       <div className="relative">
-        <Search
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-          size={20}
-        />
-        <Input
-          className="border-none bg-neutral-dark-03 pl-10"
-          placeholder="Buscar por nome, email ou telefone..."
-          value={searchInput}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
+        <div className="w-full max-w-md mx-auto">
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+              size={20}
+            />
+            <Input
+              className="border-none bg-neutral-dark-03 pl-10 rounded-lg w-full py-2 text-base focus:ring-2 focus:ring-primary transition-all"
+              value={searchInput}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Students List */}
       {isLoading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground">Carregando alunos...</p>
-        </div>
-      ) : students.length === 0 ? (
         <div className="flex flex-1 items-center justify-center flex-col">
           {!debouncedSearch &&
             <p className="text-muted-foreground pt-4">
@@ -91,11 +90,12 @@ export default function Students() {
               Nenhum aluno encontrado
             </p>
           }
+          {/* Responsive image: hidden on very small screens */}
           {!debouncedSearch &&
             <img
               src={PersonalSemAlunos}
               alt="Nenhum aluno ativo pt-2"
-              className="w-64 object-contain"
+              className="w-64 object-contain max-w-full xs:hidden sm:block"
             />
           }
         </div>
@@ -109,7 +109,7 @@ export default function Students() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate(`/students/${student.studentId}`)}
-              className="bg-neutral-dark-03 rounded-lg p-4 cursor-pointer hover:bg-neutral-dark-02 transition-colors"
+              className="bg-neutral-dark-03 rounded-lg p-4 cursor-pointer hover:bg-neutral-dark-03 transition-colors"
             >
               <div className="flex items-center gap-4">
                 {/* Avatar */}
@@ -119,6 +119,7 @@ export default function Students() {
                   email={student.studentEmail}
                   id={student.studentId}
                   size="lg"
+                  className="w-12 h-12 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0"
                 />
 
                 {/* Student Info */}
@@ -132,7 +133,7 @@ export default function Students() {
 
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                     <Mail size={14} className="flex-shrink-0" />
-                    <span className="truncate">{student.studentEmail}</span>
+                    <span className="w-full break-words whitespace-normal block text-xs sm:text-sm">{student.studentEmail}</span>
                   </div>
 
                   {student.studentPhone && (
@@ -141,11 +142,18 @@ export default function Students() {
                       <span>{student.studentPhone}</span>
                     </div>
                   )}
+
+                  {/* Age Badge on mobile (falls below info) */}
+                  {student.studentDateOfBirth && calculateAge(student.studentDateOfBirth) > 0 && (
+                    <div className="bg-primary/10 w-min whitespace-nowrap text-primary px-3 py-1 rounded-full text-xs font-medium mt-2 block sm:hidden">
+                      {calculateAge(student.studentDateOfBirth)} anos
+                    </div>
+                  )}
                 </div>
 
-                {/* Age Badge (if available) */}
-                {student.studentDateOfBirth && (
-                  <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                {/* Age Badge on desktop (hidden on mobile) */}
+                {student.studentDateOfBirth && calculateAge(student.studentDateOfBirth) > 0 && (
+                  <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium sm:block hidden">
                     {calculateAge(student.studentDateOfBirth)} anos
                   </div>
                 )}

@@ -100,7 +100,7 @@ export default function PersonalHome() {
       <div
         key={item.id}
         onClick={() => navigate("/agenda")}
-        className="flex flex-row items-center w-full bg-neutral-dark-03 rounded-md px-3 cursor-pointer hover:bg-neutral-dark-02/50 transition-colors"
+        className="flex flex-row items-center w-full bg-neutral-dark-03 rounded-md px-3 cursor-pointer hover:bg-neutral-dark-03/50 transition-colors"
       >
         <div className="flex flex-col flex-1 gap-2">
           <p className="font-bold">

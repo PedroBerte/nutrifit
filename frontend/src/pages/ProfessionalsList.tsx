@@ -131,7 +131,7 @@ export default function ProfessionalsList() {
 
   return (
     <motion.div
-      className="flex flex-1 flex-col gap-4 mt-4"
+      className="flex flex-col flex-1 gap-4 mt-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -154,14 +154,14 @@ export default function ProfessionalsList() {
 
       {/* Pills de Filtros Ativos */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 xs:gap-2">
           {showOnlyFavorites && (
-            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
-              <Bookmark className="w-3 h-3" />
-              <span>Favoritos</span>
+            <div className="flex items-center gap-1 px-2 py-1 text-xs rounded-full xs:px-3 bg-primary/20 text-primary xs:text-sm">
+              <Bookmark className="flex-shrink-0 w-3 h-3" />
+              <span className="hidden xs:inline">Favoritos</span>
               <button
                 onClick={() => setShowOnlyFavorites(false)}
-                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+                className="ml-0.5 xs:ml-1 hover:bg-primary/30 rounded-full p-0.5"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -169,14 +169,14 @@ export default function ProfessionalsList() {
           )}
           
           {selectedMode !== null && (
-            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
+            <div className="flex items-center gap-1 px-2 py-1 text-xs rounded-full xs:px-3 bg-primary/20 text-primary xs:text-sm">
               <span>
                 {selectedMode === AttendanceMode.Presencial ? "Presencial" : 
                  selectedMode === AttendanceMode.Online ? "Online" : "Híbrido"}
               </span>
               <button
                 onClick={() => setSelectedMode(null)}
-                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+                className="ml-0.5 xs:ml-1 hover:bg-primary/30 rounded-full p-0.5"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -184,11 +184,11 @@ export default function ProfessionalsList() {
           )}
           
           {selectedTag && (
-            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
-              <span>{selectedTag}</span>
+            <div className="flex items-center gap-1 px-2 xs:px-3 py-1 bg-primary/20 text-primary rounded-full text-xs xs:text-sm max-w-[140px] xs:max-w-none">
+              <span className="truncate">{selectedTag}</span>
               <button
                 onClick={() => setSelectedTag(null)}
-                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+                className="ml-0.5 xs:ml-1 hover:bg-primary/30 rounded-full p-0.5 flex-shrink-0"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -196,12 +196,12 @@ export default function ProfessionalsList() {
           )}
           
           {selectedCity && (
-            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
-              <MapPin className="w-3 h-3" />
-              <span>{selectedCity}</span>
+            <div className="flex items-center gap-1 px-2 xs:px-3 py-1 bg-primary/20 text-primary rounded-full text-xs xs:text-sm max-w-[120px] xs:max-w-none">
+              <MapPin className="flex-shrink-0 w-3 h-3" />
+              <span className="truncate">{selectedCity}</span>
               <button
                 onClick={() => setSelectedCity(null)}
-                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+                className="ml-0.5 xs:ml-1 hover:bg-primary/30 rounded-full p-0.5 flex-shrink-0"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -209,12 +209,12 @@ export default function ProfessionalsList() {
           )}
           
           {selectedDistance !== null && (
-            <div className="flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
-              <MapPin className="w-3 h-3" />
-              <span>{selectedDistance} km</span>
+            <div className="flex items-center gap-1 px-2 py-1 text-xs rounded-full xs:px-3 bg-primary/20 text-primary xs:text-sm">
+              <MapPin className="flex-shrink-0 w-3 h-3" />
+              <span>{selectedDistance}km</span>
               <button
                 onClick={() => setSelectedDistance(null)}
-                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+                className="ml-0.5 xs:ml-1 hover:bg-primary/30 rounded-full p-0.5"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -223,9 +223,9 @@ export default function ProfessionalsList() {
           
           <button
             onClick={clearFilters}
-            className="px-3 py-1 text-sm text-gray-400 hover:text-gray-300 underline"
+            className="px-2 py-1 text-xs text-gray-400 underline xs:px-3 xs:text-sm hover:text-gray-300"
           >
-            Limpar todos
+            Limpar
           </button>
         </div>
       )}
@@ -248,14 +248,15 @@ export default function ProfessionalsList() {
                 onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
                 className="w-full"
               >
-                <Bookmark className="w-4 h-4 mr-2" />
-                {showOnlyFavorites ? "Mostrando apenas favoritos" : "Mostrar apenas favoritos"}
+                <Bookmark className="flex-shrink-0 w-4 h-4" />
+                <span className="hidden xs:inline">{showOnlyFavorites ? "Mostrando apenas favoritos" : "Mostrar apenas favoritos"}</span>
+                <span className="xs:hidden">{showOnlyFavorites ? "Apenas favoritos" : "Só favoritos"}</span>
               </Button>
             </div>
 
             {/* Modalidade */}
             <div>
-              <label className="text-sm text-gray-400 block mb-2">Modalidade de Atendimento</label>
+              <label className="block mb-2 text-sm text-gray-400">Modalidade de Atendimento</label>
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
@@ -284,10 +285,10 @@ export default function ProfessionalsList() {
             {/* Tags */}
             {allTags.length > 0 && (
               <div>
-                <label className="text-sm text-gray-400 block mb-2">
+                <label className="block mb-2 text-sm text-gray-400">
                   Especialidades ({allTags.length})
                 </label>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide">
                   {allTags.map((tag) => (
                     <Button
                       key={tag}
@@ -306,10 +307,10 @@ export default function ProfessionalsList() {
             {/* Cidade */}
             {allCities.length > 0 && (
               <div>
-                <label className="text-sm text-gray-400 block mb-2">
+                <label className="block mb-2 text-sm text-gray-400">
                   Cidades ({allCities.length})
                 </label>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide">
                   {allCities.map((city) => (
                     <Button
                       key={city}
@@ -331,15 +332,16 @@ export default function ProfessionalsList() {
 
             {/* Distância (geolocalização) */}
             <div>
-              <label className="text-sm text-gray-400 flex items-center gap-2 mb-2">
+              <label className="flex items-center gap-2 mb-2 text-sm text-gray-400">
                 <MapPin className="w-4 h-4" />
                 Filtrar por distância
               </label>
               {!userHasAddress ? (
-                <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <div className="flex items-start gap-2 p-2 border rounded-lg xs:p-3 bg-yellow-500/10 border-yellow-500/30">
                   <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-yellow-500">
-                    Complete seu perfil com endereço para usar este filtro
+                    <span className="hidden xs:inline">Complete seu perfil com endereço para usar este filtro</span>
+                    <span className="xs:hidden">Adicione seu endereço no perfil</span>
                   </p>
                 </div>
               ) : (
@@ -371,15 +373,16 @@ export default function ProfessionalsList() {
             </div>
           </div>
 
-          <DrawerFooter className="border-t pt-4">
+          <DrawerFooter className="gap-2 pt-4 border-t">
             <Button 
               variant="outline" 
               onClick={clearFilters} 
               className="w-full"
               disabled={!hasActiveFilters}
             >
-              <X className="w-4 h-4 mr-2" />
-              Limpar Filtros
+              <X className="w-4 h-4" />
+              <span className="hidden xs:inline">Limpar Filtros</span>
+              <span className="xs:hidden">Limpar</span>
             </Button>
             <Button onClick={() => setShowFilters(false)} className="w-full">
               Fechar
@@ -391,7 +394,7 @@ export default function ProfessionalsList() {
       {isLoading && <p>Carregando profissionais...</p>}
 
       {!isLoading && filteredProfessionals && filteredProfessionals.length === 0 && (
-        <div className="text-center text-gray-400 py-8">
+        <div className="py-8 text-center text-gray-400">
           Nenhum profissional encontrado com os filtros selecionados.
         </div>
       )}
