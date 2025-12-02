@@ -170,7 +170,7 @@ export default function Profile() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-2xl font-bold text-neutral-white-01">
+        <h1 className="text-xl xs:text-2xl font-bold text-neutral-white-01">
           Meu Perfil
         </h1>
         <Button
@@ -179,8 +179,8 @@ export default function Profile() {
           className="border-primary/30 hover:border-primary hover:bg-primary/10"
           onClick={() => setIsUpdateDrawerOpen(true)}
         >
-          <Edit className="w-4 h-4 mr-2" />
-          Editar
+          <Edit className="w-4 h-4" />
+          <span className="hidden xs:inline">Editar</span>
         </Button>
       </motion.div>
 
@@ -195,42 +195,42 @@ export default function Profile() {
       )}
 
       {/* Conteúdo principal */}
-      <div className="max-w-4xl px-4 pb-8 mx-auto">
-        <div className="grid gap-4 md:grid-cols-2">
+      <div className="max-w-4xl pb-8 mx-auto">
+        <div className="grid gap-3 xs:gap-4 md:grid-cols-2">
 
           {/* Card de perfil */}
           <motion.div
-            className="w-full max-w-4xl mx-auto mt-6 overflow-hidden border shadow-xl bg-neutral-dark-03 rounded-2xl border-neutral-white-01/5"
+            className="w-full max-w-4xl mx-auto mt-4 xs:mt-6 overflow-hidden border shadow-xl bg-neutral-dark-03 rounded-xl xs:rounded-2xl border-neutral-white-01/5"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             {/* Banner top - mais suave e com gradiente radial */}
-            <div className="relative h-24 overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5">
+            <div className="relative h-16 xs:h-24 overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5">
               <div className="absolute inset-0 bg-gradient-to-t from-neutral-dark-03 via-transparent to-transparent" />
             </div>
 
             {/* Conteúdo do perfil */}
-            <div className="px-6 pb-6 -mt-16">
-              <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-end">
+            <div className="px-4 xs:px-6 pb-4 xs:pb-6 -mt-12 xs:-mt-16">
+              <div className="flex flex-col items-start gap-4 xs:gap-6 sm:flex-row sm:items-end">
                 {/* Avatar */}
                 <div className="relative">
                   <ProfileImageUpload user={userData} onImageUpdate={() => refetch()} />
                 </div>
 
                 {/* Info principal */}
-                <div className="flex-1 pb-2 space-y-3">
+                <div className="flex-1 pb-2 space-y-2 xs:space-y-3 min-w-0">
                   <div>
-                    <h2 className="text-2xl font-bold text-neutral-white-01">
+                    <h2 className="text-xl xs:text-2xl font-bold text-neutral-white-01 truncate">
                       {userData.name}
                     </h2>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 xs:gap-2">
                     {userData.profile?.id !== UserProfiles.STUDENT && getProfileBadge()}
                     {userData.professionalCredential && (
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium bg-amber-500/10 text-amber-400 border-amber-500/20">
-                        <Award className="w-4 h-4" />
-                        {userData.professionalCredential.type === "CRN" ? "CRN" : "CREF"} {userData.professionalCredential.credentialId}
+                      <div className="inline-flex items-center gap-1 xs:gap-1.5 px-2 xs:px-3 py-1 xs:py-1.5 rounded-full border text-[10px] xs:text-xs font-medium bg-amber-500/10 text-amber-400 border-amber-500/20">
+                        <Award className="w-3 h-3 xs:w-4 xs:h-4" />
+                        <span className="hidden xs:inline">{userData.professionalCredential.type === "CRN" ? "CRN" : "CREF"}</span> {userData.professionalCredential.credentialId}
                       </div>
                     )}
                   </div>
@@ -242,16 +242,16 @@ export default function Profile() {
           {/* Bond Management Section - Only for Students */}
           {userData.profile?.id === UserProfiles.STUDENT && (
             <motion.div
-              className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
+              className="p-4 xs:p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                  <Users className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-2 mb-3 xs:mb-4">
+                <div className="flex items-center justify-center w-7 h-7 xs:w-8 xs:h-8 rounded-lg bg-primary/10">
+                  <Users className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-primary" />
                 </div>
-                <h3 className="font-semibold text-neutral-white-01">
+                <h3 className="font-semibold text-sm xs:text-base text-neutral-white-01">
                   Vínculos
                 </h3>
               </div>
@@ -292,34 +292,37 @@ export default function Profile() {
                   </div>
                 </div>
               ) : studentBond && studentBond.status === "A" && studentBond.professional ? (
-                <div className="relative p-4 overflow-hidden border rounded-lg bg-gradient-to-br from-primary/5 via-primary/3 to-transparent border-primary/20">
+                <div className="relative p-3 xs:p-4 overflow-hidden border rounded-lg bg-gradient-to-br from-primary/5 via-primary/3 to-transparent border-primary/20">
                   <div className="absolute inset-0 opacity-50 bg-gradient-to-br from-primary/5 to-transparent" />
-                  <div className="relative flex flex-col items-start gap-3 sm:gap-4">
-                    <div className="flex items-start w-full gap-3 sm:gap-4">
+                  <div className="relative flex flex-col items-start gap-3">
+                    <div 
+                      className="flex items-start w-full gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => navigate(`/professional/${studentBond.professional?.id}`)}
+                    >
                       <div className="flex-shrink-0">
                         <AvatarImage
                           imageUrl={studentBond.professional.imageUrl}
                           name={studentBond.professional.name}
-                          size="lg"
+                          size="md"
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold truncate text-neutral-white-01">
+                        <h4 className="font-semibold text-sm xs:text-base truncate text-neutral-white-01">
                           {studentBond.professional.name}
                         </h4>
-                        <p className="overflow-hidden text-sm truncate text-neutral-white-02">
+                        <p className="overflow-hidden text-xs xs:text-sm truncate text-neutral-white-02">
                           {studentBond.professional.email}
                         </p>
                         {studentBond.professional.professionalCredential && (
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            <span className="px-2 py-1 text-xs border rounded-md bg-amber-500/10 text-amber-400 border-amber-500/20">
+                          <div className="flex flex-wrap gap-1.5 mt-1.5 xs:mt-2">
+                            <span className="px-1.5 xs:px-2 py-0.5 xs:py-1 text-[10px] xs:text-xs border rounded-md bg-amber-500/10 text-amber-400 border-amber-500/20">
                               {studentBond.professional.professionalCredential.type === "CRN" ? "CRN" : "CREF"}{" "}
                               {studentBond.professional.professionalCredential.credentialId}
                             </span>
                           </div>
                         )}
                         {studentBond.createdAt && (
-                          <p className="mt-2 text-xs text-neutral-white-02">
+                          <p className="mt-1.5 xs:mt-2 text-[10px] xs:text-xs text-neutral-white-02">
                             Vínculo desde{" "}
                             {new Date(studentBond.createdAt).toLocaleDateString(
                               "pt-BR"
@@ -332,8 +335,18 @@ export default function Profile() {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => navigate(`/professional/${studentBond.professional?.id}`)}
+                        className="flex-1 text-xs xs:text-sm border-primary/30 hover:border-primary hover:bg-primary/10"
+                      >
+                        <User className="w-3 h-3 xs:w-4 xs:h-4" />
+                        <span className="hidden xs:inline">Ver perfil</span>
+                        <span className="xs:hidden">Perfil</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setShowFeedbackModal(true)}
-                        className="flex-1 border-primary/30 hover:border-primary hover:bg-primary/10"
+                        className="flex-1 text-xs xs:text-sm border-primary/30 hover:border-primary hover:bg-primary/10"
                       >
                         Avaliar
                       </Button>
@@ -342,10 +355,10 @@ export default function Profile() {
                         size="sm"
                         onClick={() => setShowUnbondDialog(true)}
                         disabled={updateBondMutation.isPending}
-                        className="flex-1 text-red-400 border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50"
+                        className="flex-1 text-xs xs:text-sm text-red-400 border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50"
                       >
-                        <X className="w-4 h-4 mr-1" />
-                        Cancelar vínculo
+                        <X className="w-3 h-3 xs:w-4 xs:h-4" />
+                        <span className="hidden xs:inline">Cancelar</span>
                       </Button>
                     </div>
                   </div>
@@ -360,35 +373,35 @@ export default function Profile() {
 
           {/* Informações de Contato */}
           <motion.div
-            className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5"
+            className="p-4 xs:p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                <Mail className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-2 mb-3 xs:mb-4">
+              <div className="flex items-center justify-center w-7 h-7 xs:w-8 xs:h-8 rounded-lg bg-primary/10">
+                <Mail className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-primary" />
               </div>
-              <h3 className="font-semibold text-neutral-white-01">Contato</h3>
+              <h3 className="font-semibold text-sm xs:text-base text-neutral-white-01">Contato</h3>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <Mail className="w-4 h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
+            <div className="space-y-2 xs:space-y-3">
+              <div className="flex items-start gap-2 xs:gap-3">
+                <Mail className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-neutral-white-02 mb-0.5">Email</p>
-                  <p className="text-sm break-all text-neutral-white-01">
+                  <p className="text-[10px] xs:text-xs text-neutral-white-02 mb-0.5">Email</p>
+                  <p className="text-xs xs:text-sm break-all text-neutral-white-01">
                     {userData.email}
                   </p>
                 </div>
               </div>
               {userData.phoneNumber && (
-                <div className="flex items-start gap-3">
-                  <Phone className="w-4 h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2 xs:gap-3">
+                  <Phone className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-neutral-white-02 mb-0.5">
+                    <p className="text-[10px] xs:text-xs text-neutral-white-02 mb-0.5">
                       Telefone
                     </p>
-                    <p className="text-sm text-neutral-white-01">
+                    <p className="text-xs xs:text-sm text-neutral-white-01">
                       {userData.phoneNumber}
                     </p>
                   </div>
@@ -401,28 +414,28 @@ export default function Profile() {
 
           {/* Informações Pessoais */}
           <motion.div
-            className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5"
+            className="p-4 xs:p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.25 }}
           >
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                <User className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-2 mb-3 xs:mb-4">
+              <div className="flex items-center justify-center w-7 h-7 xs:w-8 xs:h-8 rounded-lg bg-primary/10">
+                <User className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-primary" />
               </div>
-              <h3 className="font-semibold text-neutral-white-01">
+              <h3 className="font-semibold text-sm xs:text-base text-neutral-white-01">
                 Dados Pessoais
               </h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2 xs:space-y-3">
               {userData.dateOfBirth && (
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-4 h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2 xs:gap-3">
+                  <Calendar className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-neutral-white-02 mb-0.5">
+                    <p className="text-[10px] xs:text-xs text-neutral-white-02 mb-0.5">
                       Nascimento
                     </p>
-                    <p className="text-sm text-neutral-white-01">
+                    <p className="text-xs xs:text-sm text-neutral-white-01">
                       {formatDate(userData.dateOfBirth)}
                       {calculateAge(userData.dateOfBirth) &&
                         ` • ${calculateAge(userData.dateOfBirth)} anos`}
@@ -431,11 +444,11 @@ export default function Profile() {
                 </div>
               )}
               {userData.sex && (
-                <div className="flex items-start gap-3">
-                  <VenusAndMars className="w-4 h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2 xs:gap-3">
+                  <VenusAndMars className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-neutral-white-02 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs text-neutral-white-02 mb-0.5">Sexo</p>
-                    <p className="text-sm text-neutral-white-01">
+                    <p className="text-[10px] xs:text-xs text-neutral-white-02 mb-0.5">Sexo</p>
+                    <p className="text-xs xs:text-sm text-neutral-white-01">
                       {getSexLabel(userData.sex)}
                     </p>
                   </div>
@@ -447,47 +460,47 @@ export default function Profile() {
           {/* Endereço */}
           {userData.address && (
             <motion.div
-              className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
+              className="p-4 xs:p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                  <Home className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-2 mb-3 xs:mb-4">
+                <div className="flex items-center justify-center w-7 h-7 xs:w-8 xs:h-8 rounded-lg bg-primary/10">
+                  <Home className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-primary" />
                 </div>
-                <h3 className="font-semibold text-neutral-white-01">
+                <h3 className="font-semibold text-sm xs:text-base text-neutral-white-01">
                   Endereço
                 </h3>
               </div>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 xs:gap-4 sm:grid-cols-4">
                 <div>
-                  <p className="mb-1 text-xs text-neutral-white-02">CEP</p>
-                  <p className="text-sm text-neutral-white-01">
+                  <p className="mb-0.5 xs:mb-1 text-[10px] xs:text-xs text-neutral-white-02">CEP</p>
+                  <p className="text-xs xs:text-sm text-neutral-white-01">
                     {userData.address.zipCode || "—"}
                   </p>
                 </div>
                 <div className="col-span-2">
-                  <p className="mb-1 text-xs text-neutral-white-02">Rua</p>
-                  <p className="text-sm text-neutral-white-01">
+                  <p className="mb-0.5 xs:mb-1 text-[10px] xs:text-xs text-neutral-white-02">Rua</p>
+                  <p className="text-xs xs:text-sm text-neutral-white-01 truncate">
                     {userData.address.addressLine || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="mb-1 text-xs text-neutral-white-02">Número</p>
-                  <p className="text-sm text-neutral-white-01">
+                  <p className="mb-0.5 xs:mb-1 text-[10px] xs:text-xs text-neutral-white-02">Número</p>
+                  <p className="text-xs xs:text-sm text-neutral-white-01">
                     {userData.address.number || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="mb-1 text-xs text-neutral-white-02">Cidade</p>
-                  <p className="text-sm text-neutral-white-01">
+                  <p className="mb-0.5 xs:mb-1 text-[10px] xs:text-xs text-neutral-white-02">Cidade</p>
+                  <p className="text-xs xs:text-sm text-neutral-white-01">
                     {userData.address.city || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="mb-1 text-xs text-neutral-white-02">Estado</p>
-                  <p className="text-sm text-neutral-white-01">
+                  <p className="mb-0.5 xs:mb-1 text-[10px] xs:text-xs text-neutral-white-02">Estado</p>
+                  <p className="text-xs xs:text-sm text-neutral-white-01">
                     {userData.address.state || "—"}
                   </p>
                 </div>
@@ -498,20 +511,20 @@ export default function Profile() {
           {/* Credenciais Profissionais */}
           {userData.professionalCredential?.biography && (
             <motion.div
-              className="p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
+              className="p-4 xs:p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.35 }}
             >
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                  <FileText className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-2 mb-3 xs:mb-4">
+                <div className="flex items-center justify-center w-7 h-7 xs:w-8 xs:h-8 rounded-lg bg-primary/10">
+                  <FileText className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-primary" />
                 </div>
-                <h3 className="font-semibold text-neutral-white-01">
+                <h3 className="font-semibold text-sm xs:text-base text-neutral-white-01">
                   Sobre mim
                 </h3>
               </div>
-              <p className="text-sm leading-relaxed text-neutral-white-02">
+              <p className="text-xs xs:text-sm leading-relaxed text-neutral-white-02">
                 {userData.professionalCredential.biography}
               </p>
             </motion.div>
@@ -522,12 +535,12 @@ export default function Profile() {
 
         {/* Footer info & logout */}
         <motion.div
-          className="mt-6 space-y-4"
+          className="mt-4 xs:mt-6 space-y-3 xs:space-y-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <p className="text-xs text-center text-neutral-white-02">
+          <p className="text-[10px] xs:text-xs text-center text-neutral-white-02">
             Membro desde {formatDate(userData.createdAt)}
           </p>
           <Button
@@ -535,8 +548,8 @@ export default function Profile() {
             variant="outline"
             className="w-full text-red-400 border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50"
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sair da conta
+            <LogOut className="w-4 h-4" />
+            <span>Sair da conta</span>
           </Button>
         </motion.div>
       </div>

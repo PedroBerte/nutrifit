@@ -22,13 +22,14 @@ export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
     (user?.profile === UserProfiles.STUDENT &&
       location.pathname === "/workout");
 
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, setOpenMobile } = useSidebar();
 
   const onMenuClick = () => {
     toggleSidebar();
   };
 
   const handleBackClick = () => {
+    setOpenMobile(false); // Garante que a sidebar feche ao voltar
     navigate(-1);
   };
 

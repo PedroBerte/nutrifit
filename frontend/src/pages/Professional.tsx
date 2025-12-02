@@ -7,7 +7,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useDeleteBond } from "@/services/api/bond";
+import { useDeleteBond, useUpdateBond } from "@/services/api/bond";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById } from "@/services/api/user";
 import { useNavigate, useParams } from "react-router-dom";
@@ -30,6 +30,7 @@ import {
   ChevronUp,
   Bookmark,
   MessageCircle,
+  X,
 } from "lucide-react";
 import type { CustomerProfessionalBondType } from "@/types/professional";
 import { useCreateBond, useGetBondsSent, useGetBondAsCustomer } from "@/services/api/bond";
@@ -38,17 +39,21 @@ import { useToast } from "@/contexts/ToastContext";
 import { useGetProfessionalFeedbacks } from "@/services/api/feedback";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { addFavorite, removeFavorite, useCheckFavorite } from "@/services/api/favorite";
+import { FeedbackModal } from "@/components/feedback/FeedbackModal";
 
 export default function Professional() {
     const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [showUnbondDialog, setShowUnbondDialog] = useState(false);
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const { mutate: deleteBond, isPending: isDeleting } = useDeleteBond();
+    const updateBondMutation = useUpdateBond();
   const { user, logout } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { data: bondsSent } = useGetBondsSent();
-  const { data: activeBond } = useGetBondAsCustomer();
+  const { data: bondsSent, refetch: refetchBondsSent } = useGetBondsSent();
+  const { data: activeBond, refetch: refetchActiveBond } = useGetBondAsCustomer();
   const { mutate: createProposal } = useCreateBond();
   const { data: feedbacks } = useGetProfessionalFeedbacks(id);
   const { data: isFavoriteData, refetch: refetchFavorite } = useCheckFavorite(id);
@@ -232,17 +237,17 @@ export default function Professional() {
   };
 
   return (
-    <div className="flex flex-1 flex-col h-full bg-neutral-dark-01">
-      <div className="flex-1 mt-6 overflow-y-auto flex gap-3 flex-col">
+    <div className="flex flex-col flex-1 h-full bg-neutral-dark-01">
+      <div className="flex flex-col flex-1 gap-3 mt-6 overflow-y-auto">
         {/* User Avatar and Basic Info */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center gap-3 bg-neutral-dark-03 p-4 rounded-lg relative"
+          className="relative flex flex-col items-center gap-3 p-4 rounded-lg bg-neutral-dark-03"
         >
           {/* Botão de Favorito no topo direito */}
           <motion.button
-            className="absolute top-3 right-3 z-10"
+            className="absolute z-10 top-3 right-3"
             onClick={handleFavoriteClick}
             disabled={isTogglingFavorite}
             whileTap={{ scale: 0.9 }}
@@ -264,7 +269,7 @@ export default function Professional() {
             size="xl"
           />
 
-          <div className="text-center space-y-2">
+          <div className="space-y-2 text-center">
             <h2 className="text-lg font-semibold text-neutral-white-01">
               {userData.name}
             </h2>
@@ -284,14 +289,14 @@ export default function Professional() {
 
           {/* Seção de Contato */}
           {userData.phoneNumber && (
-            <div className="mt-3 w-full flex justify-center">
+            <div className="flex justify-center w-full mt-3">
               <a
                 href={`https://wa.me/55${userData.phoneNumber.replace(/\D/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20 transition-colors group shadow"
+                className="flex items-center px-4 py-2 space-x-2 text-green-400 transition-colors border rounded-lg shadow bg-green-500/10 border-green-500/30 hover:bg-green-500/20 group"
               >
-                <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <MessageCircle className="w-5 h-5 transition-transform group-hover:scale-110" />
                 <span className="text-sm font-medium">WhatsApp: {userData.phoneNumber}</span>
               </a>
             </div>
@@ -311,11 +316,35 @@ export default function Professional() {
                 : "Enviar Proposta"}
         </Button>
 
+        {/* Botões de ação quando há vínculo ativo */}
+        {hasActiveBond && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 border-primary/30 hover:border-primary hover:bg-primary/10"
+              onClick={() => setShowFeedbackModal(true)}
+            >
+              <Star className="w-4 h-4" />
+              <span className="hidden xs:inline">Avaliar</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 text-red-400 border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50"
+              onClick={() => setShowUnbondDialog(true)}
+              disabled={updateBondMutation.isPending}
+            >
+              <X className="w-4 h-4" />
+              <span className="hidden xs:inline">Cancelar vínculo</span>
+              <span className="xs:hidden">Desvincular</span>
+            </Button>
+          </div>
+        )}
+
         {alreadySentProposal && (
           <>
             <Button
               variant="outline"
-              className="border-red-500 text-red-500 hover:bg-red-500/10 focus:ring-red-500"
+              className="text-red-500 border-red-500 hover:bg-red-500/10 focus:ring-red-500"
               onClick={() => setShowCancelDialog(true)}
               disabled={isDeleting}
             >
@@ -365,10 +394,10 @@ export default function Professional() {
           </>
         )}
 
-        <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
+        <div className="overflow-hidden rounded-lg bg-neutral-dark-03">
           <button
             onClick={() => toggleSection("personalInfo")}
-            className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-03 transition-colors"
+            className="flex items-center justify-between w-full p-4 transition-colors hover:bg-neutral-dark-03"
           >
             <h3 className="text-lg font-semibold text-neutral-white-01">
               Informações Pessoais
@@ -424,10 +453,10 @@ export default function Professional() {
         </div>
 
         {userData.professionalCredential && (
-          <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
+          <div className="overflow-hidden rounded-lg bg-neutral-dark-03">
             <button
               onClick={() => toggleSection("credentials")}
-              className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-03 transition-colors"
+              className="flex items-center justify-between w-full p-4 transition-colors hover:bg-neutral-dark-03"
             >
               <h3 className="text-lg font-semibold text-neutral-white-01">
                 Credenciais
@@ -450,7 +479,7 @@ export default function Professional() {
                   <div className="p-4 pt-0 space-y-3">
                     <div className="space-y-2">
                       <div>
-                        <span className="text-xs text-neutral-white-02 block mb-1">
+                        <span className="block mb-1 text-xs text-neutral-white-02">
                           {userData.professionalCredential.type === "CRN"
                             ? "CRN"
                             : "CREF"}
@@ -462,7 +491,7 @@ export default function Professional() {
 
                       {/* {userData.professionalCredential.biography && (
                         <div className="mt-3">
-                          <span className="text-xs text-neutral-white-02 block mb-1">
+                          <span className="block mb-1 text-xs text-neutral-white-02">
                             Biografia
                           </span>
                           <p className="text-sm text-neutral-white-01">
@@ -479,10 +508,10 @@ export default function Professional() {
         )}
 
         {userData.address && (
-          <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
+          <div className="overflow-hidden rounded-lg bg-neutral-dark-03">
             <button
               onClick={() => toggleSection("address")}
-              className="w-full p-4 flex items-center justify-between hover:bg-neutral-dark-03 transition-colors"
+              className="flex items-center justify-between w-full p-4 transition-colors hover:bg-neutral-dark-03"
             >
               <h3 className="text-lg font-semibold text-neutral-white-01">
                 Endereço
@@ -505,7 +534,7 @@ export default function Professional() {
                   <div className="p-4 pt-0 space-y-3">
                     <div className="space-y-3 text-sm">
                       <div>
-                        <span className="text-xs text-neutral-white-02 block mb-1">
+                        <span className="block mb-1 text-xs text-neutral-white-02">
                           CEP:
                         </span>
                         <span className="text-sm text-neutral-white-01">
@@ -515,7 +544,7 @@ export default function Professional() {
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <span className="text-xs text-neutral-white-02 block mb-1">
+                          <span className="block mb-1 text-xs text-neutral-white-02">
                             Rua
                           </span>
                           <span className="text-sm text-neutral-white-01">
@@ -523,7 +552,7 @@ export default function Professional() {
                           </span>
                         </div>
                         <div>
-                          <span className="text-xs text-neutral-white-02 block mb-1">
+                          <span className="block mb-1 text-xs text-neutral-white-02">
                             Número
                           </span>
                           <span className="text-sm text-neutral-white-01">
@@ -531,7 +560,7 @@ export default function Professional() {
                           </span>
                         </div>
                         <div>
-                          <span className="text-xs text-neutral-white-02 block mb-1">
+                          <span className="block mb-1 text-xs text-neutral-white-02">
                             Estado
                           </span>
                           <span className="text-sm text-neutral-white-01">
@@ -539,7 +568,7 @@ export default function Professional() {
                           </span>
                         </div>
                         <div>
-                          <span className="text-xs text-neutral-white-02 block mb-1">
+                          <span className="block mb-1 text-xs text-neutral-white-02">
                             Cidade
                           </span>
                           <span className="text-sm text-neutral-white-01">
@@ -560,10 +589,10 @@ export default function Professional() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-neutral-dark-03 rounded-xl p-4"
+            className="p-4 bg-neutral-dark-03 rounded-xl"
           >
-            <h3 className="text-lg font-semibold mb-4">Avaliações</h3>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <h3 className="mb-4 text-lg font-semibold">Avaliações</h3>
+            <div className="space-y-4 overflow-y-auto max-h-96">
               {feedbacks.map((feedback) => (
                 <div key={feedback.id} className="pb-4 last:pb-0">
                   <div className="flex items-center justify-between mb-2">
@@ -577,7 +606,7 @@ export default function Professional() {
                     </span>
                   </div>
                   {feedback.testimony && (
-                    <p className="text-sm text-gray-400 leading-relaxed">
+                    <p className="text-sm leading-relaxed text-gray-400">
                       "{feedback.testimony}"
                     </p>
                   )}
@@ -590,11 +619,76 @@ export default function Professional() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-neutral-white-02 text-center"
+          className="text-xs text-center text-neutral-white-02"
         >
           Conta criada em {formatDate(userData.createdAt)}
         </motion.div>
       </div>
+
+      {/* Unbind Confirmation Dialog */}
+      <Dialog open={showUnbondDialog} onOpenChange={setShowUnbondDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-500">Cancelar vínculo?</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja se desvincular de <strong>{userData.name}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              Ao desvincular, você perderá acesso às rotinas criadas por este
+              profissional e ele não poderá mais gerenciar seu treinamento.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowUnbondDialog(false)}
+              disabled={updateBondMutation.isPending}
+            >
+              Voltar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (!activeBond) return;
+                updateBondMutation.mutate(
+                  { ...activeBond, status: "C" },
+                  {
+                    onSuccess: () => {
+                      toast.success("Vínculo cancelado com sucesso!");
+                      setShowUnbondDialog(false);
+                      // Invalida e refaz as queries para atualizar a UI imediatamente
+                      queryClient.invalidateQueries({ queryKey: ["getBondAsCustomer"] });
+                      queryClient.invalidateQueries({ queryKey: ["getBondsSent"] });
+                      refetchActiveBond();
+                      refetchBondsSent();
+                    },
+                    onError: () => {
+                      toast.error("Erro ao cancelar vínculo. Tente novamente.");
+                    },
+                  }
+                );
+              }}
+              disabled={updateBondMutation.isPending}
+            >
+              {updateBondMutation.isPending ? "Cancelando..." : "Sim, desvincular"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Feedback Modal */}
+      {userData && user && user.id && userData.id && (
+        <FeedbackModal
+          open={showFeedbackModal}
+          onOpenChange={setShowFeedbackModal}
+          professionalId={userData.id}
+          professionalName={userData.name}
+          professionalImageUrl={userData.imageUrl || undefined}
+          customerId={user.id}
+        />
+      )}
     </div>
   );
 }

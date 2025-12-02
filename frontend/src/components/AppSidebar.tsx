@@ -33,9 +33,10 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Separator } from "./ui/separator";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { UserProfiles } from "@/types/user";
 import { useGetUserById } from "@/services/api/user";
+import { useEffect } from "react";
 
 const items = [
   {
@@ -95,8 +96,14 @@ const items = [
 export function AppSidebar() {
   const { user, logout } = useAuth();
   const { data: userData } = useGetUserById(user?.id);
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, setOpenMobile } = useSidebar();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Fecha a sidebar quando a rota mudar
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [location.pathname, setOpenMobile]);
 
   const getFirstUserName = (name: string | null) => {
     if (!name) return "Usuário";
@@ -153,15 +160,15 @@ export function AppSidebar() {
                       asChild
                       className="h-12 text-base font-medium hover:bg-neutral-dark-03 rounded-xl transition-colors"
                     >
-                      <a
-                        href={item.url}
-                        className="flex items-center gap-3 px-4"
+                      <button
+                        onClick={() => navigate(item.url)}
+                        className="flex items-center gap-3 px-4 w-full"
                       >
                         <item.icon size={22} className="text-primary" />
                         <span className="text-neutral-white-01">
                           {item.title}
                         </span>
-                      </a>
+                      </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
