@@ -71,11 +71,11 @@ type UpdateTemplateForm = z.infer<typeof updateTemplateSchema>;
 
 // Schema para configurar exercício
 const exerciseConfigSchema = z.object({
-  targetSets: z.number().min(1, "Número de séries deve ser maior que 0"),
-  targetRepsMin: z.number().optional(),
-  targetRepsMax: z.number().optional(),
-  suggestedLoad: z.number().optional(),
-  restSeconds: z.number().optional(),
+  targetSets: z.string().min(1, "Número de séries é obrigatório"),
+  targetRepsMin: z.string().optional(),
+  targetRepsMax: z.string().optional(),
+  suggestedLoad: z.string().optional(),
+  restSeconds: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -124,11 +124,11 @@ export function EditWorkoutTemplate() {
   const exerciseForm = useForm<ExerciseConfigForm>({
     resolver: zodResolver(exerciseConfigSchema),
     defaultValues: {
-      targetSets: 3,
-      targetRepsMin: undefined,
-      targetRepsMax: undefined,
-      suggestedLoad: undefined,
-      restSeconds: 60,
+      targetSets: "3",
+      targetRepsMin: "",
+      targetRepsMax: "",
+      suggestedLoad: "",
+      restSeconds: "60",
       notes: "",
     },
   });
@@ -154,11 +154,11 @@ export function EditWorkoutTemplate() {
     setExerciseDrawerOpen(false);
     setConfigDrawerOpen(true);
     exerciseForm.reset({
-      targetSets: 3,
-      targetRepsMin: undefined,
-      targetRepsMax: undefined,
-      suggestedLoad: undefined,
-      restSeconds: 60,
+      targetSets: "3",
+      targetRepsMin: "",
+      targetRepsMax: "",
+      suggestedLoad: "",
+      restSeconds: "60",
       notes: "",
     });
   };
@@ -173,11 +173,23 @@ export function EditWorkoutTemplate() {
     });
     setConfigDrawerOpen(true);
     exerciseForm.reset({
-      targetSets: exerciseTemplate.targetSets,
-      targetRepsMin: exerciseTemplate.targetRepsMin,
-      targetRepsMax: exerciseTemplate.targetRepsMax,
-      suggestedLoad: exerciseTemplate.suggestedLoad,
-      restSeconds: exerciseTemplate.restSeconds,
+      targetSets: String(exerciseTemplate.targetSets ?? ""),
+      targetRepsMin:
+        exerciseTemplate.targetRepsMin != null
+          ? String(exerciseTemplate.targetRepsMin)
+          : "",
+      targetRepsMax:
+        exerciseTemplate.targetRepsMax != null
+          ? String(exerciseTemplate.targetRepsMax)
+          : "",
+      suggestedLoad:
+        exerciseTemplate.suggestedLoad != null
+          ? String(exerciseTemplate.suggestedLoad)
+          : "",
+      restSeconds:
+        exerciseTemplate.restSeconds != null
+          ? String(exerciseTemplate.restSeconds)
+          : "",
       notes: exerciseTemplate.notes || "",
     });
   };
@@ -185,19 +197,28 @@ export function EditWorkoutTemplate() {
   const handleExerciseConfig = async (data: ExerciseConfigForm) => {
     if (!templateId) return;
 
+    // Converte strings vazias para undefined e garante números
+    const toNumber = (val: string | number | undefined) => {
+      if (val === "" || val === undefined) return undefined;
+      const num = typeof val === "string" ? parseFloat(val) : val;
+      return isNaN(num) ? undefined : num;
+    };
+
+    const payload = {
+      targetSets: toNumber(data.targetSets) ?? 1,
+      targetRepsMin: toNumber(data.targetRepsMin),
+      targetRepsMax: toNumber(data.targetRepsMax),
+      suggestedLoad: toNumber(data.suggestedLoad),
+      restSeconds: toNumber(data.restSeconds),
+      notes: data.notes || undefined,
+    };
+
     try {
       if (editingExerciseTemplate) {
         // Atualizar exercício existente
         await updateExercise.mutateAsync({
           exerciseTemplateId: editingExerciseTemplate.id,
-          data: {
-            targetSets: data.targetSets,
-            targetRepsMin: data.targetRepsMin,
-            targetRepsMax: data.targetRepsMax,
-            suggestedLoad: data.suggestedLoad,
-            restSeconds: data.restSeconds,
-            notes: data.notes,
-          },
+          data: payload,
         });
       } else if (selectedExercise) {
         // Adicionar novo exercício
@@ -207,12 +228,7 @@ export function EditWorkoutTemplate() {
           data: {
             exerciseId: selectedExercise.id,
             order: currentExercisesCount,
-            targetSets: data.targetSets,
-            targetRepsMin: data.targetRepsMin,
-            targetRepsMax: data.targetRepsMax,
-            suggestedLoad: data.suggestedLoad,
-            restSeconds: data.restSeconds,
-            notes: data.notes,
+            ...payload,
           },
         });
       }
@@ -542,9 +558,8 @@ export function EditWorkoutTemplate() {
                         <Input
                           type="number"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value))
-                          }
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -564,14 +579,8 @@ export function EditWorkoutTemplate() {
                             type="number"
                             placeholder="8"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? parseInt(e.target.value)
-                                  : undefined
-                              )
-                            }
-                            value={field.value || ""}
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -590,14 +599,8 @@ export function EditWorkoutTemplate() {
                             type="number"
                             placeholder="12"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? parseInt(e.target.value)
-                                  : undefined
-                              )
-                            }
-                            value={field.value || ""}
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -617,14 +620,8 @@ export function EditWorkoutTemplate() {
                           type="number"
                           placeholder="20"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseFloat(e.target.value)
-                                : undefined
-                            )
-                          }
-                          value={field.value || ""}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -643,14 +640,8 @@ export function EditWorkoutTemplate() {
                           type="number"
                           placeholder="60"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseInt(e.target.value)
-                                : undefined
-                            )
-                          }
-                          value={field.value || ""}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />

@@ -194,7 +194,6 @@ export default function WorkoutSessionDetails() {
                         <th className="text-left py-2 px-2">Série</th>
                         <th className="text-center py-2 px-2">Carga (kg)</th>
                         <th className="text-center py-2 px-2">Reps</th>
-                        <th className="text-center py-2 px-2">Descanso</th>
                         <th className="text-center py-2 px-2">Status</th>
                       </tr>
                     </thead>
@@ -214,15 +213,6 @@ export default function WorkoutSessionDetails() {
                           </td>
                           <td className="text-center py-2 px-2">
                             {set.reps || "-"}
-                          </td>
-                          <td className="text-center py-2 px-2">
-                            {set.restSeconds
-                              ? `${Math.floor(set.restSeconds / 60)}:${(
-                                  set.restSeconds % 60
-                                )
-                                  .toString()
-                                  .padStart(2, "0")}`
-                              : "-"}
                           </td>
                           <td className="text-center py-2 px-2">
                             {set.completed ? (

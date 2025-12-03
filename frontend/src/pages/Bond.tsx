@@ -1,5 +1,3 @@
-import { DataTable } from "@/components/DataTable";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -11,7 +9,6 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Spinner } from "@/components/ui/spinner";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useGetMyBonds, useUpdateBond } from "@/services/api/bond";
 import type { CustomerProfessionalBondType } from "@/types/professional";
 import { Check, X, UserPlus } from "lucide-react";
@@ -19,13 +16,15 @@ import React, { useState } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion } from "motion/react";
 import InviteStudentDrawer from "@/components/InviteStudentDrawer";
+import { AvatarImage } from "@/components/ui/avatar-image";
+import { useQueryClient } from "@tanstack/react-query";
 
 import PersonalSemVinculo from "@/assets/personal/PersonalSemVinculo.png";
 
-
 export default function Bond() {
+  const queryClient = useQueryClient();
   const { data, isLoading, refetch } = useGetMyBonds();
-  const { mutate: updateBond } = useUpdateBond();
+  const { mutate: updateBond, isPending: isUpdating } = useUpdateBond();
   const toast = useToast();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -34,6 +33,11 @@ export default function Bond() {
     bond: CustomerProfessionalBondType;
     action: "accept" | "reject" | "cancel";
   } | null>(null);
+
+  // Garantir que data é um array
+  const bonds = Array.isArray(data) ? data : [];
+  const activeBonds = bonds.filter((bond) => bond.status === "A");
+  const pendingBonds = bonds.filter((bond) => bond.status === "P");
 
   const openDrawer = (
     bond: CustomerProfessionalBondType,
@@ -47,28 +51,47 @@ export default function Bond() {
     if (!pendingAction) return;
 
     const { bond, action } = pendingAction;
+    let newStatus = "";
 
     switch (action) {
       case "accept":
-        updateBond({ ...bond, status: "A" });
-        toast.success("Vínculo aceito com sucesso!");
+        newStatus = "A";
         break;
       case "reject":
-        updateBond({ ...bond, status: "R" });
-        toast.error("Vínculo rejeitado com sucesso!");
+        newStatus = "R";
         break;
       case "cancel":
-        updateBond({ ...bond, status: "C" });
-        toast.info("Vínculo cancelado com sucesso!");
+        newStatus = "C";
         break;
     }
 
-    setTimeout(async () => {
-      await refetch();
-    }, 1000);
-
-    setIsDrawerOpen(false);
-    setPendingAction(null);
+    updateBond(
+      { ...bond, status: newStatus },
+      {
+        onSuccess: () => {
+          switch (action) {
+            case "accept":
+              toast.success("Vínculo aceito com sucesso!");
+              break;
+            case "reject":
+              toast.error("Vínculo rejeitado com sucesso!");
+              break;
+            case "cancel":
+              toast.info("Vínculo cancelado com sucesso!");
+              break;
+          }
+          // Invalida e refaz as queries imediatamente
+          queryClient.invalidateQueries({ queryKey: ["getMyBonds"] });
+          queryClient.invalidateQueries({ queryKey: ["getActiveStudents"] });
+          refetch();
+          setIsDrawerOpen(false);
+          setPendingAction(null);
+        },
+        onError: () => {
+          toast.error("Erro ao executar ação. Tente novamente.");
+        },
+      }
+    );
   };
 
   const cancelAction = () => {
@@ -100,10 +123,7 @@ export default function Bond() {
     >
       <div className="flex items-center justify-between">
         <p className="font-bold text-2xl">Vínculos</p>
-        <Button
-          onClick={() => setIsInviteDrawerOpen(true)}
-          className="gap-2"
-        >
+        <Button onClick={() => setIsInviteDrawerOpen(true)} className="gap-2">
           <UserPlus className="h-4 w-4" />
           Convidar Aluno
         </Button>
@@ -114,29 +134,37 @@ export default function Bond() {
           <div className="flex justify-center items-center py-8">
             <Spinner className="size-6 text-primary" />
           </div>
-        ) : data && data.filter((bond) => bond.status === "A").length > 0 ? (
-          data.map(
-            (bond) =>
-              bond.status === "A" && (
-                <div className="flex flex-row justify-between ">
-                  <div key={bond.id} className="flex flex-col gap-1">
-                    <p>{bond?.customer?.name}</p>
-                    <p className="text-xs text-neutral-dark-02">
-                      {bond.createdAt &&
-                        new Date(bond.createdAt).toLocaleDateString("pt-BR")}
-                    </p>
-                  </div>
-                  <div className="space-x-2">
-                    <button
-                      className="bg-red-600 text-white px-2 py-2 rounded-md"
-                      onClick={() => openDrawer(bond, "cancel")}
-                    >
-                      <X />
-                    </button>
-                  </div>
+        ) : activeBonds.length > 0 ? (
+          activeBonds.map((bond) => (
+            <div
+              key={bond.id}
+              className="flex flex-row items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <AvatarImage
+                  imageUrl={bond.customer?.imageUrl}
+                  name={bond.customer?.name || "Aluno"}
+                  email={bond.customer?.email}
+                  id={bond.customerId}
+                  size="sm"
+                />
+                <div className="flex flex-col gap-0.5">
+                  <p className="font-medium">{bond?.customer?.name}</p>
+                  <p className="text-xs text-neutral-dark-02">
+                    {bond.createdAt &&
+                      new Date(bond.createdAt).toLocaleDateString("pt-BR")}
+                  </p>
                 </div>
-              )
-          )
+              </div>
+              <button
+                className="bg-red-600 text-white px-2 py-2 rounded-md hover:bg-red-700 transition-colors"
+                onClick={() => openDrawer(bond, "cancel")}
+                disabled={isUpdating}
+              >
+                <X size={18} />
+              </button>
+            </div>
+          ))
         ) : (
           <div>Nenhum vínculo ativo.</div>
         )}
@@ -148,35 +176,46 @@ export default function Bond() {
           <div className="flex justify-center items-center py-8">
             <Spinner className="size-6 text-primary" />
           </div>
-        ) : data && data.filter((x) => x.status === "P").length > 0 ? (
-          data.map(
-            (bond) =>
-              bond.status === "P" && (
-                <div className="flex flex-row justify-between">
-                  <div key={bond.id} className="flex flex-col gap-1">
-                    <p>{bond?.customer?.name}</p>
-                    <p className="text-xs text-neutral-dark-02">
-                      {bond.createdAt &&
-                        new Date(bond.createdAt).toLocaleDateString("pt-BR")}
-                    </p>
-                  </div>
-                  <div className="space-x-2">
-                    <button
-                      className="bg-red-600 text-white px-2 py-2 rounded-md"
-                      onClick={() => openDrawer(bond, "reject")}
-                    >
-                      <X />
-                    </button>
-                    <button
-                      className="bg-green-600 text-white px-2 py-2 rounded-md"
-                      onClick={() => openDrawer(bond, "accept")}
-                    >
-                      <Check />
-                    </button>
-                  </div>
+        ) : pendingBonds.length > 0 ? (
+          pendingBonds.map((bond) => (
+            <div
+              key={bond.id}
+              className="flex flex-row items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <AvatarImage
+                  imageUrl={bond.customer?.imageUrl}
+                  name={bond.customer?.name || "Aluno"}
+                  email={bond.customer?.email}
+                  id={bond.customerId}
+                  size="sm"
+                />
+                <div className="flex flex-col gap-0.5">
+                  <p className="font-medium">{bond?.customer?.name}</p>
+                  <p className="text-xs text-neutral-dark-02">
+                    {bond.createdAt &&
+                      new Date(bond.createdAt).toLocaleDateString("pt-BR")}
+                  </p>
                 </div>
-              )
-          )
+              </div>
+              <div className="flex gap-2">
+                <button
+                  className="bg-red-600 text-white px-2 py-2 rounded-md hover:bg-red-700 transition-colors"
+                  onClick={() => openDrawer(bond, "reject")}
+                  disabled={isUpdating}
+                >
+                  <X size={18} />
+                </button>
+                <button
+                  className="bg-green-600 text-white px-2 py-2 rounded-md hover:bg-green-700 transition-colors"
+                  onClick={() => openDrawer(bond, "accept")}
+                  disabled={isUpdating}
+                >
+                  <Check size={18} />
+                </button>
+              </div>
+            </div>
+          ))
         ) : (
           <div className="flex flex-col w-full bg-neutral-dark-03 rounded-sm justify-center items-center py-5 gap-2">
             <div>Nenhum vínculo solicitado.</div>

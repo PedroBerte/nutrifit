@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useMemo, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useEffect,
+} from "react";
 import { useForm, type UseFormReturn, type Resolver } from "react-hook-form";
 import { date, z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -381,7 +387,10 @@ export function RegisterFormProvider({
         try {
           const inviteData = JSON.parse(inviteDataStr);
           if (inviteData.invited && inviteData.professionalInviterId) {
-            console.log("Criando vínculo automático com professional:", inviteData.professionalInviterId);
+            console.log(
+              "Criando vínculo automático com professional:",
+              inviteData.professionalInviterId
+            );
             await createBond.mutateAsync({
               id: null,
               customerId: newUser.id,
@@ -399,7 +408,9 @@ export function RegisterFormProvider({
         } catch (bondError) {
           console.error("Erro ao criar vínculo automático:", bondError);
           // Não falhar o cadastro se o vínculo falhar
-          toast.warning("Usuário criado, mas houve um problema ao criar o vínculo com o profissional");
+          toast.warning(
+            "Usuário criado, mas houve um problema ao criar o vínculo com o profissional"
+          );
         }
       }
 
