@@ -144,7 +144,7 @@ export default function CreateAppointmentDrawer({
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col flex-1 min-h-0"
           >
-            <div className="flex-1 overflow-y-auto px-4 space-y-4 pb-4">
+            <div className="flex-1 px-4 pb-4 space-y-4 overflow-y-auto">
               {/* Data e Hora */}
               <div className="grid grid-cols-2 gap-3">
                 <FormField
