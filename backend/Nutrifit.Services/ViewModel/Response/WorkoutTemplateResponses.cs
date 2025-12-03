@@ -23,7 +23,8 @@ namespace Nutrifit.Services.ViewModel.Response
         public Guid WorkoutTemplateId { get; set; }
         public Guid ExerciseId { get; set; }
         public string ExerciseName { get; set; } = string.Empty;
-        public string? ExerciseUrl { get; set; }
+        public string? ExerciseImageUrl { get; set; }
+        public string? ExerciseVideoUrl { get; set; }
         public int Order { get; set; }
         public int TargetSets { get; set; }
         public int? TargetRepsMin { get; set; }

@@ -200,6 +200,27 @@ public class ExerciseController : ControllerBase
     }
 
     /// <summary>
+    /// Atualiza apenas a mídia (imagem e vídeo) de um exercício
+    /// </summary>
+    [HttpPatch("{exerciseId}/media")]
+    public async Task<IActionResult> UpdateExerciseMedia(Guid exerciseId, [FromBody] UpdateExerciseMediaRequest request)
+    {
+        try
+        {
+            var result = await _exerciseService.UpdateExerciseMediaAsync(exerciseId, request);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao atualizar mídia do exercício: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
     /// Deleta um exercício personalizado (soft delete)
     /// </summary>
     [HttpDelete("{exerciseId}")]

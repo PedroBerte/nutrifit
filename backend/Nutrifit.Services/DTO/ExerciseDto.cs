@@ -6,6 +6,7 @@ public class ExerciseDto
     public Guid CategoryId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Instruction { get; set; }
+    public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public Guid? CreatedByUserId { get; set; }
     public bool IsPublished { get; set; }
@@ -24,6 +25,7 @@ public class CreateExerciseRequest
     public Guid CategoryId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Instruction { get; set; }
+    public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public bool IsPublished { get; set; } = false;
     public List<Guid> PrimaryMuscleIds { get; set; } = new();
@@ -35,10 +37,17 @@ public class UpdateExerciseRequest
     public Guid CategoryId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Instruction { get; set; }
+    public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public bool IsPublished { get; set; }
     public List<Guid> PrimaryMuscleIds { get; set; } = new();
     public List<Guid> SecondaryMuscleIds { get; set; } = new();
+}
+
+public class UpdateExerciseMediaRequest
+{
+    public string? ImageUrl { get; set; }
+    public string? VideoUrl { get; set; }
 }
 
 public class ExerciseCategoryDto

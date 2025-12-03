@@ -13,6 +13,7 @@ public interface IExerciseService
     Task<ApiResponse> GetExercisesByMuscleGroupAsync(Guid muscleGroupId);
     Task<ApiResponse> CreateExerciseAsync(CreateExerciseRequest request, Guid userId);
     Task<ApiResponse> UpdateExerciseAsync(Guid exerciseId, UpdateExerciseRequest request, Guid userId);
+    Task<ApiResponse> UpdateExerciseMediaAsync(Guid exerciseId, UpdateExerciseMediaRequest request);
     Task<ApiResponse> DeleteExerciseAsync(Guid exerciseId, Guid userId);
     Task<ApiResponse> GetUserExercisesAsync(Guid userId, int page = 1, int pageSize = 50);
 }

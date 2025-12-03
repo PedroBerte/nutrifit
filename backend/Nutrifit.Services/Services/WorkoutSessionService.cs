@@ -190,6 +190,8 @@ namespace Nutrifit.Services.Services
                         ExerciseTemplateId = es.ExerciseTemplateId,
                         ExerciseId = es.ExerciseId,
                         ExerciseName = es.Exercise.Name,
+                        ExerciseImageUrl = es.Exercise.ImageUrl,
+                        ExerciseVideoUrl = es.Exercise.VideoUrl,
                         Order = es.Order,
                         StartedAt = es.StartedAt,
                         CompletedAt = es.CompletedAt,

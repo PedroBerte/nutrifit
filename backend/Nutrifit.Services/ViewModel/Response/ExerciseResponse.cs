@@ -4,7 +4,7 @@ public class ExerciseResponse
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string? Url { get; set; }
+    public string? ImageUrl { get; set; }
     public string? Instruction { get; set; }
     public string? VideoUrl { get; set; }
     public Guid? CreatedByUserId { get; set; }

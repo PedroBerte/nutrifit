@@ -39,7 +39,7 @@ public class ExerciseService : IExerciseService
         {
             Id = e.Id,
             Name = e.Name,
-            Url = e.Instruction,
+            ImageUrl = e.ImageUrl,
             Instruction = e.Instruction,
             VideoUrl = e.VideoUrl,
             CreatedByUserId = e.CreatedByUserId,
@@ -82,7 +82,7 @@ public class ExerciseService : IExerciseService
         {
             Id = exercise.Id,
             Name = exercise.Name,
-            Url = exercise.Instruction,
+            ImageUrl = exercise.ImageUrl,
             Instruction = exercise.Instruction,
             VideoUrl = exercise.VideoUrl,
             CreatedByUserId = exercise.CreatedByUserId,
@@ -136,7 +136,7 @@ public class ExerciseService : IExerciseService
         {
             Id = e.Id,
             Name = e.Name,
-            Url = e.Instruction,
+            ImageUrl = e.ImageUrl,
             Instruction = e.Instruction,
             VideoUrl = e.VideoUrl,
             CreatedByUserId = e.CreatedByUserId,
@@ -228,7 +228,7 @@ public class ExerciseService : IExerciseService
         {
             Id = e.Id,
             Name = e.Name,
-            Url = e.Instruction,
+            ImageUrl = e.ImageUrl,
             Instruction = e.Instruction,
             VideoUrl = e.VideoUrl,
             CreatedByUserId = e.CreatedByUserId,
@@ -300,6 +300,7 @@ public class ExerciseService : IExerciseService
             CategoryId = request.CategoryId,
             Name = request.Name,
             Instruction = request.Instruction,
+            ImageUrl = request.ImageUrl,
             VideoUrl = request.VideoUrl,
             CreatedByUserId = userId,
             IsPublished = request.IsPublished,
@@ -414,6 +415,7 @@ public class ExerciseService : IExerciseService
         exercise.CategoryId = request.CategoryId;
         exercise.Name = request.Name;
         exercise.Instruction = request.Instruction;
+        exercise.ImageUrl = request.ImageUrl;
         exercise.VideoUrl = request.VideoUrl;
         exercise.IsPublished = request.IsPublished;
         exercise.UpdatedAt = DateTime.UtcNow;
@@ -488,6 +490,38 @@ public class ExerciseService : IExerciseService
         };
     }
 
+    public async Task<ApiResponse> UpdateExerciseMediaAsync(Guid exerciseId, UpdateExerciseMediaRequest request)
+    {
+        var exercise = await _context.Exercises
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && e.Status == "A");
+
+        if (exercise == null)
+        {
+            return new ApiResponse
+            {
+                Success = false,
+                Message = "Exercício não encontrado"
+            };
+        }
+
+        // Atualizar apenas os campos de mídia
+        if (request.ImageUrl != null)
+            exercise.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl;
+        
+        if (request.VideoUrl != null)
+            exercise.VideoUrl = string.IsNullOrWhiteSpace(request.VideoUrl) ? null : request.VideoUrl;
+
+        exercise.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse
+        {
+            Success = true,
+            Message = "Mídia do exercício atualizada com sucesso"
+        };
+    }
+
     public async Task<ApiResponse> GetUserExercisesAsync(Guid userId, int page = 1, int pageSize = 50)
     {
         var skip = (page - 1) * pageSize;
@@ -508,7 +542,7 @@ public class ExerciseService : IExerciseService
         {
             Id = e.Id,
             Name = e.Name,
-            Url = e.Instruction,
+            ImageUrl = e.ImageUrl,
             Instruction = e.Instruction,
             VideoUrl = e.VideoUrl,
             CreatedByUserId = e.CreatedByUserId,

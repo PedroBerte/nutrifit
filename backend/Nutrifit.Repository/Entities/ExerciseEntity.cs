@@ -8,6 +8,7 @@ namespace Nutrifit.Repository.Entities
         public Guid CategoryId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Instruction { get; set; }
+        public string? ImageUrl { get; set; }
         public string? VideoUrl { get; set; }
         public Guid? CreatedByUserId { get; set; }
         public bool IsPublished { get; set; } = false;
