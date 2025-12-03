@@ -1,7 +1,13 @@
 import { useState, useMemo } from "react";
 import { useGetProfessionalAppointments } from "@/services/api/appointment";
+import { useGetMyBonds } from "@/services/api/bond";
 import { motion, AnimatePresence } from "motion/react";
-import { Loader2, CalendarX, Calendar as CalendarIcon } from "lucide-react";
+import {
+  Loader2,
+  CalendarX,
+  Calendar as CalendarIcon,
+  Plus,
+} from "lucide-react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import AppointmentCard from "@/components/AppointmentCard";
@@ -10,6 +16,16 @@ import { toast } from "sonner";
 import type { AppointmentType } from "@/types/appointment";
 import { isSameDay, startOfDay, isPast, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
+import CreateAppointmentDrawer from "@/components/CreateAppointmentDrawer";
+import { AvatarImage } from "@/components/ui/avatar-image";
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
@@ -17,8 +33,26 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 export default function ProfessionalAgenda() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState<"calendar" | "list">("calendar");
+  const [showSelectStudentDrawer, setShowSelectStudentDrawer] = useState(false);
+  const [showCreateAppointmentDrawer, setShowCreateAppointmentDrawer] =
+    useState(false);
+  const [selectedBondId, setSelectedBondId] = useState<string | null>(null);
+
   const { data: appointments, isLoading } = useGetProfessionalAppointments();
+  const { data: bonds, isLoading: loadingBonds } = useGetMyBonds();
   const { mutate: updateAppointment } = useUpdateAppointment();
+
+  // Filtra apenas bonds ativos
+  const activeBonds = useMemo(() => {
+    if (!bonds) return [];
+    return Array.isArray(bonds) ? bonds.filter((b) => b.status === "A") : [];
+  }, [bonds]);
+
+  const handleSelectStudent = (bondId: string) => {
+    setSelectedBondId(bondId);
+    setShowSelectStudentDrawer(false);
+    setShowCreateAppointmentDrawer(true);
+  };
 
   // Agrupa appointments por data
   const appointmentsByDate = useMemo(() => {
@@ -111,22 +145,103 @@ export default function ProfessionalAgenda() {
           Nenhuma consulta
         </h2>
         <p className="text-neutral-white-02 max-w-md">
-          Você não possui consultas agendadas. Quando seus alunos aceitarem
-          consultas, elas aparecerão aqui.
+          Você não possui consultas agendadas. Crie uma nova consulta com seus
+          alunos.
         </p>
+
+        {activeBonds.length > 0 && (
+          <Button
+            onClick={() => setShowSelectStudentDrawer(true)}
+            className="mt-2"
+          >
+            <Plus size={16} className="mr-2" />
+            Nova Consulta
+          </Button>
+        )}
+
+        {/* Drawer: Selecionar Aluno */}
+        <Drawer
+          open={showSelectStudentDrawer}
+          onOpenChange={setShowSelectStudentDrawer}
+        >
+          <DrawerContent className="max-h-[85vh]">
+            <DrawerHeader>
+              <DrawerTitle>Selecionar Aluno</DrawerTitle>
+              <DrawerDescription>
+                Escolha o aluno para agendar uma consulta
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="px-4 pb-4 space-y-2 overflow-y-auto max-h-[60vh]">
+              {loadingBonds ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : activeBonds.length === 0 ? (
+                <p className="py-8 text-center text-neutral-white-02">
+                  Você não possui alunos vinculados.
+                </p>
+              ) : (
+                activeBonds.map((bond) => (
+                  <button
+                    key={bond.id}
+                    onClick={() => handleSelectStudent(bond.id!)}
+                    className="flex items-center w-full gap-3 p-3 transition-colors rounded-lg bg-neutral-dark-03 hover:bg-neutral-dark-02"
+                  >
+                    <AvatarImage
+                      imageUrl={bond.customer?.imageUrl}
+                      name={bond.customer?.name || "Aluno"}
+                      email={bond.customer?.email}
+                      id={bond.customerId}
+                      size="sm"
+                    />
+                    <div className="text-left">
+                      <p className="font-medium text-neutral-white-01">
+                        {bond.customer?.name || "Aluno"}
+                      </p>
+                      <p className="text-xs text-neutral-white-02">
+                        {bond.customer?.email}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </DrawerContent>
+        </Drawer>
+
+        {/* Drawer: Criar Agendamento */}
+        {selectedBondId && (
+          <CreateAppointmentDrawer
+            open={showCreateAppointmentDrawer}
+            onOpenChange={(open) => {
+              setShowCreateAppointmentDrawer(open);
+              if (!open) setSelectedBondId(null);
+            }}
+            bondId={selectedBondId}
+          />
+        )}
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full gap-3 p-4 pb-20 overflow-x-hidden">
-      <motion.h1
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-2xl font-bold text-neutral-white-01"
-      >
-        Agenda
-      </motion.h1>
+      <div className="flex items-center justify-between">
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-2xl font-bold text-neutral-white-01"
+        >
+          Agenda
+        </motion.h1>
+
+        {activeBonds.length > 0 && (
+          <Button onClick={() => setShowSelectStudentDrawer(true)} size="sm">
+            <Plus size={16} className="mr-1" />
+            Nova
+          </Button>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="grid w-full grid-cols-2 gap-2 bg-neutral-dark-03 p-1 rounded-lg">
@@ -405,6 +520,68 @@ export default function ProfessionalAgenda() {
           color: #666;
         }
       `}</style>
+
+      {/* Drawer: Selecionar Aluno */}
+      <Drawer
+        open={showSelectStudentDrawer}
+        onOpenChange={setShowSelectStudentDrawer}
+      >
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle>Selecionar Aluno</DrawerTitle>
+            <DrawerDescription>
+              Escolha o aluno para agendar uma consulta
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-4 space-y-2 overflow-y-auto max-h-[60vh]">
+            {loadingBonds ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : activeBonds.length === 0 ? (
+              <p className="py-8 text-center text-neutral-white-02">
+                Você não possui alunos vinculados.
+              </p>
+            ) : (
+              activeBonds.map((bond) => (
+                <button
+                  key={bond.id}
+                  onClick={() => handleSelectStudent(bond.id!)}
+                  className="flex items-center w-full gap-3 p-3 transition-colors rounded-lg bg-neutral-dark-03 hover:bg-neutral-dark-02"
+                >
+                  <AvatarImage
+                    imageUrl={bond.customer?.imageUrl}
+                    name={bond.customer?.name || "Aluno"}
+                    email={bond.customer?.email}
+                    id={bond.customerId}
+                    size="sm"
+                  />
+                  <div className="text-left">
+                    <p className="font-medium text-neutral-white-01">
+                      {bond.customer?.name || "Aluno"}
+                    </p>
+                    <p className="text-xs text-neutral-white-02">
+                      {bond.customer?.email}
+                    </p>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Drawer: Criar Agendamento */}
+      {selectedBondId && (
+        <CreateAppointmentDrawer
+          open={showCreateAppointmentDrawer}
+          onOpenChange={(open) => {
+            setShowCreateAppointmentDrawer(open);
+            if (!open) setSelectedBondId(null);
+          }}
+          bondId={selectedBondId}
+        />
+      )}
     </div>
   );
 }

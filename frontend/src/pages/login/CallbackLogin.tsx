@@ -48,10 +48,13 @@ export default function Callback() {
 
       // Se for convite, armazenar informação no sessionStorage
       if (decoded.invited && decoded.professionalInviterId) {
-        sessionStorage.setItem("inviteData", JSON.stringify({
-          invited: true,
-          professionalInviterId: decoded.professionalInviterId
-        }));
+        sessionStorage.setItem(
+          "inviteData",
+          JSON.stringify({
+            invited: true,
+            professionalInviterId: decoded.professionalInviterId,
+          })
+        );
       }
 
       if (decoded.profile) {

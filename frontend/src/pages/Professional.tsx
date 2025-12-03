@@ -33,30 +33,40 @@ import {
   X,
 } from "lucide-react";
 import type { CustomerProfessionalBondType } from "@/types/professional";
-import { useCreateBond, useGetBondsSent, useGetBondAsCustomer } from "@/services/api/bond";
+import {
+  useCreateBond,
+  useGetBondsSent,
+  useGetBondAsCustomer,
+} from "@/services/api/bond";
 import { motion, AnimatePresence } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
 import { useGetProfessionalFeedbacks } from "@/services/api/feedback";
 import { AvatarImage } from "@/components/ui/avatar-image";
-import { addFavorite, removeFavorite, useCheckFavorite } from "@/services/api/favorite";
+import {
+  addFavorite,
+  removeFavorite,
+  useCheckFavorite,
+} from "@/services/api/favorite";
 import { FeedbackModal } from "@/components/feedback/FeedbackModal";
 
 export default function Professional() {
-    const [showCancelDialog, setShowCancelDialog] = useState(false);
-    const [showUnbondDialog, setShowUnbondDialog] = useState(false);
-    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-    const { mutate: deleteBond, isPending: isDeleting } = useDeleteBond();
-    const updateBondMutation = useUpdateBond();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showUnbondDialog, setShowUnbondDialog] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const { mutate: deleteBond, isPending: isDeleting } = useDeleteBond();
+  const updateBondMutation = useUpdateBond();
   const { user, logout } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
   const queryClient = useQueryClient();
   const { data: bondsSent, refetch: refetchBondsSent } = useGetBondsSent();
-  const { data: activeBond, refetch: refetchActiveBond } = useGetBondAsCustomer();
+  const { data: activeBond, refetch: refetchActiveBond } =
+    useGetBondAsCustomer();
   const { mutate: createProposal } = useCreateBond();
   const { data: feedbacks } = useGetProfessionalFeedbacks(id);
-  const { data: isFavoriteData, refetch: refetchFavorite } = useCheckFavorite(id);
+  const { data: isFavoriteData, refetch: refetchFavorite } =
+    useCheckFavorite(id);
 
   const [expandedSections, setExpandedSections] = useState({
     personalInfo: true,
@@ -74,20 +84,23 @@ export default function Professional() {
   if (!id) navigate("/home");
 
   // Verifica se já existe vínculo ativo com este professional
-  const hasActiveBond = activeBond?.professionalId === id && activeBond?.status === "A";
+  const hasActiveBond =
+    activeBond?.professionalId === id && activeBond?.status === "A";
 
   // Verifica se já tem vínculo ativo com OUTRO profissional
-  const hasAnyActiveBond = activeBond?.status === "A" && activeBond?.professionalId !== id;
+  const hasAnyActiveBond =
+    activeBond?.status === "A" && activeBond?.professionalId !== id;
+
+  // Garante que bondsSent é um array
+  const bondsSentArray = Array.isArray(bondsSent) ? bondsSent : [];
 
   // Verifica se já enviou proposta pendente
-  const hasPendingProposal = bondsSent
-    ? bondsSent?.some(
-      (bond) => bond.professionalId === id && bond.status === "P"
-    ) ?? false
-    : false;
+  const hasPendingProposal = bondsSentArray.some(
+    (bond) => bond.professionalId === id && bond.status === "P"
+  );
 
   // Pega o bond pendente para cancelar
-  const pendingBond = bondsSent?.find(
+  const pendingBond = bondsSentArray.find(
     (bond) => bond.professionalId === id && bond.status === "P"
   );
 
@@ -181,7 +194,8 @@ export default function Professional() {
 
   const sendProposal = async (professionalId: string) => {
     // Não permite enviar proposta se já tem vínculo ativo (com este ou outro profissional)
-    if (isSending || alreadySentProposal || hasActiveBond || hasAnyActiveBond) return;
+    if (isSending || alreadySentProposal || hasActiveBond || hasAnyActiveBond)
+      return;
 
     setIsSending(true);
 
@@ -254,10 +268,11 @@ export default function Professional() {
             whileHover={{ scale: 1.1 }}
           >
             <Bookmark
-              className={`w-5 h-5 transition-all ${isFavorite
-                ? "fill-primary text-primary"
-                : "text-gray-400 hover:text-gray-300"
-                }`}
+              className={`w-5 h-5 transition-all ${
+                isFavorite
+                  ? "fill-primary text-primary"
+                  : "text-gray-400 hover:text-gray-300"
+              }`}
             />
           </motion.button>
 
@@ -291,13 +306,18 @@ export default function Professional() {
           {userData.phoneNumber && (
             <div className="flex justify-center w-full mt-3">
               <a
-                href={`https://wa.me/55${userData.phoneNumber.replace(/\D/g, '')}`}
+                href={`https://wa.me/55${userData.phoneNumber.replace(
+                  /\D/g,
+                  ""
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center px-4 py-2 space-x-2 text-green-400 transition-colors border rounded-lg shadow bg-green-500/10 border-green-500/30 hover:bg-green-500/20 group"
               >
                 <MessageCircle className="w-5 h-5 transition-transform group-hover:scale-110" />
-                <span className="text-sm font-medium">WhatsApp: {userData.phoneNumber}</span>
+                <span className="text-sm font-medium">
+                  WhatsApp: {userData.phoneNumber}
+                </span>
               </a>
             </div>
           )}
@@ -305,15 +325,20 @@ export default function Professional() {
 
         <Button
           onClick={() => id && sendProposal(id)}
-          disabled={hasActiveBond || hasAnyActiveBond || alreadySentProposal || isSending}
+          disabled={
+            hasActiveBond ||
+            hasAnyActiveBond ||
+            alreadySentProposal ||
+            isSending
+          }
         >
           {hasActiveBond
             ? "Seu Personal"
             : hasAnyActiveBond
-              ? "Você já tem um Personal"
-              : alreadySentProposal
-                ? "Proposta Pendente"
-                : "Enviar Proposta"}
+            ? "Você já tem um Personal"
+            : alreadySentProposal
+            ? "Proposta Pendente"
+            : "Enviar Proposta"}
         </Button>
 
         {/* Botões de ação quando há vínculo ativo */}
@@ -354,9 +379,12 @@ export default function Professional() {
             <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle className="text-red-500">Cancelar proposta?</DialogTitle>
+                  <DialogTitle className="text-red-500">
+                    Cancelar proposta?
+                  </DialogTitle>
                   <DialogDescription>
-                    Tem certeza que deseja cancelar sua proposta para <strong>{userData.name}</strong>?<br />
+                    Tem certeza que deseja cancelar sua proposta para{" "}
+                    <strong>{userData.name}</strong>?<br />
                     Esta ação não pode ser desfeita.
                   </DialogDescription>
                 </DialogHeader>
@@ -377,10 +405,14 @@ export default function Professional() {
                           toast.success("Proposta cancelada com sucesso!");
                           setShowCancelDialog(false);
                           setAlreadySentProposal(false);
-                          queryClient.invalidateQueries({ queryKey: ["getBondsSent"] });
+                          queryClient.invalidateQueries({
+                            queryKey: ["getBondsSent"],
+                          });
                         },
                         onError: () => {
-                          toast.error("Erro ao cancelar proposta. Tente novamente.");
+                          toast.error(
+                            "Erro ao cancelar proposta. Tente novamente."
+                          );
                         },
                       });
                     }}
@@ -409,7 +441,6 @@ export default function Professional() {
             )}
           </button>
 
-
           <AnimatePresence>
             {expandedSections.personalInfo && (
               <motion.div
@@ -424,8 +455,6 @@ export default function Professional() {
                     <Mail className="w-5 h-5" />
                     <span className="text-sm">{userData.email}</span>
                   </div>
-
-
 
                   {userData.dateOfBirth && (
                     <div className="flex items-center space-x-2 text-neutral-white-01">
@@ -629,9 +658,12 @@ export default function Professional() {
       <Dialog open={showUnbondDialog} onOpenChange={setShowUnbondDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-red-500">Cancelar vínculo?</DialogTitle>
+            <DialogTitle className="text-red-500">
+              Cancelar vínculo?
+            </DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja se desvincular de <strong>{userData.name}</strong>?
+              Tem certeza que deseja se desvincular de{" "}
+              <strong>{userData.name}</strong>?
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -659,8 +691,12 @@ export default function Professional() {
                       toast.success("Vínculo cancelado com sucesso!");
                       setShowUnbondDialog(false);
                       // Invalida e refaz as queries para atualizar a UI imediatamente
-                      queryClient.invalidateQueries({ queryKey: ["getBondAsCustomer"] });
-                      queryClient.invalidateQueries({ queryKey: ["getBondsSent"] });
+                      queryClient.invalidateQueries({
+                        queryKey: ["getBondAsCustomer"],
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: ["getBondsSent"],
+                      });
                       refetchActiveBond();
                       refetchBondsSent();
                     },
@@ -672,7 +708,9 @@ export default function Professional() {
               }}
               disabled={updateBondMutation.isPending}
             >
-              {updateBondMutation.isPending ? "Cancelando..." : "Sim, desvincular"}
+              {updateBondMutation.isPending
+                ? "Cancelando..."
+                : "Sim, desvincular"}
             </Button>
           </DialogFooter>
         </DialogContent>
