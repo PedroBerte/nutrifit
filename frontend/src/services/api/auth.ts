@@ -11,15 +11,11 @@ export interface SendAccessEmailRequest {
 export function useSendAccessEmail() {
   return useMutation({
     mutationFn: async (data: SendAccessEmailRequest) => {
-      await api.post(
-        "/authentication/sendAccessEmail",
-        data,
-        {
-          headers: {
-            "X-App-BaseUrl": window.location.origin,
-          },
-        }
-      );
+      await api.post("/authentication/sendAccessEmail", data, {
+        headers: {
+          "X-App-BaseUrl": window.location.origin,
+        },
+      });
     },
   });
 }
@@ -34,8 +30,11 @@ export function useValidateSession() {
         `/authentication/validateSession?token=${encodeURIComponent(token)}`
       );
 
-      const apiBaseUrl = import.meta.env.VITE_API_URL || "https://apinutrifit.mujapira.com/api";
-      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BKKDHulrht7Cot9XoCqXZW8GOsnML2SmNvbIfiyH2iUpbSEUKEZiDJQCHMItcb91Q7DpmhpYYwDmb7cW4mBtjO4";
+      const apiBaseUrl =
+        import.meta.env.VITE_API_URL || "https://apinutrifit.mujapira.com/api";
+      const vapidPublicKey =
+        import.meta.env.VITE_VAPID_PUBLIC_KEY ||
+        "BKKDHulrht7Cot9XoCqXZW8GOsnML2SmNvbIfiyH2iUpbSEUKEZiDJQCHMItcb91Q7DpmhpYYwDmb7cW4mBtjO4";
 
       console.log("[AUTH] API Base URL:", apiBaseUrl);
       console.log("[AUTH] VAPID Public Key:", vapidPublicKey);

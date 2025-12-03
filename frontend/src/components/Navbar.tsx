@@ -1,12 +1,9 @@
 import { ChevronLeft, Menu } from "lucide-react";
-import {
-  unstable_RouterContextProvider,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "./ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserProfiles } from "@/types/user";
+import { getParentRoute } from "@/lib/navigation";
 
 type NavbarProps = {
   isMenuButtonVisible?: boolean;
@@ -30,7 +27,8 @@ export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
 
   const handleBackClick = () => {
     setOpenMobile(false); // Garante que a sidebar feche ao voltar
-    navigate(-1);
+    const parentRoute = getParentRoute(location.pathname, user?.profile);
+    navigate(parentRoute);
   };
 
   return (

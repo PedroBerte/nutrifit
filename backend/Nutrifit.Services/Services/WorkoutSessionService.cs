@@ -229,6 +229,7 @@ namespace Nutrifit.Services.Services
 
                 var sessions = await _context.WorkoutSessions
                     .Include(ws => ws.WorkoutTemplate)
+                    .Include(ws => ws.ExerciseSessions)
                     .Where(ws => ws.CustomerId == customerId && ws.Status == "C")
                     .OrderByDescending(ws => ws.CompletedAt)
                     .Skip(skip)
@@ -244,7 +245,9 @@ namespace Nutrifit.Services.Services
                     Status = session.Status,
                     DurationMinutes = session.DurationMinutes,
                     TotalVolume = session.TotalVolume,
-                    DifficultyRating = session.DifficultyRating
+                    DifficultyRating = session.DifficultyRating,
+                    TotalExercises = session.ExerciseSessions?.Count ?? 0,
+                    ExercisesCompleted = session.ExerciseSessions?.Count(es => es.Status == "C") ?? 0
                 }).ToList();
 
                 return ApiResponse.CreateSuccess("Histórico encontrado.", response);

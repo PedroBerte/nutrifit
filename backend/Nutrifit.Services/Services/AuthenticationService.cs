@@ -20,65 +20,65 @@ using System.Threading.Tasks;
 
 namespace Nutrifit.Services.Services
 {
-    record MagicLinkPayload(string Email, string? Ip, string? Ua, DateTimeOffset CreatedAt, bool Invited = false, Guid? ProfessionalInviterId = null);
-    public class AuthenticationService : IAuthenticationService
+  record MagicLinkPayload(string Email, string? Ip, string? Ua, DateTimeOffset CreatedAt, bool Invited = false, Guid? ProfessionalInviterId = null);
+  public class AuthenticationService : IAuthenticationService
+  {
+    private readonly IConfiguration _cfg;
+    private readonly IConnectionMultiplexer _mux;
+    private readonly NutrifitContext _context;
+
+    private readonly IMailService _mailService;
+
+    public AuthenticationService(IConfiguration cfg, IConnectionMultiplexer mux, IMailService mailService, NutrifitContext context)
     {
-        private readonly IConfiguration _cfg;
-        private readonly IConnectionMultiplexer _mux;
-        private readonly NutrifitContext _context;
+      _cfg = cfg;
+      _mux = mux;
+      _context = context;
+      _mailService = mailService;
+    }
 
-        private readonly IMailService _mailService;
+    public async Task SendAccessEmailAsync(string email, string baseAppUrl, string ip, string ua, bool invited = false, Guid? professionalInviterId = null)
+    {
+      var tokenBytes = RandomNumberGenerator.GetBytes(32);
+      var token = WebEncoders.Base64UrlEncode(tokenBytes);
+      var url = $"{baseAppUrl.TrimEnd('/')}/login/callback?token={token}";
 
-        public AuthenticationService(IConfiguration cfg, IConnectionMultiplexer mux, IMailService mailService, NutrifitContext context)
-        {
-            _cfg = cfg;
-            _mux = mux;
-            _context = context;
-            _mailService = mailService;
-        }
+      var payload = new MagicLinkPayload(
+          Email: email.Trim().ToLowerInvariant(),
+          Ip: ip,
+          Ua: ua,
+          CreatedAt: DateTimeOffset.UtcNow,
+          Invited: invited,
+          ProfessionalInviterId: professionalInviterId
+      );
+      var val = JsonSerializer.Serialize(payload);
+      var ttl = TimeSpan.FromMinutes(_cfg.GetValue<int>("MagicLink:ExpiresMinutes", 10));
 
-        public async Task SendAccessEmailAsync(string email, string baseAppUrl, string ip, string ua, bool invited = false, Guid? professionalInviterId = null)
-        {
-            var tokenBytes = RandomNumberGenerator.GetBytes(32);
-            var token = WebEncoders.Base64UrlEncode(tokenBytes);
-            var url = $"{baseAppUrl.TrimEnd('/')}/login/callback?token={token}";
+      await _mux.GetDatabase().StringSetAsync($"ml:{Sha256Hex(token)}", val, ttl, When.NotExists);
 
-            var payload = new MagicLinkPayload(
-                Email: email.Trim().ToLowerInvariant(),
-                Ip: ip,
-                Ua: ua,
-                CreatedAt: DateTimeOffset.UtcNow,
-                Invited: invited,
-                ProfessionalInviterId: professionalInviterId
-            );
-            var val = JsonSerializer.Serialize(payload);
-            var ttl = TimeSpan.FromMinutes(_cfg.GetValue<int>("MagicLink:ExpiresMinutes", 10));
+      var html = GetMagicLinkEmailHtml(url, ttl.TotalMinutes);
+      var text = $"Olá! Use o link para acessar a NutriFit: {url}\nO link expira em {ttl.TotalMinutes:0} minutos.";
 
-            await _mux.GetDatabase().StringSetAsync($"ml:{Sha256Hex(token)}", val, ttl, When.NotExists);
+      await _mailService.SendAsync(new MailMessageDTO(
+          To: email,
+          Subject: "Seu acesso à NutriFit",
+          HtmlBody: html,
+          TextBody: text,
+          Attachments: null,
+          Cc: null,
+          Bcc: null
+      ));
+    }
 
-            var html = GetMagicLinkEmailHtml(url, ttl.TotalMinutes);
-            var text = $"Olá! Use o link para acessar a NutriFit: {url}\nO link expira em {ttl.TotalMinutes:0} minutos.";
+    private static string GetMagicLinkEmailHtml(string url, double expiresInMinutes)
+    {
+      const string brand = "#16a34a";
+      const string brandDark = "#15803d";
+      const string bg = "#0b0f0d";
+      const string lightBg = "#f6f8f7";
+      const string text = "#1f2937";
 
-            await _mailService.SendAsync(new MailMessageDTO(
-                To: email,
-                Subject: "Seu acesso à NutriFit",
-                HtmlBody: html,
-                TextBody: text,
-                Attachments: null,
-                Cc: null,
-                Bcc: null
-            ));
-        }
-
-        private static string GetMagicLinkEmailHtml(string url, double expiresInMinutes)
-        {
-            const string brand = "#16a34a";
-            const string brandDark = "#15803d"; 
-            const string bg = "#0b0f0d";
-            const string lightBg = "#f6f8f7";
-            const string text = "#1f2937";
-
-            return $@"
+      return $@"
                 <!doctype html>
                 <html lang=""pt-BR"">
                   <head>
@@ -197,48 +197,48 @@ namespace Nutrifit.Services.Services
                     </table>
                   </body>
                 </html>";
-        }
+    }
 
 
-        public async Task<string> ValidateSession(string token)
-        {
-            var raw = await _mux.GetDatabase().StringGetAsync($"ml:{Sha256Hex(token)}");
-            if (raw.IsNullOrEmpty) throw new UnauthorizedAccessException("Token inválido ou expirado.");
+    public async Task<string> ValidateSession(string token)
+    {
+      var raw = await _mux.GetDatabase().StringGetAsync($"ml:{Sha256Hex(token)}");
+      if (raw.IsNullOrEmpty) throw new UnauthorizedAccessException("Token inválido ou expirado.");
 
-            var payload = JsonSerializer.Deserialize<MagicLinkPayload>(raw!);
+      var payload = JsonSerializer.Deserialize<MagicLinkPayload>(raw!);
 
-            var user = await _context.Users
-                .Include(x => x.Profile)
-                .FirstOrDefaultAsync(u => u.Email == payload!.Email);
+      var user = await _context.Users
+          .Include(x => x.Profile)
+          .FirstOrDefaultAsync(u => u.Email == payload!.Email);
 
-            var request = new IssueJwtTokenRequest
-            {
-                Id = Guid.NewGuid(),
-                Name = "",
-                Email = payload.Email,
-                Profile = Guid.Empty,
-                IsAdmin = user?.IsAdmin ?? false,
-                Invited = payload.Invited,
-                ProfessionalInviterId = payload.ProfessionalInviterId
-            };
+      var request = new IssueJwtTokenRequest
+      {
+        Id = Guid.NewGuid(),
+        Name = "",
+        Email = payload.Email,
+        Profile = Guid.Empty,
+        IsAdmin = user?.IsAdmin ?? false,
+        Invited = payload.Invited,
+        ProfessionalInviterId = payload.ProfessionalInviterId
+      };
 
-            if(user is not null)
-            {
-                request.Id = user.Id;
-                request.Name = user.Name;
-                request.Profile = user.ProfileId;
-            }
+      if (user is not null)
+      {
+        request.Id = user.Id;
+        request.Name = user.Name;
+        request.Profile = user.ProfileId;
+      }
 
-            return IssueJwt(request);
-        }
+      return IssueJwt(request);
+    }
 
-        private string IssueJwt(IssueJwtTokenRequest request)
-        {
-            var cfg = _cfg.GetSection("Jwt");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(cfg["Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    private string IssueJwt(IssueJwtTokenRequest request)
+    {
+      var cfg = _cfg.GetSection("Jwt");
+      var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(cfg["Key"]!));
+      var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claimsList = new List<Claim>
+      var claimsList = new List<Claim>
             {
                 new Claim("id", request.Id.ToString()),
                 new Claim("name", request.Name),
@@ -250,29 +250,29 @@ namespace Nutrifit.Services.Services
                 new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            if (request.ProfessionalInviterId.HasValue)
-            {
-                claimsList.Add(new Claim("professionalInviterId", request.ProfessionalInviterId.Value.ToString()));
-            }
+      if (request.ProfessionalInviterId.HasValue)
+      {
+        claimsList.Add(new Claim("professionalInviterId", request.ProfessionalInviterId.Value.ToString()));
+      }
 
-            var claims = claimsList.ToArray();
+      var claims = claimsList.ToArray();
 
-            var token = new JwtSecurityToken(
-                issuer: cfg["Issuer"],
-                audience: cfg["Audience"],
-                claims: claims,
-                notBefore: DateTime.UtcNow,
-                expires: DateTime.UtcNow.AddMinutes(int.Parse(cfg["ExpiresMinutes"]!)),
-                signingCredentials: creds
-            );
+      var token = new JwtSecurityToken(
+          issuer: cfg["Issuer"],
+          audience: cfg["Audience"],
+          claims: claims,
+          notBefore: DateTime.UtcNow,
+          expires: DateTime.UtcNow.AddMinutes(int.Parse(cfg["ExpiresMinutes"]!)),
+          signingCredentials: creds
+      );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        private static string Sha256Hex(string s)
-        {
-            using var sha = SHA256.Create();
-            return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(s)));
-        }
+      return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    private static string Sha256Hex(string s)
+    {
+      using var sha = SHA256.Create();
+      return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(s)));
+    }
+  }
 }
