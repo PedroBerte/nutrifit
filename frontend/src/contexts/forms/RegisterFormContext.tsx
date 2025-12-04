@@ -20,6 +20,7 @@ import type { ProfessionalCredentialType } from "@/types/professional";
 import { uploadImage } from "@/services/api/storage";
 import { useToast } from "../ToastContext";
 import { useCreateBond } from "@/services/api/bond";
+import { api } from "@/lib/axios";
 
 export type AccountType = "student" | "nutritionist" | "personal";
 
@@ -235,9 +236,12 @@ export function RegisterFormProvider({
             );
             console.log("Upload concluído:", uploadResponse.url);
 
-            // TODO: Atualizar usuário com a URL da imagem
-            // Você pode criar um endpoint PATCH para atualizar apenas a imageUrl
-            // ou deixar para atualizar na próxima edição de perfil
+            // Atualizar usuário com a URL da imagem
+            await api.put(`/user/${createdUser.id}`, {
+              ...createdUser,
+              imageUrl: uploadResponse.url,
+            });
+            console.log("Imagem do usuário atualizada com sucesso!");
           } catch (uploadError) {
             console.error("Erro ao fazer upload da imagem:", uploadError);
             // Usuário já foi criado, apenas log do erro
@@ -321,9 +325,12 @@ export function RegisterFormProvider({
             );
             console.log("Upload concluído:", uploadResponse.url);
 
-            // TODO: Atualizar usuário com a URL da imagem
-            // Você pode criar um endpoint PATCH para atualizar apenas a imageUrl
-            // ou deixar para atualizar na próxima edição de perfil
+            // Atualizar usuário com a URL da imagem
+            await api.put(`/user/${createdUser.id}`, {
+              ...createdUser,
+              imageUrl: uploadResponse.url,
+            });
+            console.log("Imagem do usuário atualizada com sucesso!");
           } catch (uploadError) {
             console.error("Erro ao fazer upload da imagem:", uploadError);
             // Usuário já foi criado, apenas log do erro

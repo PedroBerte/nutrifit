@@ -61,7 +61,7 @@ export default function GenericPersonForm() {
           <FormItem className="mt-5">
             <FormLabel>Nome Completo</FormLabel>
             <FormControl>
-              <Input placeholder="Seu Nome" {...field} />
+              <Input placeholder="Seu Nome" maxLength={200} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

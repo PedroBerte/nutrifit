@@ -33,6 +33,7 @@ export default function RoutinesList() {
         <Input
           className="border-none bg-neutral-dark-03 max-h-full"
           placeholder="Pesquisar"
+          maxLength={100}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

@@ -72,7 +72,7 @@ export default function AddressForm() {
           <FormItem>
             <FormLabel>Rua</FormLabel>
             <FormControl>
-              <Input placeholder="Rua das Dietas" {...field} />
+              <Input placeholder="Rua das Dietas" maxLength={255} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -85,7 +85,12 @@ export default function AddressForm() {
           <FormItem>
             <FormLabel>Número</FormLabel>
             <FormControl>
-              <Input placeholder="123" {...field} />
+              <Input
+                placeholder="123"
+                maxLength={20}
+                inputMode="numeric"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -98,7 +103,7 @@ export default function AddressForm() {
           <FormItem>
             <FormLabel>Bairro</FormLabel>
             <FormControl>
-              <Input placeholder="Centro" {...field} />
+              <Input placeholder="Centro" maxLength={100} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -111,7 +116,7 @@ export default function AddressForm() {
           <FormItem>
             <FormLabel>Cidade</FormLabel>
             <FormControl>
-              <Input placeholder="São Paulo" {...field} />
+              <Input placeholder="São Paulo" maxLength={100} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
