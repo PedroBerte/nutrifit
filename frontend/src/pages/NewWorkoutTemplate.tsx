@@ -229,6 +229,7 @@ export function NewWorkoutTemplate() {
                     <FormControl>
                       <Input
                         placeholder="Ex: Treino A - Peito e Tríceps"
+                        maxLength={200}
                         {...field}
                       />
                     </FormControl>

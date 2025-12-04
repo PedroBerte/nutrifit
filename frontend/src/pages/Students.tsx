@@ -70,8 +70,10 @@ export default function Students() {
             />
             <Input
               className="border-none bg-neutral-dark-03 pl-10 rounded-lg w-full py-2 text-base focus:ring-2 focus:ring-primary transition-all"
+              placeholder="Pesquisar alunos..."
               value={searchInput}
               onChange={(e) => handleSearch(e.target.value)}
+              maxLength={100}
             />
           </div>
         </div>
@@ -80,24 +82,20 @@ export default function Students() {
       {/* Students List */}
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center flex-col">
-          {!debouncedSearch &&
+          {!debouncedSearch && (
             <p className="text-muted-foreground pt-4">
               Você ainda não tem alunos ativos
             </p>
-          }
-          {debouncedSearch &&
-            <p>
-              Nenhum aluno encontrado
-            </p>
-          }
+          )}
+          {debouncedSearch && <p>Nenhum aluno encontrado</p>}
           {/* Responsive image: hidden on very small screens */}
-          {!debouncedSearch &&
+          {!debouncedSearch && (
             <img
               src={PersonalSemAlunos}
               alt="Nenhum aluno ativo pt-2"
               className="w-64 object-contain max-w-full xs:hidden sm:block"
             />
-          }
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -133,7 +131,9 @@ export default function Students() {
 
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                     <Mail size={14} className="flex-shrink-0" />
-                    <span className="w-full break-words whitespace-normal block text-xs sm:text-sm">{student.studentEmail}</span>
+                    <span className="w-full break-words whitespace-normal block text-xs sm:text-sm">
+                      {student.studentEmail}
+                    </span>
                   </div>
 
                   {student.studentPhone && (
@@ -144,19 +144,21 @@ export default function Students() {
                   )}
 
                   {/* Age Badge on mobile (falls below info) */}
-                  {student.studentDateOfBirth && calculateAge(student.studentDateOfBirth) > 0 && (
-                    <div className="bg-primary/10 w-min whitespace-nowrap text-primary px-3 py-1 rounded-full text-xs font-medium mt-2 block sm:hidden">
-                      {calculateAge(student.studentDateOfBirth)} anos
-                    </div>
-                  )}
+                  {student.studentDateOfBirth &&
+                    calculateAge(student.studentDateOfBirth) > 0 && (
+                      <div className="bg-primary/10 w-min whitespace-nowrap text-primary px-3 py-1 rounded-full text-xs font-medium mt-2 block sm:hidden">
+                        {calculateAge(student.studentDateOfBirth)} anos
+                      </div>
+                    )}
                 </div>
 
                 {/* Age Badge on desktop (hidden on mobile) */}
-                {student.studentDateOfBirth && calculateAge(student.studentDateOfBirth) > 0 && (
-                  <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium sm:block hidden">
-                    {calculateAge(student.studentDateOfBirth)} anos
-                  </div>
-                )}
+                {student.studentDateOfBirth &&
+                  calculateAge(student.studentDateOfBirth) > 0 && (
+                    <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium sm:block hidden">
+                      {calculateAge(student.studentDateOfBirth)} anos
+                    </div>
+                  )}
               </div>
             </motion.div>
           ))}

@@ -4,6 +4,7 @@ import { useSidebar } from "./ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserProfiles } from "@/types/user";
 import { getParentRoute } from "@/lib/navigation";
+import { useGetBondAsCustomer } from "@/services/api/bond";
 
 type NavbarProps = {
   isMenuButtonVisible?: boolean;
@@ -13,6 +14,8 @@ export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: activeBond } = useGetBondAsCustomer();
+
   const isOnHome =
     (user?.profile === UserProfiles.PERSONAL &&
       location.pathname === "/personal") ||
@@ -27,6 +30,16 @@ export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
 
   const handleBackClick = () => {
     setOpenMobile(false); // Garante que a sidebar feche ao voltar
+
+    // Se estiver na página de um profissional e tiver vínculo ativo, voltar para myProfessionals
+    const isProfessionalPage = /^\/professional\/[^/]+$/.test(
+      location.pathname
+    );
+    if (isProfessionalPage && activeBond?.status === "A") {
+      navigate("/myProfessionals");
+      return;
+    }
+
     const parentRoute = getParentRoute(location.pathname, user?.profile);
     navigate(parentRoute);
   };

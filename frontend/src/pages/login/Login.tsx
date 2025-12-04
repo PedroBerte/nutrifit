@@ -61,7 +61,12 @@ export default function Login() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="seu.email@email.com.br" {...field} />
+                  <Input
+                    type="email"
+                    maxLength={255}
+                    placeholder="seu.email@email.com.br"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

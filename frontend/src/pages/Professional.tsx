@@ -194,10 +194,18 @@ export default function Professional() {
 
   const sendProposal = async (professionalId: string) => {
     // Não permite enviar proposta se já tem vínculo ativo (com este ou outro profissional)
-    if (isSending || alreadySentProposal || hasActiveBond || hasAnyActiveBond)
+    // ou se já existe uma proposta pendente
+    if (
+      isSending ||
+      alreadySentProposal ||
+      hasPendingProposal ||
+      hasActiveBond ||
+      hasAnyActiveBond
+    )
       return;
 
     setIsSending(true);
+    setAlreadySentProposal(true); // Previne cliques duplos imediatamente
 
     var newProposal: CustomerProfessionalBondType = {
       id: null,
@@ -217,8 +225,11 @@ export default function Professional() {
         setAlreadySentProposal(true);
         setIsSending(false);
         toast.success("Proposta enviada com sucesso!");
+        // Atualizar a lista de bonds enviados para refletir a nova proposta
+        refetchBondsSent();
       },
       onError: () => {
+        setAlreadySentProposal(false); // Restaura para permitir nova tentativa
         setIsSending(false);
         toast.error("Ocorreu um erro ao enviar a proposta.");
       },
@@ -328,6 +339,7 @@ export default function Professional() {
           disabled={
             hasActiveBond ||
             hasAnyActiveBond ||
+            hasPendingProposal ||
             alreadySentProposal ||
             isSending
           }
@@ -336,7 +348,7 @@ export default function Professional() {
             ? "Seu Personal"
             : hasAnyActiveBond
             ? "Você já tem um Personal"
-            : alreadySentProposal
+            : hasPendingProposal || alreadySentProposal
             ? "Proposta Pendente"
             : "Enviar Proposta"}
         </Button>
