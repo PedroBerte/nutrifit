@@ -68,6 +68,12 @@ const items = [
     profiles: [UserProfiles.PERSONAL, UserProfiles.NUTRITIONIST],
   },
   {
+    title: "Alunos",
+    url: "/students",
+    icon: Users,
+    profiles: [UserProfiles.PERSONAL],
+  },
+  {
     title: "Vínculos",
     url: "/bond",
     icon: Users,
@@ -154,24 +160,45 @@ export function AppSidebar() {
                 .filter((item) =>
                   item.profiles.includes(user?.profile as UserProfiles)
                 )
-                .map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      className="h-12 text-base font-medium hover:bg-neutral-dark-03 rounded-xl transition-colors"
-                    >
-                      <button
-                        onClick={() => navigate(item.url)}
-                        className="flex items-center gap-3 px-4 w-full"
+                .map((item) => {
+                  const isActive = location.pathname === item.url;
+                  return (
+                    <SidebarMenuItem key={item.title + item.url}>
+                      <SidebarMenuButton
+                        asChild
+                        className={`h-12 text-base font-medium hover:bg-neutral-dark-03 rounded-xl transition-colors ${
+                          isActive ? "bg-neutral-dark-03" : ""
+                        }`}
                       >
-                        <item.icon size={22} className="text-primary" />
-                        <span className="text-neutral-white-01">
-                          {item.title}
-                        </span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                        <button
+                          onClick={() => {
+                            if (!isActive) {
+                              navigate(item.url);
+                            }
+                            toggleSidebar();
+                          }}
+                          className="flex items-center gap-3 px-4 w-full"
+                        >
+                          <item.icon
+                            size={22}
+                            className={
+                              isActive ? "text-primary" : "text-primary"
+                            }
+                          />
+                          <span
+                            className={
+                              isActive
+                                ? "text-primary font-semibold"
+                                : "text-neutral-white-01"
+                            }
+                          >
+                            {item.title}
+                          </span>
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

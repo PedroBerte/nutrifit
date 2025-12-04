@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,14 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
-import {
   Form,
   FormControl,
   FormField,
@@ -29,18 +21,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Calendar } from "lucide-react";
 import { GOAL_OPTIONS, DIFFICULTY_OPTIONS } from "@/constants/routine";
 import { useToast } from "@/contexts/ToastContext";
 import { motion } from "motion/react";
-
-const WEEK_OPTIONS = [
-  { value: 4, label: "4 semanas (1 mês)" },
-  { value: 8, label: "8 semanas (2 meses)" },
-  { value: 12, label: "12 semanas (3 meses)" },
-  { value: 16, label: "16 semanas (4 meses)" },
-  { value: 24, label: "24 semanas (6 meses)" },
-];
 
 const createRoutineSchema = z.object({
   title: z
@@ -49,7 +32,6 @@ const createRoutineSchema = z.object({
     .max(200, "Título muito longo"),
   goal: z.string().optional(),
   difficulty: z.string().optional(),
-  weeks: z.number().optional(),
 });
 
 type CreateRoutineFormData = z.infer<typeof createRoutineSchema>;
@@ -57,7 +39,6 @@ type CreateRoutineFormData = z.infer<typeof createRoutineSchema>;
 export default function NewRoutine() {
   const navigate = useNavigate();
   const createRoutine = useCreateRoutine();
-  const [isWeeksDrawerOpen, setIsWeeksDrawerOpen] = useState(false);
   const toast = useToast();
 
   const form = useForm<CreateRoutineFormData>({
@@ -66,7 +47,6 @@ export default function NewRoutine() {
       title: "",
       goal: undefined,
       difficulty: undefined,
-      weeks: undefined,
     },
   });
 
@@ -76,7 +56,6 @@ export default function NewRoutine() {
         title: data.title.trim(),
         goal: data.goal || undefined,
         difficulty: data.difficulty || undefined,
-        weeks: data.weeks,
       });
 
       if (response.success) {
@@ -97,11 +76,6 @@ export default function NewRoutine() {
   const handleCancel = () => {
     navigate(-1);
   };
-
-  const selectedWeeks = form.watch("weeks");
-  const selectedWeekLabel = WEEK_OPTIONS.find(
-    (opt) => opt.value === selectedWeeks
-  )?.label;
 
   return (
     <motion.div
@@ -191,61 +165,6 @@ export default function NewRoutine() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Semanas */}
-              <FormField
-                control={form.control}
-                name="weeks"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Semanas</FormLabel>
-                    <Drawer
-                      open={isWeeksDrawerOpen}
-                      onOpenChange={setIsWeeksDrawerOpen}
-                    >
-                      <DrawerTrigger asChild className="bg-transparent">
-                        <FormControl>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal"
-                          >
-                            <Calendar className="mr-2 size-4" />
-                            {selectedWeekLabel || "Selecione a duração"}
-                          </Button>
-                        </FormControl>
-                      </DrawerTrigger>
-                      <DrawerContent>
-                        <DrawerHeader>
-                          <DrawerTitle>Selecione a duração</DrawerTitle>
-                        </DrawerHeader>
-                        <div className="p-4 space-y-2">
-                          {WEEK_OPTIONS.map((option) => (
-                            <DrawerClose asChild key={option.value}>
-                              <Button
-                                type="button"
-                                variant={
-                                  selectedWeeks === option.value
-                                    ? "default"
-                                    : "outline"
-                                }
-                                className="w-full justify-start"
-                                onClick={() => {
-                                  field.onChange(option.value);
-                                  setIsWeeksDrawerOpen(false);
-                                }}
-                              >
-                                {option.label}
-                              </Button>
-                            </DrawerClose>
-                          ))}
-                        </div>
-                      </DrawerContent>
-                    </Drawer>
                     <FormMessage />
                   </FormItem>
                 )}

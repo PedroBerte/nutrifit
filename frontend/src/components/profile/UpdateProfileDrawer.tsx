@@ -38,6 +38,8 @@ import { format } from "date-fns";
 import { api } from "@/lib/axios";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MaskedInput } from "@/components/MaskedInput";
+import { formatPhoneBR, formatCEP } from "@/lib/mask";
 
 const updateProfileSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
@@ -136,7 +138,11 @@ export function UpdateProfileDrawer({
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        placeholder="Seu nome"
+                        maxLength={200}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -150,7 +156,12 @@ export function UpdateProfileDrawer({
                   <FormItem>
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" />
+                      <Input
+                        placeholder="seu.email@email.com"
+                        maxLength={255}
+                        type="email"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -164,7 +175,12 @@ export function UpdateProfileDrawer({
                   <FormItem>
                     <FormLabel>Telefone</FormLabel>
                     <FormControl>
-                      <Input {...field} type="tel" value={field.value || ""} />
+                      <MaskedInput
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="(11) 91234-5678"
+                        formatter={formatPhoneBR}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -251,7 +267,12 @@ export function UpdateProfileDrawer({
                     <FormItem>
                       <FormLabel>CEP</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} />
+                        <MaskedInput
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="00000-000"
+                          formatter={formatCEP}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -266,7 +287,12 @@ export function UpdateProfileDrawer({
                       <FormItem>
                         <FormLabel>Rua</FormLabel>
                         <FormControl>
-                          <Input {...field} value={field.value || ""} />
+                          <Input
+                            placeholder="Rua"
+                            maxLength={255}
+                            {...field}
+                            value={field.value || ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -280,7 +306,13 @@ export function UpdateProfileDrawer({
                       <FormItem>
                         <FormLabel>Número</FormLabel>
                         <FormControl>
-                          <Input {...field} value={field.value || ""} />
+                          <Input
+                            placeholder="123"
+                            maxLength={20}
+                            inputMode="numeric"
+                            {...field}
+                            value={field.value || ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -296,7 +328,12 @@ export function UpdateProfileDrawer({
                       <FormItem>
                         <FormLabel>Estado</FormLabel>
                         <FormControl>
-                          <Input {...field} value={field.value || ""} />
+                          <Input
+                            placeholder="SP"
+                            maxLength={50}
+                            {...field}
+                            value={field.value || ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -310,7 +347,12 @@ export function UpdateProfileDrawer({
                       <FormItem>
                         <FormLabel>Cidade</FormLabel>
                         <FormControl>
-                          <Input {...field} value={field.value || ""} />
+                          <Input
+                            placeholder="São Paulo"
+                            maxLength={100}
+                            {...field}
+                            value={field.value || ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

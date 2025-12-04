@@ -1,7 +1,11 @@
 import ProfessionalCard from "@/components/ProfessionalCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useGetAllUsers, useGetUserById, useGeocodeAllAddresses } from "@/services/api/user";
+import {
+  useGetAllUsers,
+  useGetUserById,
+  useGeocodeAllAddresses,
+} from "@/services/api/user";
 import { useGetBondAsCustomer } from "@/services/api/bond";
 import { AttendanceMode } from "@/types/professional";
 import { motion } from "motion/react";
@@ -35,47 +39,59 @@ export default function ProfessionalsList() {
   const [selectedDistance, setSelectedDistance] = useState<number | null>(null);
 
   const userHasAddress = useMemo(() => {
-    return currentUserData?.address?.latitude !== null &&
+    return (
+      currentUserData?.address?.latitude !== null &&
       currentUserData?.address?.latitude !== undefined &&
       currentUserData?.address?.longitude !== null &&
-      currentUserData?.address?.longitude !== undefined;
+      currentUserData?.address?.longitude !== undefined
+    );
   }, [currentUserData]);
 
   const { data, isLoading, refetch } = useGetAllUsers(
     false,
     false,
     true,
-    selectedDistance && userHasAddress ? currentUserData?.address?.latitude! : null,
-    selectedDistance && userHasAddress ? currentUserData?.address?.longitude! : null,
+    selectedDistance && userHasAddress
+      ? currentUserData?.address?.latitude!
+      : null,
+    selectedDistance && userHasAddress
+      ? currentUserData?.address?.longitude!
+      : null,
     selectedDistance && userHasAddress ? selectedDistance : null
   );
 
   // Extrair tags únicas e cidades únicas
   const allTags = Array.from(
     new Set(
-      data?.flatMap(p => [
-        p.professionalDetails?.tag1,
-        p.professionalDetails?.tag2,
-        p.professionalDetails?.tag3,
-      ]).filter(Boolean) as string[]
+      data
+        ?.flatMap((p) => [
+          p.professionalDetails?.tag1,
+          p.professionalDetails?.tag2,
+          p.professionalDetails?.tag3,
+        ])
+        .filter(Boolean) as string[]
     )
   ).sort();
 
   const allCities = Array.from(
-    new Set(
-      data?.map(p => p.address?.city).filter(Boolean) as string[]
-    )
+    new Set(data?.map((p) => p.address?.city).filter(Boolean) as string[])
   ).sort();
 
   // Filtrar profissionais
-  const filteredProfessionals = data?.filter(professional => {
+  const filteredProfessionals = data?.filter((professional) => {
     // Filtro de busca por nome
-    if (searchTerm && !professional.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (
+      searchTerm &&
+      !professional.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ) {
       return false;
     }
 
     // Filtro de modalidade
-    if (selectedMode !== null && professional.professionalDetails?.attendanceMode !== selectedMode) {
+    if (
+      selectedMode !== null &&
+      professional.professionalDetails?.attendanceMode !== selectedMode
+    ) {
       return false;
     }
 
@@ -92,7 +108,11 @@ export default function ProfessionalsList() {
     }
 
     // Filtro de cidade (só aplica se não tiver filtro de distância ativo)
-    if (selectedCity && !selectedDistance && professional.address?.city !== selectedCity) {
+    if (
+      selectedCity &&
+      !selectedDistance &&
+      professional.address?.city !== selectedCity
+    ) {
       return false;
     }
 
@@ -113,11 +133,18 @@ export default function ProfessionalsList() {
     setSelectedDistance(null);
   };
 
-  const hasActiveFilters = selectedMode !== null || selectedTag || selectedCity || showOnlyFavorites || selectedDistance !== null;
+  const hasActiveFilters =
+    selectedMode !== null ||
+    selectedTag ||
+    selectedCity ||
+    showOnlyFavorites ||
+    selectedDistance !== null;
 
   const handleGeocodeAll = async () => {
     try {
-      toast.loading("Geocodificando endereços... (pode levar ~40s)", { id: "geocode" });
+      toast.loading("Geocodificando endereços... (pode levar ~40s)", {
+        id: "geocode",
+      });
       const result = await geocodeMutation.mutateAsync();
       toast.success(
         `${result.message}: ${result.success} sucessos, ${result.failed} falhas`,
@@ -140,6 +167,7 @@ export default function ProfessionalsList() {
         <Input
           placeholder="Pesquisar por nome..."
           className="border-none bg-neutral-dark-03"
+          maxLength={100}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -167,12 +195,15 @@ export default function ProfessionalsList() {
               </button>
             </div>
           )}
-          
+
           {selectedMode !== null && (
             <div className="flex items-center gap-1 px-2 py-1 text-xs rounded-full xs:px-3 bg-primary/20 text-primary xs:text-sm">
               <span>
-                {selectedMode === AttendanceMode.Presencial ? "Presencial" : 
-                 selectedMode === AttendanceMode.Online ? "Online" : "Híbrido"}
+                {selectedMode === AttendanceMode.Presencial
+                  ? "Presencial"
+                  : selectedMode === AttendanceMode.Online
+                  ? "Online"
+                  : "Híbrido"}
               </span>
               <button
                 onClick={() => setSelectedMode(null)}
@@ -182,7 +213,7 @@ export default function ProfessionalsList() {
               </button>
             </div>
           )}
-          
+
           {selectedTag && (
             <div className="flex items-center gap-1 px-2 xs:px-3 py-1 bg-primary/20 text-primary rounded-full text-xs xs:text-sm max-w-[140px] xs:max-w-none">
               <span className="truncate">{selectedTag}</span>
@@ -194,7 +225,7 @@ export default function ProfessionalsList() {
               </button>
             </div>
           )}
-          
+
           {selectedCity && (
             <div className="flex items-center gap-1 px-2 xs:px-3 py-1 bg-primary/20 text-primary rounded-full text-xs xs:text-sm max-w-[120px] xs:max-w-none">
               <MapPin className="flex-shrink-0 w-3 h-3" />
@@ -207,7 +238,7 @@ export default function ProfessionalsList() {
               </button>
             </div>
           )}
-          
+
           {selectedDistance !== null && (
             <div className="flex items-center gap-1 px-2 py-1 text-xs rounded-full xs:px-3 bg-primary/20 text-primary xs:text-sm">
               <MapPin className="flex-shrink-0 w-3 h-3" />
@@ -220,7 +251,7 @@ export default function ProfessionalsList() {
               </button>
             </div>
           )}
-          
+
           <button
             onClick={clearFilters}
             className="px-2 py-1 text-xs text-gray-400 underline xs:px-3 xs:text-sm hover:text-gray-300"
@@ -249,33 +280,71 @@ export default function ProfessionalsList() {
                 className="w-full"
               >
                 <Bookmark className="flex-shrink-0 w-4 h-4" />
-                <span className="hidden xs:inline">{showOnlyFavorites ? "Mostrando apenas favoritos" : "Mostrar apenas favoritos"}</span>
-                <span className="xs:hidden">{showOnlyFavorites ? "Apenas favoritos" : "Só favoritos"}</span>
+                <span className="hidden xs:inline">
+                  {showOnlyFavorites
+                    ? "Mostrando apenas favoritos"
+                    : "Mostrar apenas favoritos"}
+                </span>
+                <span className="xs:hidden">
+                  {showOnlyFavorites ? "Apenas favoritos" : "Só favoritos"}
+                </span>
               </Button>
             </div>
 
             {/* Modalidade */}
             <div>
-              <label className="block mb-2 text-sm text-gray-400">Modalidade de Atendimento</label>
+              <label className="block mb-2 text-sm text-gray-400">
+                Modalidade de Atendimento
+              </label>
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
-                  variant={selectedMode === AttendanceMode.Presencial ? "default" : "outline"}
-                  onClick={() => setSelectedMode(selectedMode === AttendanceMode.Presencial ? null : AttendanceMode.Presencial)}
+                  variant={
+                    selectedMode === AttendanceMode.Presencial
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() =>
+                    setSelectedMode(
+                      selectedMode === AttendanceMode.Presencial
+                        ? null
+                        : AttendanceMode.Presencial
+                    )
+                  }
                 >
                   Presencial
                 </Button>
                 <Button
                   size="sm"
-                  variant={selectedMode === AttendanceMode.Online ? "default" : "outline"}
-                  onClick={() => setSelectedMode(selectedMode === AttendanceMode.Online ? null : AttendanceMode.Online)}
+                  variant={
+                    selectedMode === AttendanceMode.Online
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() =>
+                    setSelectedMode(
+                      selectedMode === AttendanceMode.Online
+                        ? null
+                        : AttendanceMode.Online
+                    )
+                  }
                 >
                   Online
                 </Button>
                 <Button
                   size="sm"
-                  variant={selectedMode === AttendanceMode.Hibrido ? "default" : "outline"}
-                  onClick={() => setSelectedMode(selectedMode === AttendanceMode.Hibrido ? null : AttendanceMode.Hibrido)}
+                  variant={
+                    selectedMode === AttendanceMode.Hibrido
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() =>
+                    setSelectedMode(
+                      selectedMode === AttendanceMode.Hibrido
+                        ? null
+                        : AttendanceMode.Hibrido
+                    )
+                  }
                 >
                   Híbrido
                 </Button>
@@ -294,7 +363,9 @@ export default function ProfessionalsList() {
                       key={tag}
                       size="sm"
                       variant={selectedTag === tag ? "default" : "outline"}
-                      onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                      onClick={() =>
+                        setSelectedTag(selectedTag === tag ? null : tag)
+                      }
                       className="flex-shrink-0"
                     >
                       {tag}
@@ -340,8 +411,12 @@ export default function ProfessionalsList() {
                 <div className="flex items-start gap-2 p-2 border rounded-lg xs:p-3 bg-yellow-500/10 border-yellow-500/30">
                   <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-yellow-500">
-                    <span className="hidden xs:inline">Complete seu perfil com endereço para usar este filtro</span>
-                    <span className="xs:hidden">Adicione seu endereço no perfil</span>
+                    <span className="hidden xs:inline">
+                      Complete seu perfil com endereço para usar este filtro
+                    </span>
+                    <span className="xs:hidden">
+                      Adicione seu endereço no perfil
+                    </span>
                   </p>
                 </div>
               ) : (
@@ -350,10 +425,15 @@ export default function ProfessionalsList() {
                     <Button
                       key={distance}
                       size="sm"
-                      variant={selectedDistance === distance ? "default" : "outline"}
+                      variant={
+                        selectedDistance === distance ? "default" : "outline"
+                      }
                       onClick={() => {
-                        setSelectedDistance(selectedDistance === distance ? null : distance);
-                        if (distance !== selectedDistance) setSelectedCity(null);
+                        setSelectedDistance(
+                          selectedDistance === distance ? null : distance
+                        );
+                        if (distance !== selectedDistance)
+                          setSelectedCity(null);
                       }}
                     >
                       {distance} km
@@ -374,9 +454,9 @@ export default function ProfessionalsList() {
           </div>
 
           <DrawerFooter className="gap-2 pt-4 border-t">
-            <Button 
-              variant="outline" 
-              onClick={clearFilters} 
+            <Button
+              variant="outline"
+              onClick={clearFilters}
               className="w-full"
               disabled={!hasActiveFilters}
             >
@@ -393,16 +473,20 @@ export default function ProfessionalsList() {
 
       {isLoading && <p>Carregando profissionais...</p>}
 
-      {!isLoading && filteredProfessionals && filteredProfessionals.length === 0 && (
-        <div className="py-8 text-center text-gray-400">
-          Nenhum profissional encontrado com os filtros selecionados.
-        </div>
-      )}
+      {!isLoading &&
+        filteredProfessionals &&
+        filteredProfessionals.length === 0 && (
+          <div className="py-8 text-center text-gray-400">
+            Nenhum profissional encontrado com os filtros selecionados.
+          </div>
+        )}
 
       {filteredProfessionals?.map((professional) => {
         if (professional.id) {
-          const isMyProfessional = activeBond?.professionalId === professional.id && activeBond?.status === "A";
-          
+          const isMyProfessional =
+            activeBond?.professionalId === professional.id &&
+            activeBond?.status === "A";
+
           return (
             <ProfessionalCard
               id={professional.id}
