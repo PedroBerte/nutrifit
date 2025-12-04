@@ -38,7 +38,12 @@ import { UserProfiles } from "@/types/user";
 import { useGetUserById } from "@/services/api/user";
 import { useEffect } from "react";
 
-const items = [
+const items: {
+  title: string;
+  url: string;
+  icon: typeof Home;
+  profiles: UserProfiles[];
+}[] = [
   {
     title: "Início",
     url: "/home",
