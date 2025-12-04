@@ -129,8 +129,15 @@ public class BondService : IBondService
                     routine.Status = "I"; // Inativar as rotinas
                     routine.UpdatedAt = DateTime.UtcNow;
                 }
-            }
 
+                var appointments = await _context.Appointments.Where(x => x.CustomerProfessionalBondId == existing.Id).ToListAsync();
+
+                foreach (var appointment in appointments)
+                {
+                    appointment.Status = "C"; // Inativar os agendamentos
+                    appointment.UpdatedAt = DateTime.UtcNow;
+                }
+            }
 
             var personalId = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == bond.ProfessionalId);
             var action = string.Empty;
@@ -154,7 +161,8 @@ public class BondService : IBondService
                 body = personalId is null ? $"Seu personal {action} o vínculo!" : $"{personalId.Name} {action} o vínculo!"
             };
 
-            await _pushService.SendToUserAsync(bond.CustomerId, pushMessage);
+            if(bond.Status != "C")
+                await _pushService.SendToUserAsync(bond.CustomerId, pushMessage);
 
             await _context.SaveChangesAsync();
             return existing;
