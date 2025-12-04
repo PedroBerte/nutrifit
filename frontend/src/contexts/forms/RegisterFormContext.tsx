@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { useForm, type UseFormReturn, type Resolver } from "react-hook-form";
-import { date, z } from "zod";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { UserProfiles, type AddressType, type UserType } from "@/types/user";
@@ -24,12 +24,30 @@ import { api } from "@/lib/axios";
 
 export type AccountType = "student" | "nutritionist" | "personal";
 
+const MIN_AGE = 18;
+
+function calculateAge(date: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const monthDiff = today.getMonth() - date.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+    age--;
+  }
+
+  return age;
+}
+
 const formSchema = z.object({
   image: z.string().optional().or(z.literal("")), // Aceita data URL ou URL normal
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   phone: z.string().min(8, "Celular deve ter pelo menos 8 dígitos"),
   sex: z.enum(["male", "female", "other"]),
-  dateOfBirth: z.coerce.date("Data de nascimento obrigatória"),
+  dateOfBirth: z.coerce
+    .date({ message: "Data de nascimento obrigatória" })
+    .refine((date) => calculateAge(date) > MIN_AGE, {
+      message: `Você precisa ter pelo menos ${MIN_AGE} anos`,
+    }),
   search: z.enum(["nutritionist", "personal", "both"]).optional(),
   personalServiceModality: z.enum(["in_person", "online", "both"]).optional(),
   nutritionistServiceModality: z
@@ -150,7 +168,12 @@ export function RegisterFormProvider({
   const handleValidateStep = async () => {
     switch (step) {
       case "generic":
-        const ok = await form.trigger(["image", "name", "phone"]);
+        const ok = await form.trigger([
+          "image",
+          "name",
+          "phone",
+          "dateOfBirth",
+        ]);
         if (!ok) return false;
         return true;
       case "address":
