@@ -11,6 +11,10 @@ namespace Nutrifit.Repository.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropColumn(
+                name: "ImageUrl",
+                table: "Exercises");
+
             migrationBuilder.AddColumn<string>(
                 name: "ImageUrl",
                 table: "Exercises",
