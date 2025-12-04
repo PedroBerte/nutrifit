@@ -43,7 +43,8 @@ export interface ExerciseTemplateResponse {
   workoutTemplateId: string;
   exerciseId: string;
   exerciseName: string;
-  exerciseUrl?: string;
+  exerciseImageUrl?: string;
+  exerciseVideoUrl?: string;
   order: number;
   targetSets: number;
   targetRepsMin?: number;

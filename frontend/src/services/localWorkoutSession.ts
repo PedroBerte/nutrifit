@@ -20,7 +20,8 @@ export interface LocalExerciseSession {
   exerciseTemplateId: string;
   exerciseId: string;
   exerciseName: string;
-  exerciseUrl?: string;
+  exerciseImageUrl?: string;
+  exerciseVideoUrl?: string;
   order: number;
   startedAt?: string;
   completedAt?: string;

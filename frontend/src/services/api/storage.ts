@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface ImageUploadResponse {
   url: string;
@@ -80,4 +81,43 @@ export async function getPresignedUrl(
     }
   );
   return response.data.url;
+}
+
+// Hook para upload de mídia de exercício
+export function useUploadExerciseMedia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      file,
+      exerciseId,
+    }: {
+      file: File;
+      exerciseId: string;
+    }) => {
+      return uploadExerciseMedia(file, exerciseId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getExercises"] });
+      queryClient.invalidateQueries({ queryKey: ["getWorkoutTemplateById"] });
+      queryClient.invalidateQueries({ queryKey: ["getWorkoutTemplatesByRoutine"] });
+    },
+  });
+}
+
+// Hook genérico para upload de arquivo
+export function useUploadFile() {
+  return useMutation({
+    mutationFn: async ({
+      file,
+      folder,
+      customFileName,
+    }: {
+      file: File;
+      folder?: string;
+      customFileName?: string;
+    }) => {
+      return uploadImage(file, folder, customFileName);
+    },
+  });
 }

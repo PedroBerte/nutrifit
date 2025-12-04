@@ -10,10 +10,12 @@ import {
   useAddExerciseToTemplate,
   useUpdateExerciseTemplate,
   useRemoveExerciseFromTemplate,
+  useReorderExercises,
   type ExerciseTemplateRequest,
   type ExerciseTemplateResponse,
 } from "@/services/api/workoutTemplate";
-import { useGetExercises } from "@/services/api/exercise";
+import { useGetExercises, useUpdateExerciseMedia } from "@/services/api/exercise";
+import { useUploadExerciseMedia } from "@/services/api/storage";
 import type { ExerciseType } from "@/types/exercise";
 import { ExerciseDrawer } from "@/components/exercise/ExerciseDrawer";
 import { Button } from "@/components/ui/button";
@@ -56,9 +58,30 @@ import {
   Loader2,
   Edit,
   AlertTriangle,
+  ImageIcon,
+  Video,
+  Upload,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // Schema para editar template
 const updateTemplateSchema = z.object({
@@ -77,9 +100,113 @@ const exerciseConfigSchema = z.object({
   suggestedLoad: z.string().optional(),
   restSeconds: z.string().optional(),
   notes: z.string().optional(),
+  imageUrl: z.string().optional(),
+  videoUrl: z.string().url("URL inválida").optional().or(z.literal("")),
 });
 
 type ExerciseConfigForm = z.infer<typeof exerciseConfigSchema>;
+
+// Componente para item arrastável
+interface SortableExerciseItemProps {
+  exerciseTemplate: ExerciseTemplateResponse;
+  onEdit: (ex: ExerciseTemplateResponse) => void;
+  onRemove: (ex: ExerciseTemplateResponse) => void;
+  formatSummary: (ex: ExerciseTemplateResponse) => string;
+}
+
+function SortableExerciseItem({
+  exerciseTemplate,
+  onEdit,
+  onRemove,
+  formatSummary,
+}: SortableExerciseItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: exerciseTemplate.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-2 xs:gap-3 p-2 xs:p-3 bg-neutral-dark-01 rounded-lg ${
+        isDragging ? "shadow-lg ring-2 ring-primary" : ""
+      }`}
+    >
+      {/* Grip para arrastar - sempre visível */}
+      <button
+        type="button"
+        className="touch-none p-1 xs:p-1.5 rounded hover:bg-neutral-dark-03 cursor-grab active:cursor-grabbing flex-shrink-0"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4 xs:h-5 xs:w-5 text-muted-foreground" />
+      </button>
+
+      {/* Thumbnail da imagem/GIF do exercício - oculta em telas pequenas */}
+      {exerciseTemplate.exerciseImageUrl && (
+        <div className="hidden xs:flex flex-shrink-0 w-10 h-10 xs:w-12 xs:h-12 rounded-md overflow-hidden bg-muted">
+          <img
+            src={exerciseTemplate.exerciseImageUrl}
+            alt={exerciseTemplate.exerciseName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        </div>
+      )}
+
+      {/* Informações do exercício */}
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-sm xs:text-base truncate">
+          {exerciseTemplate.exerciseName}
+        </p>
+        <p className="text-xs xs:text-sm text-muted-foreground truncate">
+          {formatSummary(exerciseTemplate)}
+        </p>
+        {exerciseTemplate.notes && (
+          <p className="text-[10px] xs:text-xs text-muted-foreground mt-0.5 xs:mt-1 truncate">
+            {exerciseTemplate.notes}
+          </p>
+        )}
+      </div>
+
+      {/* Botões de ação - vertical */}
+      <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 xs:h-8 xs:w-8"
+          onClick={() => onEdit(exerciseTemplate)}
+        >
+          <Edit className="h-3.5 w-3.5 xs:h-4 xs:w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 xs:h-8 xs:w-8 text-destructive hover:text-destructive"
+          onClick={() => onRemove(exerciseTemplate)}
+        >
+          <Trash2 className="h-3.5 w-3.5 xs:h-4 xs:w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function EditWorkoutTemplate() {
   const navigate = useNavigate();
@@ -100,6 +227,7 @@ export function EditWorkoutTemplate() {
   const [exerciseToRemove, setExerciseToRemove] =
     useState<ExerciseTemplateResponse | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [localExercises, setLocalExercises] = useState<ExerciseTemplateResponse[]>([]);
 
   const { data: templateResponse, isLoading: loadingTemplate } =
     useGetWorkoutTemplateById(templateId);
@@ -109,8 +237,36 @@ export function EditWorkoutTemplate() {
   const addExercise = useAddExerciseToTemplate();
   const updateExercise = useUpdateExerciseTemplate();
   const removeExercise = useRemoveExerciseFromTemplate();
+  const reorderExercises = useReorderExercises();
+  const updateExerciseMedia = useUpdateExerciseMedia();
+  const uploadExerciseMedia = useUploadExerciseMedia();
 
   const template = templateResponse?.data;
+
+  // Sensores para drag and drop (suporta touch e mouse)
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Sincroniza exercícios locais com os do template
+  useEffect(() => {
+    if (template?.exerciseTemplates) {
+      setLocalExercises([...template.exerciseTemplates].sort((a, b) => a.order - b.order));
+    }
+  }, [template?.exerciseTemplates]);
 
   const templateForm = useForm<UpdateTemplateForm>({
     resolver: zodResolver(updateTemplateSchema),
@@ -130,6 +286,8 @@ export function EditWorkoutTemplate() {
       suggestedLoad: "",
       restSeconds: "60",
       notes: "",
+      imageUrl: "",
+      videoUrl: "",
     },
   });
 
@@ -147,7 +305,8 @@ export function EditWorkoutTemplate() {
   const handleExerciseSelect = (
     exerciseId: string,
     exerciseName: string,
-    exerciseVideoUrl?: string
+    exerciseVideoUrl?: string,
+    exerciseImageUrl?: string
   ) => {
     setSelectedExercise({ id: exerciseId, name: exerciseName });
     setEditingExerciseTemplate(null);
@@ -160,6 +319,8 @@ export function EditWorkoutTemplate() {
       suggestedLoad: "",
       restSeconds: "60",
       notes: "",
+      imageUrl: exerciseImageUrl || "",
+      videoUrl: exerciseVideoUrl || "",
     });
   };
 
@@ -191,11 +352,13 @@ export function EditWorkoutTemplate() {
           ? String(exerciseTemplate.restSeconds)
           : "",
       notes: exerciseTemplate.notes || "",
+      imageUrl: exerciseTemplate.exerciseImageUrl || "",
+      videoUrl: exerciseTemplate.exerciseVideoUrl || "",
     });
   };
 
   const handleExerciseConfig = async (data: ExerciseConfigForm) => {
-    if (!templateId) return;
+    if (!templateId || !selectedExercise) return;
 
     // Converte strings vazias para undefined e garante números
     const toNumber = (val: string | number | undefined) => {
@@ -214,13 +377,27 @@ export function EditWorkoutTemplate() {
     };
 
     try {
+      // Atualizar mídia do exercício se houver alteração
+      const currentImageUrl = editingExerciseTemplate?.exerciseImageUrl || "";
+      const currentVideoUrl = editingExerciseTemplate?.exerciseVideoUrl || "";
+      
+      if (data.imageUrl !== currentImageUrl || data.videoUrl !== currentVideoUrl) {
+        await updateExerciseMedia.mutateAsync({
+          exerciseId: selectedExercise.id,
+          data: {
+            imageUrl: data.imageUrl || undefined,
+            videoUrl: data.videoUrl || undefined,
+          },
+        });
+      }
+
       if (editingExerciseTemplate) {
         // Atualizar exercício existente
         await updateExercise.mutateAsync({
           exerciseTemplateId: editingExerciseTemplate.id,
           data: payload,
         });
-      } else if (selectedExercise) {
+      } else {
         // Adicionar novo exercício
         const currentExercisesCount = template?.exerciseTemplates?.length || 0;
         await addExercise.mutateAsync({
@@ -310,6 +487,37 @@ export function EditWorkoutTemplate() {
     }
 
     return parts.join(" • ");
+  };
+
+  // Handler para quando o drag termina
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id || !templateId) return;
+
+    const oldIndex = localExercises.findIndex(ex => ex.id === active.id);
+    const newIndex = localExercises.findIndex(ex => ex.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Atualiza estado local imediatamente (optimistic update)
+    const newExercises = arrayMove(localExercises, oldIndex, newIndex);
+    setLocalExercises(newExercises);
+
+    // Envia para a API
+    try {
+      await reorderExercises.mutateAsync({
+        templateId,
+        exerciseTemplateIds: newExercises.map(ex => ex.id),
+      });
+    } catch (error) {
+      console.error("Erro ao reordenar exercícios:", error);
+      toast.error("Erro ao reordenar exercícios");
+      // Reverte em caso de erro
+      if (template?.exerciseTemplates) {
+        setLocalExercises([...template.exerciseTemplates].sort((a, b) => a.order - b.order));
+      }
+    }
   };
 
   if (loadingTemplate) {
@@ -437,60 +645,26 @@ export function EditWorkoutTemplate() {
                   </h1>
                 </div>
                 <div className="space-y-3">
-                  {template.exerciseTemplates?.map((exerciseTemplate) => (
-                    <div
-                      key={exerciseTemplate.id}
-                      className="flex items-center gap-3 p-3 bg-neutral-dark-01 rounded-lg"
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={localExercises.map(ex => ex.id)}
+                      strategy={verticalListSortingStrategy}
                     >
-                      <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-
-                      {/* Thumbnail da imagem/GIF do exercício */}
-                      {exerciseTemplate.exerciseUrl && (
-                        <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-muted">
-                          <img
-                            src={exerciseTemplate.exerciseUrl}
-                            alt={exerciseTemplate.exerciseName}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex-1">
-                        <p className="font-medium">
-                          {exerciseTemplate.exerciseName}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatExerciseSummary(exerciseTemplate)}
-                        </p>
-                        {exerciseTemplate.notes && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {exerciseTemplate.notes}
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          handleEditExerciseTemplate(exerciseTemplate)
-                        }
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setExerciseToRemove(exerciseTemplate)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                      {localExercises.map((exerciseTemplate) => (
+                        <SortableExerciseItem
+                          key={exerciseTemplate.id}
+                          exerciseTemplate={exerciseTemplate}
+                          formatSummary={formatExerciseSummary}
+                          onEdit={handleEditExerciseTemplate}
+                          onRemove={setExerciseToRemove}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
 
                   <Button
                     type="button"
@@ -536,14 +710,14 @@ export function EditWorkoutTemplate() {
 
       {/* Drawer 2: Configuração do Exercício */}
       <Drawer open={configDrawerOpen} onOpenChange={setConfigDrawerOpen}>
-        <DrawerContent>
-          <DrawerHeader>
+        <DrawerContent className="max-h-[85vh] flex flex-col">
+          <DrawerHeader className="flex-shrink-0">
             <DrawerTitle>
               {editingExerciseTemplate ? "Editar" : "Configurar"}:{" "}
               {selectedExercise?.name}
             </DrawerTitle>
           </DrawerHeader>
-          <div className="p-4">
+          <div className="p-4 flex-1 overflow-y-auto min-h-0">
             <Form {...exerciseForm}>
               <form
                 onSubmit={exerciseForm.handleSubmit(handleExerciseConfig)}
@@ -667,6 +841,62 @@ export function EditWorkoutTemplate() {
                   )}
                 />
 
+                {/* Seção de Mídia */}
+                <div className="border-t border-neutral-dark-03 pt-4 mt-4">
+                  <h4 className="text-sm font-medium text-neutral-white-01 mb-3 flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    Mídia do Exercício
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    <FormField
+                      control={exerciseForm.control}
+                      name="imageUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Upload className="h-3.5 w-3.5" />
+                            URL da Imagem/GIF
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://exemplo.com/imagem.gif"
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Cole a URL de uma imagem ou GIF demonstrando o exercício
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={exerciseForm.control}
+                      name="videoUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Video className="h-3.5 w-3.5" />
+                            URL do Vídeo (YouTube)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://youtube.com/watch?v=..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Cole o link de um vídeo do YouTube
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-4">
                   <DrawerClose asChild>
                     <Button type="button" variant="outline" className="flex-1">
@@ -676,7 +906,7 @@ export function EditWorkoutTemplate() {
                   <Button
                     type="submit"
                     className="flex-1"
-                    disabled={addExercise.isPending || updateExercise.isPending}
+                    disabled={addExercise.isPending || updateExercise.isPending || updateExerciseMedia.isPending}
                   >
                     {editingExerciseTemplate ? "Atualizar" : "Adicionar"}
                   </Button>

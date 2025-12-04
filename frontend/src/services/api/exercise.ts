@@ -98,6 +98,36 @@ export function useUpdateExercise(exerciseId: string) {
   });
 }
 
+export interface UpdateExerciseMediaRequest {
+  imageUrl?: string;
+  videoUrl?: string;
+}
+
+export function useUpdateExerciseMedia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      exerciseId,
+      data,
+    }: {
+      exerciseId: string;
+      data: UpdateExerciseMediaRequest;
+    }) => {
+      const response = await api.patch<ApiResponse>(
+        `/exercise/${exerciseId}/media`,
+        data
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getExercises"] });
+      queryClient.invalidateQueries({ queryKey: ["getWorkoutTemplateById"] });
+      queryClient.invalidateQueries({ queryKey: ["getWorkoutTemplatesByRoutine"] });
+    },
+  });
+}
+
 export function useDeleteExercise() {
   const queryClient = useQueryClient();
 
