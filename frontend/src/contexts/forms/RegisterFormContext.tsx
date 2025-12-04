@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { useForm, type UseFormReturn, type Resolver } from "react-hook-form";
-import { date, z } from "zod";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { UserProfiles, type AddressType, type UserType } from "@/types/user";
@@ -24,12 +24,30 @@ import { api } from "@/lib/axios";
 
 export type AccountType = "student" | "nutritionist" | "personal";
 
+const MIN_AGE = 18;
+
+function calculateAge(date: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const monthDiff = today.getMonth() - date.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+    age--;
+  }
+
+  return age;
+}
+
 const formSchema = z.object({
   image: z.string().optional().or(z.literal("")), // Aceita data URL ou URL normal
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   phone: z.string().min(8, "Celular deve ter pelo menos 8 dígitos"),
   sex: z.enum(["male", "female", "other"]),
-  dateOfBirth: z.coerce.date("Data de nascimento obrigatória"),
+  dateOfBirth: z.coerce
+    .date({ message: "Data de nascimento obrigatória" })
+    .refine((date) => calculateAge(date) > MIN_AGE, {
+      message: `Você precisa ter pelo menos ${MIN_AGE} anos`,
+    }),
   search: z.enum(["nutritionist", "personal", "both"]).optional(),
   personalServiceModality: z.enum(["in_person", "online", "both"]).optional(),
   nutritionistServiceModality: z
@@ -65,6 +83,7 @@ type Ctx = {
   accountType?: AccountType;
   setAccountType: (t: AccountType) => void;
   handleSubmitAll: () => Promise<void>;
+  isLoadingSubmit?: boolean;
   setStep: (s: RegisterStep) => void;
   handleValidateStep: () => Promise<boolean>;
   setImageFile: (file: File | null) => void;
@@ -86,6 +105,7 @@ export function RegisterFormProvider({
   const [step, setStep] = useState<RegisterStep>("choose");
   const [accountType, setAccountTypeState] = useState<AccountType>("student");
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [isLoadingSubmit, setIsLoadingSubmit] = useState<boolean>(false);
 
   const { user } = useAuth();
   const createUser = useCreateUser();
@@ -148,7 +168,12 @@ export function RegisterFormProvider({
   const handleValidateStep = async () => {
     switch (step) {
       case "generic":
-        const ok = await form.trigger(["image", "name", "phone"]);
+        const ok = await form.trigger([
+          "image",
+          "name",
+          "phone",
+          "dateOfBirth",
+        ]);
         if (!ok) return false;
         return true;
       case "address":
@@ -192,6 +217,8 @@ export function RegisterFormProvider({
         if (!ok) return;
 
         const payload = form.getValues();
+
+        setIsLoadingSubmit(true);
 
         // Criar usuário SEM imagem primeiro
         var newUser: UserType = {
@@ -250,6 +277,7 @@ export function RegisterFormProvider({
         }
 
         navigate("/home", { replace: true });
+        setIsLoadingSubmit(false);
         return;
       }
 
@@ -272,6 +300,8 @@ export function RegisterFormProvider({
         if (!ok) return;
 
         const payload = form.getValues();
+
+        setIsLoadingSubmit(true);
 
         // Criar usuário profissional SEM imagem primeiro
         var newUser: UserType = {
@@ -340,6 +370,7 @@ export function RegisterFormProvider({
         }
       }
       toast.success("Cadastro realizado com sucesso!");
+      setIsLoadingSubmit(false);
       navigate("/home", { replace: true });
     } catch (error: any) {
       console.error("Failed to submit form:", error);
@@ -349,7 +380,10 @@ export function RegisterFormProvider({
         "Erro ao criar cadastro";
       toast.error(errorMessage);
       signOut();
+      setIsLoadingSubmit(false);
       navigate("/login", { replace: true });
+    } finally {
+      setIsLoadingSubmit(false);
     }
   };
 
@@ -438,6 +472,7 @@ export function RegisterFormProvider({
     setStep,
     handleValidateStep,
     setImageFile: setSelectedImageFile,
+    isLoadingSubmit,
   };
 
   return (
