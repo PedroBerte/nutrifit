@@ -2,12 +2,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useGetExerciseHistory } from "@/services/api/workoutSession";
 import { Button } from "@/components/ui/button";
 import {
-  ChevronLeft,
   TrendingUp,
   Dumbbell,
   BarChart3,
   Activity,
   Flame,
+  ChevronLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { format } from "date-fns";
@@ -54,13 +54,9 @@ export default function ExerciseHistory() {
           <h2 className="text-xl font-bold mb-2">
             Nenhum histórico encontrado
           </h2>
-          <p className="text-muted-foreground mb-4">
+          <p className="text-muted-foreground">
             Você ainda não realizou este exercício.
           </p>
-          <Button onClick={() => navigate(-1)} variant="outline">
-            <ChevronLeft size={16} className="mr-2" />
-            Voltar
-          </Button>
         </div>
       </div>
     );
@@ -78,14 +74,6 @@ export default function ExerciseHistory() {
         <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-lg border border-primary/20 backdrop-blur-sm overflow-hidden">
           <div className="p-4">
             <div className="flex items-center gap-3">
-              <Button
-                onClick={() => navigate(-1)}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 hover:bg-primary/20"
-              >
-                <ChevronLeft size={18} />
-              </Button>
               <div className="flex-1 min-w-0">
                 <h1 className="text-lg font-bold truncate">
                   {history.exerciseName}

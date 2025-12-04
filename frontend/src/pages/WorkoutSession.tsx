@@ -354,6 +354,8 @@ export default function WorkoutSession() {
 
       await completeSession.mutateAsync(payload);
       clearLocalWorkout();
+      // Limpa sessionStorage de retorno para sessão
+      sessionStorage.removeItem('returnToWorkoutSession');
       setIsWorkoutTimerRunning(false);
       setShowCompleteConfirm(false);
       toast.success("Treino concluído com sucesso!");
@@ -370,6 +372,8 @@ export default function WorkoutSession() {
 
   const handleCancelSession = () => {
     clearLocalWorkout();
+    // Limpa sessionStorage de retorno para sessão
+    sessionStorage.removeItem('returnToWorkoutSession');
     setIsWorkoutTimerRunning(false);
     toast.info("Treino cancelado");
     navigate("/workout");
@@ -688,6 +692,7 @@ export default function WorkoutSession() {
             onAddSet={handleAddSet}
             isExpanded={expandedExerciseIds.has(exercise.id)}
             navigate={navigate}
+            templateId={templateId}
           />
         ))}
 
@@ -922,6 +927,7 @@ interface ExerciseCardProps {
   onAddSet: (exerciseId: string, restSeconds?: number) => void;
   isExpanded: boolean;
   navigate: (path: string) => void;
+  templateId?: string;
 }
 
 function ExerciseCard({
@@ -931,6 +937,7 @@ function ExerciseCard({
   onAddSet,
   isExpanded,
   navigate,
+  templateId,
 }: ExerciseCardProps) {
   const [exerciseRestTimer, setExerciseRestTimer] = useState(0);
   const [isExerciseRestRunning, setIsExerciseRestRunning] = useState(false);
@@ -1136,9 +1143,13 @@ function ExerciseCard({
                   variant="outline"
                   size="sm"
                   className="flex-shrink-0 px-2 xs:px-3"
-                  onClick={() =>
-                    navigate(`/exercise/${exercise.exerciseId}/history`)
-                  }
+                  onClick={() => {
+                    // Armazena o templateId para voltar para a sessão ao invés de /workout
+                    if (templateId) {
+                      sessionStorage.setItem('returnToWorkoutSession', templateId);
+                    }
+                    navigate(`/exercise/${exercise.exerciseId}/history`);
+                  }}
                 >
                   <ChartBar size={16} />
                   <span className="hidden xs:inline">Evolução</span>

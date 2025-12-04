@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerClose,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AvatarImage } from "@/components/ui/avatar-image";
@@ -83,23 +84,27 @@ export function FeedbackModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
-            {existingFeedback ? "Atualizar Avaliação" : "Avaliar Profissional"}
-          </DialogTitle>
-          <DialogDescription>
-            Compartilhe sua experiência com {professionalName}
-          </DialogDescription>
-        </DialogHeader>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[95vh]">
+        <div className="mx-auto w-full max-w-md flex flex-col overflow-hidden">
+          <DrawerHeader className="flex-shrink-0">
+            <DrawerTitle>
+              {existingFeedback ? "Atualizar Avaliação" : "Avaliar Profissional"}
+            </DrawerTitle>
+            <DrawerDescription>
+              Compartilhe sua experiência com {professionalName}
+            </DrawerDescription>
+          </DrawerHeader>
 
-        {loadingExisting ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="space-y-6 py-4">
+          {loadingExisting ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div
+              className="flex-1 overflow-y-auto px-4 space-y-6 py-4"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
             {/* Professional Info */}
             <div className="flex items-center gap-3 p-3 bg-neutral-dark-02/50 rounded-lg border border-neutral-white-01/10">
               <AvatarImage
@@ -173,17 +178,11 @@ export function FeedbackModal({
           </div>
         )}
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={createFeedbackMutation.isPending}
-          >
-            Cancelar
-          </Button>
+        <DrawerFooter className="flex-shrink-0 gap-2">
           <Button
             onClick={handleSubmit}
             disabled={createFeedbackMutation.isPending || loadingExisting}
+            className="w-full"
           >
             {createFeedbackMutation.isPending ? (
               <>
@@ -196,8 +195,18 @@ export function FeedbackModal({
               "Enviar Avaliação"
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DrawerClose asChild>
+            <Button
+              variant="outline"
+              disabled={createFeedbackMutation.isPending}
+              className="w-full"
+            >
+              Cancelar
+            </Button>
+          </DrawerClose>
+        </DrawerFooter>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }

@@ -115,12 +115,9 @@ export function UpdateProfileDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <div
-          className="mx-auto w-full max-w-sm overflow-y-auto"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          <DrawerHeader>
+      <DrawerContent className="max-h-[95vh]">
+        <div className="mx-auto w-full max-w-sm flex flex-col overflow-hidden">
+          <DrawerHeader className="flex-shrink-0">
             <DrawerTitle className="text-neutral-white-01">
               Editar Perfil
             </DrawerTitle>
@@ -129,7 +126,8 @@ export function UpdateProfileDrawer({
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="p- space-y-4"
+              className="flex-1 overflow-y-auto px-4 space-y-4"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               <FormField
                 control={form.control}
@@ -361,7 +359,7 @@ export function UpdateProfileDrawer({
                 </div>
               </div>
 
-              <DrawerFooter className="px-0">
+              <DrawerFooter className="px-0 pb-4 flex-shrink-0">
                 <Button type="submit" disabled={form.formState.isSubmitting}>
                   {form.formState.isSubmitting ? "Atualizando..." : "Atualizar"}
                 </Button>

@@ -23,9 +23,17 @@ const routePatterns: RoutePattern[] = [
     getParent: () => "/workout",
   },
   {
-    // /exercise/:exerciseId/history -> /workout
+    // /exercise/:exerciseId/history -> volta para sessão se existe, senão /workout
     pattern: /^\/exercise\/[^/]+\/history$/,
-    getParent: () => "/workout",
+    getParent: () => {
+      // Verifica se há uma sessão de treino ativa para retornar
+      const returnToSession = sessionStorage.getItem('returnToWorkoutSession');
+      if (returnToSession) {
+        sessionStorage.removeItem('returnToWorkoutSession');
+        return `/workout/session/${returnToSession}`;
+      }
+      return "/workout";
+    },
   },
   {
     // /professional/:id -> /professionalsList ou /myProfessionals
