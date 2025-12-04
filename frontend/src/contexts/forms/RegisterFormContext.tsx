@@ -65,6 +65,7 @@ type Ctx = {
   accountType?: AccountType;
   setAccountType: (t: AccountType) => void;
   handleSubmitAll: () => Promise<void>;
+  isLoadingSubmit?: boolean;
   setStep: (s: RegisterStep) => void;
   handleValidateStep: () => Promise<boolean>;
   setImageFile: (file: File | null) => void;
@@ -86,6 +87,7 @@ export function RegisterFormProvider({
   const [step, setStep] = useState<RegisterStep>("choose");
   const [accountType, setAccountTypeState] = useState<AccountType>("student");
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [isLoadingSubmit, setIsLoadingSubmit] = useState<boolean>(false);
 
   const { user } = useAuth();
   const createUser = useCreateUser();
@@ -193,6 +195,8 @@ export function RegisterFormProvider({
 
         const payload = form.getValues();
 
+        setIsLoadingSubmit(true);
+
         // Criar usuário SEM imagem primeiro
         var newUser: UserType = {
           id: null,
@@ -250,6 +254,7 @@ export function RegisterFormProvider({
         }
 
         navigate("/home", { replace: true });
+        setIsLoadingSubmit(false);
         return;
       }
 
@@ -272,6 +277,8 @@ export function RegisterFormProvider({
         if (!ok) return;
 
         const payload = form.getValues();
+
+        setIsLoadingSubmit(true);
 
         // Criar usuário profissional SEM imagem primeiro
         var newUser: UserType = {
@@ -340,6 +347,7 @@ export function RegisterFormProvider({
         }
       }
       toast.success("Cadastro realizado com sucesso!");
+      setIsLoadingSubmit(false);
       navigate("/home", { replace: true });
     } catch (error: any) {
       console.error("Failed to submit form:", error);
@@ -349,7 +357,10 @@ export function RegisterFormProvider({
         "Erro ao criar cadastro";
       toast.error(errorMessage);
       signOut();
+      setIsLoadingSubmit(false);
       navigate("/login", { replace: true });
+    } finally {
+      setIsLoadingSubmit(false);
     }
   };
 
@@ -438,6 +449,7 @@ export function RegisterFormProvider({
     setStep,
     handleValidateStep,
     setImageFile: setSelectedImageFile,
+    isLoadingSubmit,
   };
 
   return (

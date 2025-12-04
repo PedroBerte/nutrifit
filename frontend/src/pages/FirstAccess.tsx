@@ -20,6 +20,7 @@ export default function FirstAccess() {
     accountType,
     handleSubmitAll,
     handleValidateStep,
+    isLoadingSubmit,
   } = useRegisterForm();
 
   function renderForm() {
@@ -75,6 +76,7 @@ export default function FirstAccess() {
             <Button
               className="flex flex-1"
               onClick={() => handleSubmitAll()}
+              disabled={isLoadingSubmit}
               type="button"
             >
               Finalizar
@@ -137,6 +139,7 @@ export default function FirstAccess() {
             <Button
               className="flex flex-1"
               onClick={() => handleSubmitAll()}
+              disabled={isLoadingSubmit}
               type="button"
             >
               Finalizar
