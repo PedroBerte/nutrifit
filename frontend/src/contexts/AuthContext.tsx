@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { type RootState } from "@/store";
 import { signOut } from "@/store/authSlice";
 import { decodeAndNormalizeJwt, type DecodedJwt } from "@/lib/jwt";
+import { unsubscribePush } from "@/registerPush";
 
 type AuthUser = {
   token: string | null;
@@ -37,8 +38,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [expiresAt]);
 
   const logout = useCallback(() => {
+    // Unsubscribe push notifications antes de deslogar
+    if (accessToken) {
+      const apiUrl =
+        import.meta.env.VITE_API_URL || "https://apinutrifit.mujapira.com/api";
+      unsubscribePush(apiUrl, accessToken).catch(() => {});
+    }
     dispatch(signOut());
-  }, [dispatch]);
+  }, [dispatch, accessToken]);
 
   const value = useMemo<AuthUser>(
     () => ({

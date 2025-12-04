@@ -139,10 +139,11 @@ namespace Nutrifit.Services.Services
                 var routine = await context.Routines.FirstOrDefaultAsync(x => x.Id == workoutTemplate.RoutineId);
                 if (routine is null) return;
 
+                var name = customer.Name.Split(' ').FirstOrDefault() ?? "Cliente";
                 var pushMessage = new
                 {
-                    title = $"{customer.Name} Finalizou um treino! 🚀",
-                    body = $"Venha analisar o treinão registrado."
+                    title = $"Treino finalizado",
+                    body = $"{name} Finalizou um treino! 🚀"
                 };
 
                 await pushService.SendToUserAsync(routine.PersonalId, pushMessage);
