@@ -7,9 +7,12 @@ import {
   useCreateWorkoutTemplate,
   type ExerciseTemplateRequest,
 } from "@/services/api/workoutTemplate";
-import { useGetExercises } from "@/services/api/exercise";
-import type { ExerciseType } from "@/types/exercise";
+import { useUpdateExerciseMedia } from "@/services/api/exercise";
 import { ExerciseDrawer } from "@/components/exercise/ExerciseDrawer";
+import {
+  SortableExerciseItem,
+  type SortableExerciseData,
+} from "@/components/exercise/SortableExerciseItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,16 +31,25 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, ImageIcon, Video, Upload } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion } from "motion/react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 const createTemplateSchema = z.object({
   title: z.string().min(3, "Título deve ter no mínimo 3 caracteres"),
@@ -54,13 +66,14 @@ const exerciseConfigSchema = z.object({
   suggestedLoad: z.number().optional(),
   restSeconds: z.number().optional(),
   notes: z.string().optional(),
+  imageUrl: z.string().optional(),
+  videoUrl: z.string().url("URL inválida").optional().or(z.literal("")),
 });
 
 type ExerciseConfigForm = z.infer<typeof exerciseConfigSchema>;
 
-interface ConfiguredExercise extends ExerciseTemplateRequest {
-  exerciseName: string;
-  exerciseImageUrl?: string;
+interface ConfiguredExercise extends SortableExerciseData {
+  // Herda todos os campos de SortableExerciseData
 }
 
 export function NewWorkoutTemplate() {
@@ -78,9 +91,28 @@ export function NewWorkoutTemplate() {
   const [configuredExercises, setConfiguredExercises] = useState<
     ConfiguredExercise[]
   >([]);
+  const [editingExercise, setEditingExercise] = useState<ConfiguredExercise | null>(null);
 
-  const { data: exercises, isLoading: exercisesLoading } = useGetExercises();
   const createTemplate = useCreateWorkoutTemplate();
+  const updateExerciseMedia = useUpdateExerciseMedia();
+
+  // Sensores para drag and drop (suporta touch e mouse)
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const templateForm = useForm<CreateTemplateForm>({
     resolver: zodResolver(createTemplateSchema),
@@ -100,12 +132,15 @@ export function NewWorkoutTemplate() {
       suggestedLoad: undefined,
       restSeconds: 60,
       notes: "",
+      imageUrl: "",
+      videoUrl: "",
     },
   });
 
   const handleExerciseSelect = (
     exerciseId: string,
     exerciseName: string,
+    exerciseVideoUrl?: string,
     exerciseImageUrl?: string
   ) => {
     setSelectedExercise({
@@ -113,36 +148,124 @@ export function NewWorkoutTemplate() {
       name: exerciseName,
       imageUrl: exerciseImageUrl,
     });
+    setEditingExercise(null);
     setExerciseDrawerOpen(false);
     setConfigDrawerOpen(true);
-    exerciseForm.reset();
+    exerciseForm.reset({
+      targetSets: 3,
+      targetRepsMin: undefined,
+      targetRepsMax: undefined,
+      suggestedLoad: undefined,
+      restSeconds: 60,
+      notes: "",
+      imageUrl: exerciseImageUrl || "",
+      videoUrl: exerciseVideoUrl || "",
+    });
   };
 
-  const handleExerciseConfig = (data: ExerciseConfigForm) => {
+  const handleEditExercise = (exercise: ConfiguredExercise) => {
+    setEditingExercise(exercise);
+    setSelectedExercise({
+      id: exercise.exerciseId,
+      name: exercise.exerciseName,
+      imageUrl: exercise.exerciseImageUrl,
+    });
+    setConfigDrawerOpen(true);
+    exerciseForm.reset({
+      targetSets: exercise.targetSets,
+      targetRepsMin: exercise.targetRepsMin,
+      targetRepsMax: exercise.targetRepsMax,
+      suggestedLoad: exercise.suggestedLoad,
+      restSeconds: exercise.restSeconds,
+      notes: exercise.notes || "",
+      imageUrl: exercise.exerciseImageUrl || "",
+      videoUrl: "",
+    });
+  };
+
+  const handleExerciseConfig = async (data: ExerciseConfigForm) => {
     if (!selectedExercise) return;
 
-    const configured: ConfiguredExercise = {
-      exerciseId: selectedExercise.id,
-      exerciseName: selectedExercise.name,
-      exerciseImageUrl: selectedExercise.imageUrl,
-      order: configuredExercises.length,
-      targetSets: data.targetSets,
-      targetRepsMin: data.targetRepsMin,
-      targetRepsMax: data.targetRepsMax,
-      suggestedLoad: data.suggestedLoad,
-      restSeconds: data.restSeconds,
-      notes: data.notes,
-    };
+    try {
+      // Atualizar mídia do exercício se houver alteração
+      const currentImageUrl = editingExercise?.exerciseImageUrl || selectedExercise.imageUrl || "";
+      
+      if (data.imageUrl && data.imageUrl !== currentImageUrl) {
+        await updateExerciseMedia.mutateAsync({
+          exerciseId: selectedExercise.id,
+          data: {
+            imageUrl: data.imageUrl || undefined,
+            videoUrl: data.videoUrl || undefined,
+          },
+        });
+      }
 
-    setConfiguredExercises((prev) => [...prev, configured]);
-    setConfigDrawerOpen(false);
-    setSelectedExercise(null);
+      if (editingExercise) {
+      // Atualizar exercício existente
+        setConfiguredExercises((prev) =>
+          prev.map((ex) =>
+            ex.id === editingExercise.id
+              ? {
+                  ...ex,
+                  targetSets: data.targetSets,
+                  targetRepsMin: data.targetRepsMin,
+                  targetRepsMax: data.targetRepsMax,
+                  suggestedLoad: data.suggestedLoad,
+                  restSeconds: data.restSeconds,
+                  notes: data.notes,
+                  exerciseImageUrl: data.imageUrl || ex.exerciseImageUrl,
+                }
+              : ex
+          )
+        );
+      } else {
+        // Adicionar novo exercício
+        const configured: ConfiguredExercise = {
+          id: crypto.randomUUID(), // ID único para drag-and-drop
+          exerciseId: selectedExercise.id,
+          exerciseName: selectedExercise.name,
+          exerciseImageUrl: data.imageUrl || selectedExercise.imageUrl,
+          order: configuredExercises.length,
+          targetSets: data.targetSets,
+          targetRepsMin: data.targetRepsMin,
+          targetRepsMax: data.targetRepsMax,
+          suggestedLoad: data.suggestedLoad,
+          restSeconds: data.restSeconds,
+          notes: data.notes,
+        };
+        setConfiguredExercises((prev) => [...prev, configured]);
+      }
+
+      setConfigDrawerOpen(false);
+      setSelectedExercise(null);
+      setEditingExercise(null);
+    } catch (error) {
+      console.error("Erro ao salvar exercício:", error);
+      toast.error("Erro ao salvar exercício");
+    }
   };
 
-  const removeExercise = (index: number) => {
+  const removeExercise = (exercise: ConfiguredExercise) => {
     setConfiguredExercises((prev) => {
-      const updated = prev.filter((_, i) => i !== index);
+      const updated = prev.filter((ex) => ex.id !== exercise.id);
       return updated.map((ex, i) => ({ ...ex, order: i }));
+    });
+  };
+
+  // Handler para quando o drag termina
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = configuredExercises.findIndex(ex => ex.id === active.id);
+    const newIndex = configuredExercises.findIndex(ex => ex.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    setConfiguredExercises((prev) => {
+      const newExercises = arrayMove(prev, oldIndex, newIndex);
+      return newExercises.map((ex, i) => ({ ...ex, order: i }));
     });
   };
 
@@ -212,14 +335,14 @@ export function NewWorkoutTemplate() {
           onSubmit={templateForm.handleSubmit(handleSubmit)}
           className="space-y-6"
         >
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações do Treino</CardTitle>
-              <CardDescription>
-                Configure os detalhes básicos do treino
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <section className="bg-neutral-dark-01 w-full">
+            <div className="mx-auto w-full bg-neutral-dark-03 p-4 space-y-4 rounded-sm">
+              {/* Header */}
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold text-neutral-white-01">
+                  Informações do Treino
+                </h2>
+              </div>
               <FormField
                 control={templateForm.control}
                 name="title"
@@ -273,73 +396,50 @@ export function NewWorkoutTemplate() {
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Exercícios</CardTitle>
-              <CardDescription>
-                Adicione e configure os exercícios do template
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <section className="bg-neutral-dark-01 w-full">
+            <div className="mx-auto w-full bg-neutral-dark-03 p-3 rounded-sm">
+              {/* Header */}
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-neutral-white-01">
+                  Exercícios
+                </h2>
+              </div>
               <div className="space-y-3">
-                {configuredExercises.map((exercise, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 p-3 border rounded-lg bg-card"
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={configuredExercises.map(ex => ex.id)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-
-                    {/* Thumbnail da imagem/GIF do exercício */}
-                    {exercise.exerciseImageUrl && (
-                      <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-muted">
-                        <img
-                          src={exercise.exerciseImageUrl}
-                          alt={exercise.exerciseName}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex-1">
-                      <p className="font-medium">{exercise.exerciseName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatExerciseSummary(exercise)}
-                      </p>
-                      {exercise.notes && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {exercise.notes}
-                        </p>
-                      )}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeExercise(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                    {configuredExercises.map((exercise) => (
+                      <SortableExerciseItem
+                        key={exercise.id}
+                        exercise={exercise}
+                        formatSummary={formatExerciseSummary}
+                        onEdit={handleEditExercise}
+                        onRemove={removeExercise}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
 
                 <Button
                   type="button"
-                  variant="outline"
-                  className="w-full"
+                  className="w-full bg-transparent"
                   onClick={() => setExerciseDrawerOpen(true)}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Adicionar Exercício
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
           <div className="flex gap-3">
             <Button
@@ -373,11 +473,13 @@ export function NewWorkoutTemplate() {
 
       {/* Drawer 2: Configuração do Exercício */}
       <Drawer open={configDrawerOpen} onOpenChange={setConfigDrawerOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Configurar: {selectedExercise?.name}</DrawerTitle>
+        <DrawerContent className="max-h-[85vh] flex flex-col">
+          <DrawerHeader className="flex-shrink-0">
+            <DrawerTitle>
+              {editingExercise ? "Editar" : "Configurar"}: {selectedExercise?.name}
+            </DrawerTitle>
           </DrawerHeader>
-          <div className="p-4">
+          <div className="p-4 flex-1 overflow-y-auto min-h-0">
             <Form {...exerciseForm}>
               <form
                 onSubmit={exerciseForm.handleSubmit(handleExerciseConfig)}
@@ -526,6 +628,62 @@ export function NewWorkoutTemplate() {
                   )}
                 />
 
+                {/* Seção de Mídia */}
+                <div className="border-t border-neutral-dark-03 pt-4 mt-4">
+                  <h4 className="text-sm font-medium text-neutral-white-01 mb-3 flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    Mídia do Exercício
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    <FormField
+                      control={exerciseForm.control}
+                      name="imageUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Upload className="h-3.5 w-3.5" />
+                            URL da Imagem/GIF
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://exemplo.com/imagem.gif"
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Cole a URL de uma imagem ou GIF demonstrando o exercício
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={exerciseForm.control}
+                      name="videoUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Video className="h-3.5 w-3.5" />
+                            URL do Vídeo (YouTube)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://youtube.com/watch?v=..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Cole o link de um vídeo do YouTube
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-4">
                   <DrawerClose asChild>
                     <Button type="button" variant="outline" className="flex-1">
@@ -533,7 +691,7 @@ export function NewWorkoutTemplate() {
                     </Button>
                   </DrawerClose>
                   <Button type="submit" className="flex-1">
-                    Adicionar
+                    {editingExercise ? "Atualizar" : "Adicionar"}
                   </Button>
                 </div>
               </form>
@@ -544,3 +702,4 @@ export function NewWorkoutTemplate() {
     </motion.div>
   );
 }
+

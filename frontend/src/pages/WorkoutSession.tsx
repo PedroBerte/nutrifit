@@ -765,7 +765,7 @@ export default function WorkoutSession() {
           </DrawerHeader>
 
           <div className="px-4 py-4 space-y-3">
-            <div className="bg-neutral-dark-02 rounded-lg p-4 space-y-2">
+            <div className="rounded-lg p-4 space-y-3 border border-border">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Duração</span>
                 <span className="font-bold">
@@ -785,6 +785,44 @@ export default function WorkoutSession() {
                 </span>
               </div>
             </div>
+
+            {/* Exercícios com diferença de séries */}
+            {localWorkout && (() => {
+              const exercisesWithDiff = localWorkout.exercises.filter(ex => {
+                const target = ex.targetSets || 0;
+                const completed = ex.sets.filter(s => s.completed).length;
+                return target > 0 && completed !== target;
+              });
+              
+              if (exercisesWithDiff.length === 0) return null;
+              
+              return (
+                <div className="space-y-2">
+                  {exercisesWithDiff.map(ex => {
+                    const target = ex.targetSets || 0;
+                    const completed = ex.sets.filter(s => s.completed).length;
+                    const diff = completed - target;
+                    const isExtra = diff > 0;
+                    
+                    return (
+                      <div 
+                        key={ex.id} 
+                        className={`flex items-center justify-between p-2 rounded-lg border ${
+                          isExtra 
+                            ? 'border-green-500/30 text-green-500' 
+                            : 'border-yellow-500/30 text-yellow-500'
+                        }`}
+                      >
+                        <span className="text-sm truncate flex-1 mr-2">{ex.exerciseName}</span>
+                        <span className="text-xs font-medium whitespace-nowrap">
+                          {isExtra ? `+${diff} série${diff > 1 ? 's' : ''}` : `${diff} série${Math.abs(diff) > 1 ? 's' : ''}`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
 
           <DrawerFooter className="gap-2">
@@ -862,12 +900,12 @@ export default function WorkoutSession() {
             </div>
 
             {/* Dica Visual */}
-            <div className="p-4 bg-neutral-dark-02 rounded-lg border border-neutral-dark-03">
+            <div className="p-4 rounded-lg border border-primary/30">
               <div className="flex items-center gap-2 mb-2">
-                <GripVertical size={18} className="text-muted-foreground" />
+                <GripVertical size={18} className="text-primary" />
                 <p className="text-sm font-bold">Dica Visual</p>
               </div>
-              <p className="text-sm text-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Ao arrastar, você verá fundos coloridos aparecerem indicando a
                 ação que será executada. Solte quando o fundo estiver visível!
               </p>
@@ -1006,11 +1044,9 @@ function ExerciseCard({
             >
               {exercise.exerciseName}
             </h3>
-            {isCollapsed && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {completedSetsCount}/{exercise.sets.length} séries
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {completedSetsCount} de {exercise.targetSets || exercise.sets.length} séries
+            </p>
           </div>
         </div>
 
@@ -1083,6 +1119,9 @@ function ExerciseCard({
                       onRegisterSet={onRegisterSet}
                       exerciseId={exercise.id}
                       restSeconds={exercise.restSeconds}
+                      targetRepsMin={exercise.targetRepsMin}
+                      targetRepsMax={exercise.targetRepsMax}
+                      targetSets={exercise.targetSets}
                     />
                   ))}
                 </AnimatePresence>
@@ -1211,6 +1250,9 @@ interface SetRowProps {
   set: LocalSetSession;
   exerciseId: string;
   restSeconds?: number;
+  targetRepsMin?: number;
+  targetRepsMax?: number;
+  targetSets?: number;
   onRegisterSet: (
     exerciseId: string,
     load?: number,
@@ -1219,7 +1261,7 @@ interface SetRowProps {
   ) => void;
 }
 
-function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
+function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, targetSets, onRegisterSet }: SetRowProps) {
   const [editData, setEditData] = useState<{
     load?: number;
     reps?: number;
@@ -1424,7 +1466,7 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
         </span>
         <Input
           type="number"
-          placeholder={set.previousLoad ? `${set.previousLoad}kg` : "kg"}
+          placeholder={set.previousLoad ? `${set.previousLoad}` : "carga"}
           className="h-8 text-sm text-center"
           value={editData.load || ""}
           onChange={(e) =>
@@ -1436,7 +1478,15 @@ function SetRow({ set, exerciseId, restSeconds, onRegisterSet }: SetRowProps) {
         />
         <Input
           type="number"
-          placeholder={set.previousReps ? `${set.previousReps}` : "reps"}
+          placeholder={(() => {
+            const isExtra = targetSets && set.setNumber > targetSets;
+            if (isExtra) return "extra";
+            const targetReps = targetRepsMax || targetRepsMin || null;
+            if (set.previousReps && targetReps) return `${set.previousReps} de ${targetReps}`;
+            if (set.previousReps) return `${set.previousReps}`;
+            if (targetReps) return `0 de ${targetReps}`;
+            return "reps";
+          })()}
           className="h-8 text-sm text-center"
           value={editData.reps || ""}
           onChange={(e) =>
