@@ -205,14 +205,14 @@ export function CreateExerciseDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <DrawerHeader className="border-b">
+      <DrawerContent className="max-h-[85vh] flex flex-col">
+        <DrawerHeader className="border-b flex-shrink-0">
           <DrawerTitle>
             {isEditing ? "Editar Exercício" : "Novo Exercício"}
           </DrawerTitle>
         </DrawerHeader>
 
-        <div className="p-4 max-h-[70vh] overflow-y-auto">
+        <div className="p-4 flex-1 overflow-y-auto min-h-0">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleSubmit)}

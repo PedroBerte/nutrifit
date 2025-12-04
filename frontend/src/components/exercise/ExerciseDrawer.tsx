@@ -8,7 +8,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { Plus, Search, X, ChevronDown, Filter } from "lucide-react";
+import { Plus, Search, X, ChevronDown, Filter, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CreateExerciseDrawer } from "./CreateExerciseDrawer";
 import { motion, AnimatePresence } from "motion/react";
@@ -19,7 +19,8 @@ interface ExerciseDrawerProps {
   onExerciseSelect: (
     exerciseId: string,
     exerciseName: string,
-    exercisevideoUrl?: string
+    exerciseVideoUrl?: string,
+    exerciseImageUrl?: string
   ) => void;
   selectedExerciseIds?: string[];
   onLongPress?: (exercise: ExerciseType) => void;
@@ -149,7 +150,7 @@ export function ExerciseDrawer({
     handlePressEnd();
     const isAdded = selectedExerciseIds.includes(exercise.id);
     if (!isAdded) {
-      onExerciseSelect(exercise.id, exercise.name, exercise.videoUrl);
+      onExerciseSelect(exercise.id, exercise.name, exercise.videoUrl, exercise.imageUrl);
     }
   };
 
@@ -161,12 +162,12 @@ export function ExerciseDrawer({
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[85vh]">
+        <DrawerContent className="max-h-[85vh] flex flex-col">
           <DrawerHeader className="border-b flex-shrink-0">
             <DrawerTitle>Exercícios</DrawerTitle>
           </DrawerHeader>
 
-          <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+          <div className="p-4 space-y-4 flex-1 overflow-y-auto min-h-0">
             {/* Botão Adicionar Exercício */}
             <Button
               variant="outline"
@@ -329,40 +330,26 @@ export function ExerciseDrawer({
                       onMouseLeave={handlePressEnd}
                       disabled={isAdded}
                     >
-                      {/* Thumbnail da imagem/GIF */}
-                      {exercise.videoUrl && (
-                        <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-muted mr-3">
-                          <img
-                            src={exercise.videoUrl}
-                            alt={exercise.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      <div className="text-left flex-1">
+                      <div className="text-left flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium">{exercise.name}</p>
+                          <p className="font-medium truncate">{exercise.name}</p>
                           {exercise.isCustom && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                            <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary flex-shrink-0">
                               Meu
                             </span>
                           )}
                         </div>
                         {exercise.primaryMuscles &&
                           exercise.primaryMuscles.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground truncate">
                               {exercise.primaryMuscles.join(", ")}
                             </p>
                           )}
                       </div>
                       {isAdded && (
-                        <span className="ml-auto text-xs text-muted-foreground">
-                          Adicionado
-                        </span>
+                        <div className="ml-2 flex-shrink-0 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-4 h-4 text-primary-foreground" />
+                        </div>
                       )}
                     </Button>
                   );

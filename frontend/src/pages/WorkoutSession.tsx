@@ -112,7 +112,7 @@ export default function WorkoutSession() {
 
     // Se já existe um workout no localStorage e é do mesmo template
     if (existingWorkout && existingWorkout.workoutTemplateId === template.id) {
-      // Atualiza os exercícios com dados mais recentes do template (como exerciseUrl)
+      // Atualiza os exercícios com dados mais recentes do template (como mídia)
       const updatedExercises = existingWorkout.exercises.map((localEx) => {
         const templateEx = template.exerciseTemplates?.find(
           (te) => te.id === localEx.exerciseTemplateId
@@ -121,7 +121,8 @@ export default function WorkoutSession() {
         if (templateEx) {
           return {
             ...localEx,
-            exerciseUrl: templateEx.exerciseUrl, // Atualiza com URL do template
+            exerciseImageUrl: templateEx.exerciseImageUrl, // Atualiza com URL do template
+            exerciseVideoUrl: templateEx.exerciseVideoUrl, // Atualiza com URL do template
             exerciseName: templateEx.exerciseName, // Atualiza nome se mudou
           };
         }
@@ -148,7 +149,8 @@ export default function WorkoutSession() {
             exerciseTemplateId: et.id,
             exerciseId: et.exerciseId,
             exerciseName: et.exerciseName,
-            exerciseUrl: et.exerciseUrl,
+            exerciseImageUrl: et.exerciseImageUrl,
+            exerciseVideoUrl: et.exerciseVideoUrl,
             order: et.order,
             status: "IP",
             sets: [],
@@ -975,7 +977,7 @@ function ExerciseCard({
   ).length;
 
   // Debug log temporário
-  console.log(`[${exercise.exerciseName}] exerciseUrl:`, exercise.exerciseUrl, '| disabled:', !exercise.exerciseUrl);
+  console.log(`[${exercise.exerciseName}] exerciseVideoUrl:`, exercise.exerciseVideoUrl, '| disabled:', !exercise.exerciseVideoUrl);
 
   return (
     <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
@@ -1103,7 +1105,7 @@ function ExerciseCard({
                   size="sm"
                   className="flex-shrink-0 px-2 xs:px-3"
                   onClick={() => setShowVideoModal(true)}
-                  disabled={!exercise.exerciseUrl}
+                  disabled={!exercise.exerciseVideoUrl}
                 >
                   <Video size={16} />
                   <span className="hidden xs:inline">Vídeo</span>
@@ -1176,15 +1178,15 @@ function ExerciseCard({
 
           <div className="px-4 pb-4">
             <div className="relative w-full pb-[56.25%] bg-neutral-dark-02 rounded-lg overflow-hidden">
-              {exercise.exerciseUrl && (
+              {exercise.exerciseVideoUrl && (
                 <iframe
                   className="absolute top-0 left-0 w-full h-full"
                   src={
-                    exercise.exerciseUrl.includes('youtube.com/watch?v=')
-                      ? exercise.exerciseUrl.replace('watch?v=', 'embed/')
-                      : exercise.exerciseUrl.includes('youtu.be/')
-                      ? exercise.exerciseUrl.replace('youtu.be/', 'youtube.com/embed/')
-                      : exercise.exerciseUrl
+                    exercise.exerciseVideoUrl.includes('youtube.com/watch?v=')
+                      ? exercise.exerciseVideoUrl.replace('watch?v=', 'embed/')
+                      : exercise.exerciseVideoUrl.includes('youtu.be/')
+                      ? exercise.exerciseVideoUrl.replace('youtu.be/', 'youtube.com/embed/')
+                      : exercise.exerciseVideoUrl
                   }
                   title={exercise.exerciseName}
                   frameBorder="0"
