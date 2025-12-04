@@ -43,11 +43,7 @@ const items = [
     title: "Início",
     url: "/home",
     icon: Home,
-    profiles: [
-      UserProfiles.STUDENT,
-      UserProfiles.PERSONAL,
-      UserProfiles.NUTRITIONIST,
-    ],
+    profiles: [UserProfiles.PERSONAL, UserProfiles.NUTRITIONIST],
   },
   {
     title: "Treinos",

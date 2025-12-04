@@ -50,9 +50,11 @@ export async function ensurePushSubscription(
   }
 
   console.log("[PUSH] Registrando Service Worker em /sw.js...");
-  const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  const registration = await navigator.serviceWorker.register("/sw.js", {
+    scope: "/",
+  });
   console.log("[PUSH] Service Worker registrado:", registration.active?.state);
-  
+
   const reg = await navigator.serviceWorker.ready;
   console.log("[PUSH] Service Worker pronto:", reg.active?.state);
 
@@ -65,9 +67,12 @@ export async function ensurePushSubscription(
 
   const desired = b64UrlNormalize(vapidPublicKey);
   console.log("[PUSH] VAPID key normalizada:", desired);
-  
+
   let sub = await reg.pushManager.getSubscription();
-  console.log("[PUSH] Subscription existente:", sub ? "✅ Encontrada" : "❌ Não encontrada");
+  console.log(
+    "[PUSH] Subscription existente:",
+    sub ? "✅ Encontrada" : "❌ Não encontrada"
+  );
 
   if (sub) {
     const ask = (sub as any).options?.applicationServerKey as
@@ -76,10 +81,15 @@ export async function ensurePushSubscription(
     if (ask instanceof ArrayBuffer) {
       const usedKeyU8 = new Uint8Array(ask);
       const usedKey = u8ToB64Url(usedKeyU8);
-      console.log("[PUSH] Chave atual da subscription:", b64UrlNormalize(usedKey));
+      console.log(
+        "[PUSH] Chave atual da subscription:",
+        b64UrlNormalize(usedKey)
+      );
       console.log("[PUSH] Chave desejada:", desired);
       if (b64UrlNormalize(usedKey) !== desired) {
-        console.log("[PUSH] Chaves diferentes, removendo subscription antiga...");
+        console.log(
+          "[PUSH] Chaves diferentes, removendo subscription antiga..."
+        );
         await sub.unsubscribe();
         sub = null;
       } else {
@@ -118,7 +128,7 @@ export async function ensurePushSubscription(
   });
 
   console.log("[PUSH] Response status:", res.status);
-  
+
   if (!res.ok) {
     const errorText = await res.text();
     console.error("[PUSH] ❌ Erro ao registrar no backend:", errorText);
@@ -127,4 +137,55 @@ export async function ensurePushSubscription(
 
   console.log("[PUSH] ✅ Subscription registrada no backend com sucesso!");
   return sub;
+}
+
+export async function unsubscribePush(apiBaseUrl: string, authToken: string) {
+  console.log("[PUSH] 🔴 Iniciando unsubscribePush");
+
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    console.log("[PUSH] Push não suportado, ignorando unsubscribe");
+    return;
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+
+    if (!sub) {
+      console.log("[PUSH] Nenhuma subscription ativa para remover");
+      return;
+    }
+
+    const endpoint = sub.endpoint;
+    console.log(
+      "[PUSH] Removendo subscription:",
+      endpoint.substring(0, 50) + "..."
+    );
+
+    // Unsubscribe no backend primeiro
+    try {
+      const res = await fetch(`${apiBaseUrl}/push/Unsubscribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(endpoint),
+      });
+
+      if (res.ok) {
+        console.log("[PUSH] ✅ Subscription removida do backend");
+      } else {
+        console.warn("[PUSH] ⚠️ Falha ao remover do backend:", res.status);
+      }
+    } catch (err) {
+      console.warn("[PUSH] ⚠️ Erro ao chamar backend:", err);
+    }
+
+    // Unsubscribe local
+    await sub.unsubscribe();
+    console.log("[PUSH] ✅ Subscription removida localmente");
+  } catch (err) {
+    console.error("[PUSH] ❌ Erro ao fazer unsubscribe:", err);
+  }
 }
