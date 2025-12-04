@@ -297,28 +297,6 @@ export default function WorkoutSession() {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Esconde a dica de swipe após 8 segundos
-  useEffect(() => {
-    if (showSwipeHint) {
-      const timer = setTimeout(() => {
-        setShowSwipeHint(false);
-        localStorage.setItem("hasSeenSwipeHint", "true");
-      }, 8000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSwipeHint]);
-
-  // Esconde a dica de edição após 10 segundos
-  useEffect(() => {
-    if (showEditSwipeHint) {
-      const timer = setTimeout(() => {
-        setShowEditSwipeHint(false);
-        localStorage.setItem("hasSeenEditSwipeHint", "true");
-      }, 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [showEditSwipeHint]);
-
   // Monitora quando uma série é completada pela primeira vez
   useEffect(() => {
     if (!localWorkout) return;
@@ -633,6 +611,10 @@ export default function WorkoutSession() {
                       <span className="text-blue-400">→</span>
                       <span>Série completa? Arraste direita para editar</span>
                     </div>
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-blue-500/20">
+                      <HelpCircle size={12} className="text-blue-400" />
+                      <span>Toque no <strong>?</strong> no topo para ver o tutorial completo</span>
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -672,6 +654,10 @@ export default function WorkoutSession() {
                   <p className="text-xs text-green-400">
                     Precisa editar? Arraste a série completada para a direita
                     (→) e ela voltará ao modo editável!
+                  </p>
+                  <p className="text-xs text-green-400 mt-2 pt-2 border-t border-green-500/20 flex items-center gap-1">
+                    <HelpCircle size={12} />
+                    <span>Toque no <strong>?</strong> no topo para ver todos os gestos</span>
                   </p>
                 </div>
                 <Button
@@ -1014,9 +1000,6 @@ function ExerciseCard({
     (set) => set.completed
   ).length;
 
-  // Debug log temporário
-  console.log(`[${exercise.exerciseName}] exerciseVideoUrl:`, exercise.exerciseVideoUrl, '| disabled:', !exercise.exerciseVideoUrl);
-
   return (
     <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
       {/* Cabeçalho do Exercício - Clicável para colapsar */}
@@ -1103,8 +1086,8 @@ function ExerciseCard({
             <div className="px-4 pb-4 space-y-3">
               {/* Tabela de Séries */}
               <div className="space-y-2">
-                <div className="grid grid-cols-4 gap-2 text-xs font-bold text-muted-foreground">
-                  <span>SÉRIE</span>
+                <div className="grid grid-cols-[1fr_0.95fr_1.05fr] xs:grid-cols-[auto_1fr_0.95fr_1.05fr] gap-1 xs:gap-2 text-[10px] xs:text-xs font-bold text-muted-foreground">
+                  <span className="hidden xs:block">SÉRIE</span>
                   <span>ANTERIOR</span>
                   <span className="text-center">KG</span>
                   <span className="text-center">REPS</span>
@@ -1339,22 +1322,22 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
           }}
           animate={{ x: 0 }}
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className="grid grid-cols-4 gap-2 items-center bg-neutral-dark-03 relative z-10 py-4"
+          className="grid grid-cols-[1fr_0.95fr_1.05fr] xs:grid-cols-[auto_1fr_0.95fr_1.05fr] gap-1 xs:gap-2 items-center bg-neutral-dark-03 relative z-10 py-4"
           whileTap={{ scale: 0.98 }}
         >
-          <div className="flex items-center gap-1.5">
+          <div className="hidden xs:flex items-center gap-1.5">
             <GripVertical size={18} className="text-muted-foreground/60" />
             <span className="text-sm font-bold">{set.setNumber}</span>
           </div>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs xs:text-sm text-muted-foreground">
             {set.previousLoad && set.previousReps
               ? `${set.previousLoad}kg x ${set.previousReps}`
               : "-"}
           </span>
-          <span className="text-sm font-mono font-bold text-green-500 text-center">
-            {set.load || "-"}kg
+          <span className="text-xs xs:text-sm font-mono font-bold text-green-500 text-center">
+            {set.load ? `${set.load}kg` : "-"}
           </span>
-          <span className="text-sm font-mono font-bold text-green-500 text-center">
+          <span className="text-xs xs:text-sm font-mono font-bold text-green-500 text-center">
             {set.reps || "-"}
           </span>
         </motion.div>
@@ -1452,14 +1435,14 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
         }}
         animate={{ x: 0 }}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        className="grid grid-cols-4 gap-2 items-center bg-neutral-dark-03 relative z-10 py-4"
+        className="grid grid-cols-[1fr_0.95fr_1.05fr] xs:grid-cols-[auto_1fr_0.95fr_1.05fr] gap-1 xs:gap-2 items-center bg-neutral-dark-03 relative z-10 py-4"
         whileTap={{ scale: 0.98 }}
       >
-        <div className="flex items-center gap-1.5">
+        <div className="hidden xs:flex items-center gap-1.5">
           <GripVertical size={18} className="text-muted-foreground/60" />
           <span className="text-sm font-bold">{set.setNumber}</span>
         </div>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-xs xs:text-sm text-muted-foreground">
           {set.previousLoad && set.previousReps
             ? `${set.previousLoad}kg x ${set.previousReps}`
             : "-"}
@@ -1467,7 +1450,7 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
         <Input
           type="number"
           placeholder={set.previousLoad ? `${set.previousLoad}` : "carga"}
-          className="h-8 text-sm text-center"
+          className="h-8 text-xs xs:text-sm text-center"
           value={editData.load || ""}
           onChange={(e) =>
             setEditData((prev) => ({
@@ -1487,7 +1470,7 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
             if (targetReps) return `0 de ${targetReps}`;
             return "reps";
           })()}
-          className="h-8 text-sm text-center"
+          className="h-8 text-xs xs:text-sm text-center"
           value={editData.reps || ""}
           onChange={(e) =>
             setEditData((prev) => ({
