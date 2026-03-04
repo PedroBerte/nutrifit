@@ -7,7 +7,7 @@ export function useCreateUser() {
     mutationKey: ["createUser"],
     retry: 0,
     mutationFn: async (user: UserType) => {
-      const request = await api.post<UserType>(`/user`, user);
+      const request = await api.post<UserType>(`/users`, user);
       return request.data;
     },
     onError: (e) => {
@@ -22,7 +22,7 @@ export function useGetUserById(id: string | null | undefined) {
     queryKey: ["getUserById", id],
     queryFn: async () => {
       if (!id) throw new Error("ID do usuário é obrigatório");
-      const request = await api.get<UserType>(`/user/${id}`);
+      const request = await api.get<UserType>(`/users/${id}`);
       return request.data;
     },
     enabled: !!id,
@@ -69,7 +69,7 @@ export function useGetAllUsers(
       }
       
       const queryString = params.toString();
-      const url = queryString ? `/user?${queryString}` : '/user';
+      const url = queryString ? `/users?${queryString}` : '/users';
       const request = await api.get<UserType[]>(url);
 
       if (filters.onlyNutritionists) {
@@ -104,7 +104,7 @@ export function useUpdateUser() {
     mutationKey: ["updateUser"],
     retry: 0,
     mutationFn: async (user: UserType) => {
-      const request = await api.put<UserType>(`/user/${user.id}`, user);
+      const request = await api.put<UserType>(`/users/${user.id}`, user);
       return request.data;
     },
     onSuccess: (data) => {
@@ -134,7 +134,7 @@ export function useGeocodeAllAddresses() {
         processed: number;
         success: number;
         failed: number;
-      }>(`/user/geocode-addresses`);
+      }>(`/users/geocode-addresses`);
       return request.data;
     },
     onError: (e) => {

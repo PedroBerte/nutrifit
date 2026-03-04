@@ -84,6 +84,58 @@ export async function getUserById(id: string) {
   return { ...user, password: undefined, passwordHash: undefined };
 }
 
+export async function createUser(
+  data: {
+    profileId: string;
+    name: string;
+    email: string;
+    imageUrl?: string;
+    sex?: string;
+    phoneNumber?: string;
+    dateOfBirth?: string | Date;
+    address?: {
+      addressLine: string;
+      number: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      country?: string;
+      addressType?: number;
+    };
+  }
+) {
+  return prisma.user.create({
+    data: {
+      profile: { connect: { id: data.profileId } },
+      name: data.name,
+      email: data.email,
+      imageUrl: data.imageUrl,
+      sex: data.sex ?? "",
+      phoneNumber: data.phoneNumber ?? "",
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+      status: "A",
+      address: data.address
+        ? {
+            create: {
+              addressLine: data.address.addressLine,
+              number: data.address.number,
+              city: data.address.city,
+              state: data.address.state,
+              zipCode: data.address.zipCode,
+              country: data.address.country ?? "Brasil",
+              addressType: data.address.addressType ?? 0,
+            },
+          }
+        : undefined,
+    },
+    include: { profile: true, address: true },
+  });
+}
+
+export async function geocodeAllUserAddresses() {
+  return { message: "Geocoding skipped", processed: 0, success: 0, failed: 0 };
+}
+
 export async function updateUser(
   id: string,
   data: Partial<{

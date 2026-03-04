@@ -11,7 +11,7 @@ export interface SendAccessEmailRequest {
 export function useSendAccessEmail() {
   return useMutation({
     mutationFn: async (data: SendAccessEmailRequest) => {
-      await api.post("/authentication/sendAccessEmail", data, {
+      await api.post("/auth/magic-link/send", data, {
         headers: {
           "X-App-BaseUrl": window.location.origin,
         },
@@ -26,9 +26,11 @@ export function useValidateSession() {
     retry: 0,
     mutationFn: async (token: string) => {
       console.log("Validating session with token:", token);
-      const request = await api.post<string>(
-        `/authentication/validateSession?token=${encodeURIComponent(token)}`
+      const request = await api.post<{ token: string }>(
+        "/auth/magic-link/validate",
+        { token }
       );
+      const jwt = request.data.token;
 
       const apiBaseUrl =
         import.meta.env.VITE_API_URL || "http://localhost:3333/api";
@@ -38,16 +40,16 @@ export function useValidateSession() {
 
       console.log("[AUTH] API Base URL:", apiBaseUrl);
       console.log("[AUTH] VAPID Public Key:", vapidPublicKey);
-      console.log("[AUTH] Token received:", request.data ? "✅" : "❌");
+      console.log("[AUTH] Token received:", jwt ? "✅" : "❌");
 
       try {
-        await ensurePushSubscription(apiBaseUrl, vapidPublicKey, request.data);
+        await ensurePushSubscription(apiBaseUrl, vapidPublicKey, jwt);
         console.log("[AUTH] Push subscription successful ✅");
       } catch (e) {
         console.error("[AUTH] ❌ Falha ao inscrever push:", e);
       }
 
-      return request.data;
+      return jwt;
     },
     onError: (e) => {
       console.error("Erro ao validar sessão", e);

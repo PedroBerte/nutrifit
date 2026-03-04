@@ -10,10 +10,10 @@ export function useGetAppointmentsByBondId(bondId: string) {
   return useQuery({
     queryKey: ["getAppointmentsByBondId", bondId],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        `/appointment/bond/${bondId}`
+      const request = await api.get<AppointmentType[]>("/appointments");
+      return request.data.filter(
+        (appointment: any) => appointment.customerProfessionalBondId === bondId
       );
-      return request.data;
     },
     enabled: !!bondId,
     retry: 1,
@@ -24,8 +24,10 @@ export function useGetAppointmentById(id: string) {
   return useQuery({
     queryKey: ["getAppointmentById", id],
     queryFn: async () => {
-      const request = await api.get<AppointmentType>(`/appointment/${id}`);
-      return request.data;
+      const request = await api.get<AppointmentType[]>("/appointments");
+      const appointment = request.data.find((x) => x.id === id);
+      if (!appointment) throw new Error("Appointment not found");
+      return appointment;
     },
     enabled: !!id,
     retry: 1,
@@ -36,10 +38,8 @@ export function useGetCustomerPendingAppointments() {
   return useQuery({
     queryKey: ["getCustomerPendingAppointments"],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        "/appointment/customer/pending"
-      );
-      return request.data;
+      const request = await api.get<AppointmentType[]>("/appointments");
+      return request.data.filter((x: any) => x.status === "P");
     },
     retry: 1,
   });
@@ -49,9 +49,7 @@ export function useGetCustomerAppointments() {
   return useQuery({
     queryKey: ["getCustomerAppointments"],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        "/appointment/customer/all"
-      );
+      const request = await api.get<AppointmentType[]>("/appointments");
       return request.data;
     },
     retry: 1,
@@ -62,9 +60,7 @@ export function useGetProfessionalAppointments() {
   return useQuery({
     queryKey: ["getProfessionalAppointments"],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        "/appointment/professional/all"
-      );
+      const request = await api.get<AppointmentType[]>("/appointments");
       return request.data;
     },
     retry: 1,
@@ -75,9 +71,7 @@ export function useGetProfessionalUpcomingAppointments(limit?: number) {
   return useQuery({
     queryKey: ["getProfessionalUpcomingAppointments", limit],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        "/appointment/professional/all"
-      );
+      const request = await api.get<AppointmentType[]>("/appointments");
       const now = new Date();
       const upcoming = request.data
         .filter((apt) => {
@@ -101,7 +95,7 @@ export function useCreateAppointment() {
 
   return useMutation({
     mutationFn: async (data: CreateAppointmentRequest) => {
-      const request = await api.post<AppointmentType>("/appointment", data);
+      const request = await api.post<AppointmentType>("/appointments", data);
       console.log("Created appointment:", request.data);
       return request.data;
     },
@@ -123,7 +117,7 @@ export function useUpdateAppointment() {
       data: UpdateAppointmentRequest;
     }) => {
       const request = await api.put<AppointmentType>(
-        `/appointment/${id}`,
+        `/appointments/${id}`,
         data
       );
       return request.data;
@@ -149,7 +143,7 @@ export function useDeleteAppointment() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/appointment/${id}`);
+      await api.delete(`/appointments/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["getAppointmentsByBondId"] });

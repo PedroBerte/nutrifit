@@ -122,7 +122,7 @@ export function useCompleteWorkoutSession() {
     retry: 0,
     mutationFn: async (data: CompleteWorkoutSessionRequest) => {
       const request = await api.post<ApiResponse<string>>(
-        `/workoutSession/complete`,
+        `/workout-sessions/complete`,
         data
       );
       return request.data;
@@ -144,7 +144,7 @@ export function useGetWorkoutSessionById(sessionId: string | null | undefined) {
     queryFn: async () => {
       if (!sessionId) throw new Error("ID da sessão é obrigatório");
       const request = await api.get<ApiResponse<WorkoutSessionResponse>>(
-        `/workoutSession/${sessionId}`
+        `/workout-sessions/${sessionId}`
       );
       return request.data;
     },
@@ -166,7 +166,7 @@ export function useGetWorkoutHistory(page: number = 1, pageSize: number = 20) {
           pageSize: number;
           totalPages: number;
         }>
-      >(`/workoutSession/history?page=${page}&pageSize=${pageSize}`);
+      >(`/workout-sessions/history?page=${page}&pageSize=${pageSize}`);
       return request.data;
     },
     retry: 1,
@@ -182,7 +182,7 @@ export function useGetPreviousExerciseData(
     queryFn: async () => {
       if (!exerciseId) throw new Error("ID do exercício é obrigatório");
       const request = await api.get<ApiResponse<PreviousSetData[]>>(
-        `/workoutSession/exercise/${exerciseId}/previous`
+        `/workout-sessions/exercise/${exerciseId}/previous`
       );
       return request.data;
     },
@@ -204,7 +204,7 @@ export function useGetCustomerWorkoutHistory(
       const request = await api.get<
         ApiResponse<WorkoutSessionSummaryResponse[]>
       >(
-        `/workoutSession/customer/${customerId}?page=${page}&pageSize=${pageSize}`
+        `/workout-sessions/customer/${customerId}?page=${page}&pageSize=${pageSize}`
       );
       return request.data;
     },
@@ -220,7 +220,7 @@ export function useGetExerciseHistory(exerciseId: string | null | undefined) {
     queryFn: async () => {
       if (!exerciseId) throw new Error("ID do exercício é obrigatório");
       const request = await api.get<ApiResponse<ExerciseHistoryType>>(
-        `/workoutSession/exercise/${exerciseId}/history`
+        `/workout-sessions/exercise/${exerciseId}/history`
       );
       return request.data;
     },

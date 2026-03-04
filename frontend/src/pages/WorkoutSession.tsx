@@ -187,7 +187,7 @@ export default function WorkoutSession() {
         try {
           // Busca histórico do exercício via API
           const response = await api.get<ApiResponse<PreviousSetData[]>>(
-            `/workoutSession/exercise/${exercise.exerciseId}/previous`
+            `/workout-sessions/exercise/${exercise.exerciseId}/previous`
           );
 
           const previousSets = response.data.data || [];

@@ -2,6 +2,64 @@ import { api } from "@/lib/axios";
 import type { ApiResponse } from "@/types/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+function ok<T>(data: T, message?: string): ApiResponse<T> {
+  return { success: true, data, message };
+}
+
+type RawExerciseTemplate = {
+  id: string;
+  workoutTemplateId: string;
+  exerciseId: string;
+  order: number;
+  targetSets: number;
+  targetRepsMin?: number;
+  targetRepsMax?: number;
+  suggestedLoad?: number;
+  restSeconds?: number;
+  notes?: string;
+  createdAt: string;
+  exercise?: {
+    name: string;
+    imageUrl?: string;
+    videoUrl?: string;
+  };
+};
+
+type RawWorkoutTemplate = {
+  id: string;
+  routineId: string;
+  title: string;
+  description?: string;
+  estimatedDurationMinutes?: number;
+  order: number;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+  exerciseTemplates?: RawExerciseTemplate[];
+};
+
+function adaptTemplate(template: RawWorkoutTemplate): WorkoutTemplateResponse {
+  return {
+    ...template,
+    exerciseTemplates: (template.exerciseTemplates || []).map((item) => ({
+      id: item.id,
+      workoutTemplateId: item.workoutTemplateId,
+      exerciseId: item.exerciseId,
+      exerciseName: item.exercise?.name || "Exercício",
+      exerciseImageUrl: item.exercise?.imageUrl,
+      exerciseVideoUrl: item.exercise?.videoUrl,
+      order: item.order,
+      targetSets: item.targetSets,
+      targetRepsMin: item.targetRepsMin,
+      targetRepsMax: item.targetRepsMax,
+      suggestedLoad: item.suggestedLoad,
+      restSeconds: item.restSeconds,
+      notes: item.notes,
+      createdAt: item.createdAt,
+    })),
+  };
+}
+
 export interface ExerciseTemplateRequest {
   exerciseId: string;
   order: number;
@@ -81,11 +139,27 @@ export function useCreateWorkoutTemplate() {
       routineId: string;
       data: CreateWorkoutTemplateRequest;
     }) => {
-      const request = await api.post<ApiResponse<{ id: string }>>(
-        `/workoutTemplate/routine/${routineId}`,
-        data
+      const request = await api.post<RawWorkoutTemplate>(
+        `/workout-templates/routine/${routineId}`,
+        {
+          title: data.title,
+          description: data.description,
+          estimatedDurationMinutes: data.estimatedDurationMinutes,
+          order: data.order,
+        }
       );
-      return request.data;
+      const created = request.data;
+
+      if (data.exerciseTemplates?.length) {
+        for (const exerciseTemplate of data.exerciseTemplates) {
+          await api.post(
+            `/workout-templates/${created.id}/exercises`,
+            exerciseTemplate
+          );
+        }
+      }
+
+      return ok({ id: created.id });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -111,11 +185,11 @@ export function useUpdateWorkoutTemplate() {
       templateId: string;
       data: UpdateWorkoutTemplateRequest;
     }) => {
-      const request = await api.put<ApiResponse>(
-        `/workoutTemplate/${templateId}`,
+      const request = await api.put<RawWorkoutTemplate>(
+        `/workout-templates/${templateId}`,
         data
       );
-      return request.data;
+      return ok(adaptTemplate(request.data), "Template updated");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -138,10 +212,8 @@ export function useDeleteWorkoutTemplate() {
     mutationKey: ["deleteWorkoutTemplate"],
     retry: 0,
     mutationFn: async (templateId: string) => {
-      const request = await api.delete<ApiResponse>(
-        `/workoutTemplate/${templateId}`
-      );
-      return request.data;
+      await api.delete(`/workout-templates/${templateId}`);
+      return ok(true, "Template deleted");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -162,10 +234,10 @@ export function useGetWorkoutTemplateById(
     queryKey: ["getWorkoutTemplateById", templateId],
     queryFn: async () => {
       if (!templateId) throw new Error("ID do template é obrigatório");
-      const request = await api.get<ApiResponse<WorkoutTemplateResponse>>(
-        `/workoutTemplate/${templateId}`
+      const request = await api.get<RawWorkoutTemplate>(
+        `/workout-templates/${templateId}`
       );
-      return request.data;
+      return ok(adaptTemplate(request.data));
     },
     enabled: !!templateId,
     retry: 1,
@@ -179,10 +251,10 @@ export function useGetWorkoutTemplatesByRoutine(
     queryKey: ["getWorkoutTemplatesByRoutine", routineId],
     queryFn: async () => {
       if (!routineId) throw new Error("ID da rotina é obrigatório");
-      const request = await api.get<ApiResponse<WorkoutTemplateResponse[]>>(
-        `/workoutTemplate/routine/${routineId}`
+      const request = await api.get<RawWorkoutTemplate[]>(
+        `/workout-templates/routine/${routineId}`
       );
-      return request.data;
+      return ok((request.data || []).map(adaptTemplate));
     },
     enabled: !!routineId,
     retry: 1,
@@ -201,11 +273,11 @@ export function useAddExerciseToTemplate() {
       templateId: string;
       data: ExerciseTemplateRequest;
     }) => {
-      const request = await api.post<ApiResponse<{ id: string }>>(
-        `/workoutTemplate/${templateId}/exercises`,
+      const request = await api.post<RawExerciseTemplate>(
+        `/workout-templates/${templateId}/exercises`,
         data
       );
-      return request.data;
+      return ok({ id: request.data.id }, "Exercise added");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -234,11 +306,11 @@ export function useUpdateExerciseTemplate() {
       exerciseTemplateId: string;
       data: UpdateExerciseTemplateRequest;
     }) => {
-      const request = await api.put<ApiResponse>(
-        `/workoutTemplate/exercise/${exerciseTemplateId}`,
+      const request = await api.put<RawExerciseTemplate>(
+        `/workout-templates/exercise/${exerciseTemplateId}`,
         data
       );
-      return request.data;
+      return ok(request.data, "Exercise updated");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -261,10 +333,8 @@ export function useRemoveExerciseFromTemplate() {
     mutationKey: ["removeExerciseFromTemplate"],
     retry: 0,
     mutationFn: async (exerciseTemplateId: string) => {
-      const request = await api.delete<ApiResponse>(
-        `/workoutTemplate/exercise/${exerciseTemplateId}`
-      );
-      return request.data;
+      await api.delete(`/workout-templates/exercise/${exerciseTemplateId}`);
+      return ok(true, "Exercise removed");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -293,11 +363,11 @@ export function useReorderExercises() {
       templateId: string;
       exerciseTemplateIds: string[];
     }) => {
-      const request = await api.put<ApiResponse>(
-        `/workoutTemplate/${templateId}/reorder`,
+      const request = await api.put<RawWorkoutTemplate>(
+        `/workout-templates/${templateId}/reorder`,
         exerciseTemplateIds
       );
-      return request.data;
+      return ok(adaptTemplate(request.data), "Template reordered");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

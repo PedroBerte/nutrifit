@@ -22,7 +22,7 @@ export function useCreateBond() {
     retry: 0,
     mutationFn: async (bond: CustomerProfessionalBondType) => {
       const request = await api.post<CustomerProfessionalBondType>(
-        `/bond`,
+        `/bonds`,
         bond
       );
       return request.data;
@@ -40,7 +40,7 @@ export function useGetBondById(id: string | null | undefined) {
     queryFn: async () => {
       if (!id) throw new Error("ID do vínculo é obrigatório");
       const request = await api.get<CustomerProfessionalBondType>(
-        `/bond/${id}`
+        `/bonds/${id}`
       );
       return request.data;
     },
@@ -54,7 +54,7 @@ export function useGetBondsSent() {
     queryKey: ["getBondsSent"],
     queryFn: async () => {
       const request = await api.get<Array<CustomerProfessionalBondType>>(
-        `/bond/sent`
+        `/bonds/sent`
       );
       return request.data;
     },
@@ -67,7 +67,7 @@ export function useGetBondAsCustomer() {
     queryKey: ["getBondsAsCustomer"],
     queryFn: async () => {
       const request = await api.get<Array<CustomerProfessionalBondType>>(
-        `/bond/as-customer`
+        `/bonds/as-customer`
       );
       return request.data && request.data[0];
     },
@@ -91,7 +91,7 @@ export function useGetAllBonds(
           onlyPending: boolean;
         }
       ];
-      const request = await api.get<CustomerProfessionalBondType[]>(`/bond`);
+      const request = await api.get<CustomerProfessionalBondType[]>(`/bonds`);
       let data = request.data;
 
       if (filters.customerId) {
@@ -116,7 +116,7 @@ export function useGetMyBonds() {
   return useQuery({
     queryKey: ["getMyBonds"],
     queryFn: async () => {
-      const request = await api.get<CustomerProfessionalBondType[]>(`/bond/as-professional`);
+      const request = await api.get<CustomerProfessionalBondType[]>(`/bonds/as-professional`);
       return request.data;
     },
     retry: 1,
@@ -130,7 +130,7 @@ export function useUpdateBond() {
     mutationFn: async (bond: CustomerProfessionalBondType) => {
       if (!bond?.id) throw new Error("Id do vínculo é obrigatório");
       const request = await api.put<CustomerProfessionalBondType>(
-        `/bond/${bond.id}`,
+        `/bonds/${bond.id}`,
         bond
       );
       return request.data;
@@ -147,7 +147,7 @@ export function useDeleteBond() {
     mutationKey: ["deleteBond"],
     retry: 0,
     mutationFn: async (id: string) => {
-      const request = await api.delete(`/bond/${id}`);
+      const request = await api.delete(`/bonds/${id}`);
       return request.data;
     },
     onError: (e) => {
@@ -166,13 +166,51 @@ export function useGetActiveStudents(
     queryKey: ["getActiveStudents", page, pageSize, search],
     queryFn: async () => {
       const request = await api.get<
-        ApiResponse<PaginatedResponse<ActiveStudentResponse>>
+        {
+          total: number;
+          page: number;
+          pageSize: number;
+          data: Array<{
+            id: string;
+            customerId: string;
+            professionalId: string;
+            status: string;
+            createdAt: string;
+            customer: {
+              id: string;
+              name: string;
+              email: string;
+              imageUrl?: string;
+            };
+          }>;
+        }
       >(
-        `/bond/active-students?page=${page}&pageSize=${pageSize}${
+        `/bonds/active-students?page=${page}&pageSize=${pageSize}${
           search ? `&search=${encodeURIComponent(search)}` : ""
         }`
       );
-      return request.data;
+      const mapped: ActiveStudentResponse[] = (request.data.data || []).map((item) => ({
+        bondId: item.id,
+        studentId: item.customer.id,
+        studentName: item.customer.name,
+        studentEmail: item.customer.email,
+        studentImageUrl: item.customer.imageUrl,
+        bondCreatedAt: item.createdAt,
+        bondStatus: item.status,
+      }));
+
+      return {
+        success: true,
+        data: {
+          items: mapped,
+          pagination: {
+            currentPage: request.data.page,
+            pageSize: request.data.pageSize,
+            totalPages: Math.ceil(request.data.total / request.data.pageSize),
+            totalCount: request.data.total,
+          },
+        },
+      } as ApiResponse<PaginatedResponse<ActiveStudentResponse>>;
     },
     retry: 1,
   });
@@ -182,7 +220,7 @@ export function useGetBondByStudentId(studentId: string) {
   return useQuery({
     queryKey: ["getBondByStudentId", studentId],
     queryFn: async () => {
-      const request = await api.get<CustomerProfessionalBondType[]>(`/bond`);
+      const request = await api.get<CustomerProfessionalBondType[]>(`/bonds`);
       const bonds = request.data;
       console.log("Bonds fetched:", bonds);
       // Encontrar o bond ativo entre o professional logado e este student

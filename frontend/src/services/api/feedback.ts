@@ -7,7 +7,7 @@ export function useGetProfessionalFeedbacks(professionalId: string | null | unde
     queryKey: ["getProfessionalFeedbacks", professionalId],
     queryFn: async () => {
       if (!professionalId) throw new Error("ID do profissional é obrigatório");
-      const request = await api.get<FeedbackType[]>(`/user/${professionalId}/feedbacks`);
+      const request = await api.get<FeedbackType[]>(`/users/${professionalId}/feedbacks`);
       return request.data;
     },
     enabled: !!professionalId,
@@ -20,7 +20,7 @@ export function useCreateFeedback() {
 
   return useMutation({
     mutationFn: async (data: CreateFeedbackRequest) => {
-      const response = await api.post<FeedbackResponse>("/feedback", data);
+      const response = await api.post<FeedbackResponse>("/feedbacks", data);
       return response.data;
     },
     onSuccess: () => {
@@ -38,7 +38,7 @@ export function useGetFeedbacksForProfessional(professionalId: string | undefine
     queryFn: async () => {
       if (!professionalId) return [];
       const response = await api.get<FeedbackResponse[]>(
-        `/feedback/professional/${professionalId}`
+        `/feedbacks?professionalId=${professionalId}`
       );
       return response.data;
     },
@@ -55,10 +55,10 @@ export function useGetBondFeedback(
     queryFn: async () => {
       if (!customerId || !professionalId) return null;
       try {
-        const response = await api.get<FeedbackResponse>(
-          `/feedback/bond?customerId=${customerId}&professionalId=${professionalId}`
+        const response = await api.get<FeedbackResponse[]>(
+          `/feedbacks?professionalId=${professionalId}`
         );
-        return response.data;
+        return response.data.find((feedback: any) => feedback.customerId === customerId) || null;
       } catch (error: any) {
         if (error.response?.status === 404) {
           return null;

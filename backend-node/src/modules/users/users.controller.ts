@@ -1,6 +1,23 @@
 import { Request, Response } from "express";
-import { getAllUsers, getUserById, updateUser, deleteUser, getProfessionalFeedbacks } from "./users.service";
+import {
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  getProfessionalFeedbacks,
+  createUser,
+  geocodeAllUserAddresses,
+} from "./users.service";
 import { updateUserSchema } from "./users.schemas";
+
+export async function createUserHandler(req: Request, res: Response) {
+  const created = await createUser(req.body);
+  return res.status(201).json(created);
+}
+
+export async function geocodeAllAddressesHandler(_req: Request, res: Response) {
+  return res.status(200).json(await geocodeAllUserAddresses());
+}
 
 export async function listUsers(req: Request, res: Response) {
   const { userLat, userLon, maxDistanceKm } = req.query as Record<string, string>;
