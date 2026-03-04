@@ -29,6 +29,8 @@ import PersonalHome from "@/pages/PersonalHome";
 import ExerciseHistory from "@/pages/ExerciseHistory";
 import { Appointments } from "@/pages/Appointments";
 import ProfessionalAgenda from "@/pages/ProfessionalAgenda";
+import SelfManagedWorkoutNew from "@/pages/SelfManagedWorkoutNew";
+import SelfManagedWorkoutSession from "@/pages/SelfManagedWorkoutSession";
 
 export function AppRoutes() {
   return (
@@ -38,6 +40,7 @@ export function AppRoutes() {
 
         <Route path="login" element={<Login />} />
         <Route path="login/callback" element={<Callback />} />
+        <Route path="auth/validate" element={<Callback />} />
 
         <Route element={<RegisterFormLayout />}>
           <Route path="first-access" element={<FirstAccess />} />
@@ -63,6 +66,22 @@ export function AppRoutes() {
               element={
                 <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
                   <WorkoutSession />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="workout/self-managed/new"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                  <SelfManagedWorkoutNew />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="workout/self-managed/session/:sessionId"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                  <SelfManagedWorkoutSession />
                 </RoleGuard>
               }
             />

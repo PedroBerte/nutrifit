@@ -17,6 +17,12 @@ import { Bell } from "lucide-react";
 import AlunoSemPersonal from "@/assets/aluno/AlunoSemPersonal.png";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { cn } from "@/lib/utils";
+import { useUpdateUser } from "@/services/api/user";
+import { toast } from "sonner";
+import {
+  useGetMySelfManagedWorkouts,
+  useStartSelfManagedWorkoutSession,
+} from "@/services/api/selfManagedWorkout";
 
 export default function Workout() {
   const navigate = useNavigate();
@@ -26,6 +32,7 @@ export default function Workout() {
     useGetBondAsCustomer();
   const { data: routinesResponse, isLoading: isLoadingRoutines } =
     useGetMyAssignedRoutines();
+  const updateUserMutation = useUpdateUser();
 
   // Busca appointments pendentes do usuário
   const { data: pendingAppointments } = useGetCustomerPendingAppointments();
@@ -46,9 +53,51 @@ export default function Workout() {
   }, []);
 
   const routines = routinesResponse?.data?.items || [];
+  const isSelfManagedUser = userData?.profileId === UserProfiles.SELF_MANAGED;
+  const {
+    data: selfManagedWorkouts,
+    isLoading: isLoadingSelfManagedWorkouts,
+  } = useGetMySelfManagedWorkouts(isSelfManagedUser);
+  const startSelfManagedSession = useStartSelfManagedWorkoutSession();
+
+  async function activateSelfManagedMode() {
+    if (!userData?.id) return;
+
+    try {
+      const payload = {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        profileId: UserProfiles.SELF_MANAGED,
+        ...(userData.imageUrl ? { imageUrl: userData.imageUrl } : {}),
+      };
+
+      await updateUserMutation.mutateAsync(payload);
+      toast.success("Modo auto gerido ativado com sucesso!");
+    } catch {
+      toast.error("Não foi possível ativar o modo auto gerido.");
+    }
+  }
+
+  async function handleStartSelfManagedWorkout(workoutTemplateId: string) {
+    try {
+      const session = await startSelfManagedSession.mutateAsync({
+        workoutTemplateId,
+      });
+
+      toast.success("Sessão iniciada!");
+      navigate(`/workout/self-managed/session/${session.id}`);
+    } catch {
+      toast.error("Não foi possível iniciar a sessão desse treino.");
+    }
+  }
 
   function getBondStatus() {
     if (isLoadingUser || isLoadingBonds) return null;
+
+    if (isSelfManagedUser) {
+      return null;
+    }
 
     if (!studentBond) {
       return (
@@ -99,6 +148,18 @@ export default function Workout() {
             >
               <Search className="w-4 h-4 mr-2" />
               Encontrar Personal
+            </Button>
+
+            <Button
+              className="w-full"
+              size="lg"
+              variant="outline"
+              onClick={activateSelfManagedMode}
+              disabled={updateUserMutation.isPending}
+            >
+              {updateUserMutation.isPending
+                ? "Ativando modo auto gerido..."
+                : "Quero ser usuário auto gerido"}
             </Button>
           </div>
 
@@ -349,30 +410,53 @@ export default function Workout() {
                 {/* Título e descrição */}
                 <div className="space-y-2">
                   <h3 className="text-lg xs:text-xl font-bold text-neutral-white-01">
-                    Aguardando Rotinas
+                    {isSelfManagedUser ? "Modo Auto Gerido Ativo" : "Aguardando Rotinas"}
                   </h3>
                   <p className="text-xs xs:text-sm text-neutral-white-02 leading-relaxed">
-                    Seu personal está preparando treinos especialmente para você! 
-                    Em breve suas rotinas aparecerão aqui.
+                    {isSelfManagedUser
+                      ? "Você optou por treinar sem personal no momento. Quando quiser, você pode procurar um profissional novamente."
+                      : "Seu personal está preparando treinos especialmente para você! Em breve suas rotinas aparecerão aqui."}
                   </p>
                 </div>
 
                 {/* Dica */}
                 <div className="w-full p-3 xs:p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <p className="text-xs xs:text-sm text-neutral-white-02">
-                    💡 <span className="font-medium text-primary">Dica:</span> Enquanto isso, 
-                    você pode conversar com seu personal pelo WhatsApp para alinhar seus objetivos!
+                    💡 <span className="font-medium text-primary">Dica:</span>{" "}
+                    {isSelfManagedUser
+                      ? "para receber treinos personalizados, vincule-se a um personal quando desejar."
+                      : "Enquanto isso, você pode conversar com seu personal pelo WhatsApp para alinhar seus objetivos!"}
                   </p>
                 </div>
 
                 {/* Botão para ver perfil do personal */}
-                {studentBond?.professional && (
+                {studentBond?.professional && !isSelfManagedUser && (
                   <Button
                     variant="outline"
                     className="w-full border-primary/30 hover:border-primary hover:bg-primary/10"
                     onClick={() => navigate(`/professional/${studentBond.professional?.id}`)}
                   >
                     Ver Perfil do Personal
+                  </Button>
+                )}
+
+                {isSelfManagedUser && (
+                  <Button
+                    variant="outline"
+                    className="w-full border-primary/30 hover:border-primary hover:bg-primary/10"
+                    onClick={() => navigate("/routines")}
+                  >
+                    Criar treino no modo personal
+                  </Button>
+                )}
+
+                {isSelfManagedUser && (
+                  <Button
+                    variant="outline"
+                    className="w-full border-primary/30 hover:border-primary hover:bg-primary/10"
+                    onClick={() => navigate("/ProfessionalsList", { replace: true })}
+                  >
+                    Encontrar Personal
                   </Button>
                 )}
               </div>
@@ -391,6 +475,75 @@ export default function Workout() {
             routines.map((routine) => (
               <AssignedRoutineCard key={routine.id} routine={routine} />
             ))}
+
+          {isSelfManagedUser && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mt-4">
+                <p className="font-bold text-lg">Meus treinos auto geridos</p>
+                <Button size="sm" onClick={() => navigate("/routines")}>
+                  Ir para rotinas
+                </Button>
+              </div>
+
+              {isLoadingSelfManagedWorkouts && (
+                <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
+                  Carregando treinos auto geridos...
+                </div>
+              )}
+
+              {!isLoadingSelfManagedWorkouts &&
+                (selfManagedWorkouts?.length ?? 0) === 0 && (
+                  <div className="rounded-sm border border-neutral-dark-02 p-4 text-sm text-muted-foreground">
+                    Você ainda não criou nenhum treino auto gerido.
+                  </div>
+                )}
+
+              {!isLoadingSelfManagedWorkouts &&
+                (selfManagedWorkouts?.length ?? 0) > 0 &&
+                selfManagedWorkouts?.map((workout) => (
+                  <div
+                    key={workout.id}
+                    className="rounded-sm border border-neutral-dark-02 p-4 bg-neutral-dark-03"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-neutral-white-01">{workout.title}</p>
+                        {workout.notes && (
+                          <p className="text-sm text-neutral-white-02 mt-1">{workout.notes}</p>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {workout.exercises.length} exercícios
+                      </span>
+                    </div>
+
+                    <div className="mt-3 space-y-1">
+                      {workout.exercises.slice(0, 5).map((exercise, index) => (
+                        <p key={`${workout.id}-${index}`} className="text-sm text-neutral-white-02">
+                          {index + 1}. {exercise.name} — {exercise.sets}x{exercise.reps}
+                        </p>
+                      ))}
+
+                      {workout.exercises.length > 5 && (
+                        <p className="text-xs text-muted-foreground">
+                          +{workout.exercises.length - 5} exercícios
+                        </p>
+                      )}
+                    </div>
+
+                    <Button
+                      className="w-full mt-4"
+                      onClick={() => handleStartSelfManagedWorkout(workout.id)}
+                      disabled={startSelfManagedSession.isPending}
+                    >
+                      {startSelfManagedSession.isPending
+                        ? "Iniciando sessão..."
+                        : "Iniciar treino"}
+                    </Button>
+                  </div>
+                ))}
+            </div>
+          )}
         </>
       )}
     </div>

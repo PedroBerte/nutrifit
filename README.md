@@ -1,5 +1,38 @@
 # nutrifit
 
+## 🚀 Node.js Backend Setup (First Run)
+
+The backend code is scaffolded via setup scripts. Run **one** of the following from the project root:
+
+```cmd
+:: Option A – batch file (double-click or run in CMD)
+run-setup.bat
+
+:: Option B – Node.js launcher
+node exec-create-dirs.js
+
+:: Option C – Python launcher
+python create_dirs.py
+```
+
+Then finish the database setup:
+
+```cmd
+docker-compose up db redis minio -d
+cd backend-node
+npx prisma migrate dev --name init
+npx prisma db seed
+npm run test:unit
+npm run dev
+```
+
+Then start everything with Docker:
+```cmd
+docker-compose up --build
+```
+
+---
+
 ## Configuração do Ambiente
 
 ```powershell

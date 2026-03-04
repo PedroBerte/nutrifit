@@ -31,7 +31,7 @@ export function useValidateSession() {
       );
 
       const apiBaseUrl =
-        import.meta.env.VITE_API_URL || "https://apinutrifit.mujapira.com/api";
+        import.meta.env.VITE_API_URL || "http://localhost:3333/api";
       const vapidPublicKey =
         import.meta.env.VITE_VAPID_PUBLIC_KEY ||
         "BKKDHulrht7Cot9XoCqXZW8GOsnML2SmNvbIfiyH2iUpbSEUKEZiDJQCHMItcb91Q7DpmhpYYwDmb7cW4mBtjO4";

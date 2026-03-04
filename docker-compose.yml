@@ -55,8 +55,8 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: backend/Nutrifit.API/Dockerfile
+      context: ./backend-node
+      dockerfile: Dockerfile
     container_name: nutrifit_api
     depends_on:
       db:
@@ -66,31 +66,34 @@ services:
       minio:
         condition: service_healthy
     environment:
-      # Use os NOMES DOS SERVIÇOS da rede Docker (db/redis), não localhost
-      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      ConnectionStrings__Redis: redis:6379,ssl=false,abortConnect=false
-
-      # deixe Development enquanto valida Swagger
-      ASPNETCORE_ENVIRONMENT: Development
-      Smtp__AppPassword: ${SMTP_APP_PASSWORD}
-
-      Vapid__PublicKey: ${VAPID_PUBLIC_KEY}
-      Vapid__PrivateKey: ${VAPID_PRIVATE_KEY}
-
-      MinIO__Endpoint: minio:9000
-      MinIO__PublicEndpoint: ${MINIO_PUBLIC_ENDPOINT:-minio:9000}
-      MinIO__AccessKey: ${MINIO_ROOT_USER:-admin}
-      MinIO__SecretKey: ${MINIO_ROOT_PASSWORD:-admin123}
-      MinIO__BucketName: ${MINIO_BUCKET_NAME:-nutrifit-images}
-      MinIO__UseSSL: "false"
-
-      Serilog__WriteTo__0__Args__connectionString: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-
-      # (opcional) forçar Kestrel a escutar na 8080 explícito
-      ASPNETCORE_URLS: http://+:5051
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      SELF_MANAGED_PROFILE_ID: "00000000-0000-0000-0000-000000000004"
+      PORT: "5051"
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-NutriFit <no-reply@nutrifit.app>}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-admin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-admin123}
+      MINIO_BUCKET: ${MINIO_BUCKET_NAME:-nutrifit}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@nutrifit.app}
     ports:
-      - "5051:5051"   # host 6000 -> container 8080 (AGORA bate certo)
+      - "5051:5051"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5051/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks: [nutrifit_net]
 
   front:

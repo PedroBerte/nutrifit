@@ -107,6 +107,29 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const rawProfileValue =
+    typeof user?.raw?.profile === "string" ? user.raw.profile.toLowerCase() : "";
+  const currentUserProfile = user?.profile as UserProfiles | undefined;
+  const isSelfManagedUser =
+    currentUserProfile === UserProfiles.SELF_MANAGED ||
+    rawProfileValue === "selfmanaged";
+
+  function canAccessItem(itemProfiles: UserProfiles[]) {
+    if (currentUserProfile && itemProfiles.includes(currentUserProfile)) {
+      return true;
+    }
+
+    if (
+      isSelfManagedUser &&
+      (itemProfiles.includes(UserProfiles.STUDENT) ||
+        itemProfiles.includes(UserProfiles.PERSONAL))
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
   // Fecha a sidebar quando a rota mudar
   useEffect(() => {
     setOpenMobile(false);
@@ -158,9 +181,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
               {items
-                .filter((item) =>
-                  item.profiles.includes(user?.profile as UserProfiles)
-                )
+                .filter((item) => canAccessItem(item.profiles))
                 .map((item) => {
                   const isActive = location.pathname === item.url;
                   return (

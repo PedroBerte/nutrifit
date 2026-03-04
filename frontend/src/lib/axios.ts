@@ -5,7 +5,7 @@ import { signOut } from "@/store/authSlice";
 
 export const api = axios.create({
   baseURL:
-    import.meta.env.VITE_API_URL || "https://apinutrifit.mujapira.com/api",
+    import.meta.env.VITE_API_URL || "http://localhost:3333/api",
 });
 
 api.interceptors.request.use(async (config) => {

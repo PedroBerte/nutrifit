@@ -1,5 +1,6 @@
 // src/lib/jwt.ts
 import { jwtDecode } from "jwt-decode";
+import { UserProfiles } from "@/types/user";
 
 export type DecodedJwtRaw = {
   id?: string;
@@ -29,6 +30,27 @@ export type DecodedJwt = {
   raw: DecodedJwtRaw;
 };
 
+function normalizeProfile(profile: unknown): string | null {
+  if (typeof profile !== "string") return null;
+
+  const value = profile.trim();
+  const lower = value.toLowerCase();
+
+  if (value === UserProfiles.STUDENT || lower === "student" || lower === "selfmanaged") {
+    return UserProfiles.STUDENT;
+  }
+
+  if (value === UserProfiles.PERSONAL || lower === "personal") {
+    return UserProfiles.PERSONAL;
+  }
+
+  if (value === UserProfiles.NUTRITIONIST || lower === "nutritionist") {
+    return UserProfiles.NUTRITIONIST;
+  }
+
+  return value;
+}
+
 export function decodeAndNormalizeJwt(token: string | null): DecodedJwt | null {
   if (!token) return null;
   try {
@@ -55,7 +77,7 @@ export function decodeAndNormalizeJwt(token: string | null): DecodedJwt | null {
       name: raw.name ?? null,
       email: raw.email ?? raw.sub ?? null,
       isAdmin: isAdminBool,
-      profile: raw.profile ?? null,
+      profile: normalizeProfile(raw.profile),
       invited: invitedBool,
       professionalInviterId: raw.professionalInviterId ?? null,
       expMs,

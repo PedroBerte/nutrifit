@@ -1,0 +1,401 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Profile {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  status    String    @default("A")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  users     User[]
+}
+
+model User {
+  id           String    @id @default(uuid())
+  profileId    String
+  addressId    String?
+  name         String
+  email        String    @unique
+  imageUrl     String?
+  password     String    @default("")
+  passwordHash String?
+  sex          String    @default("")
+  dateOfBirth  DateTime  @default(now())
+  phoneNumber  String    @default("")
+  isAdmin      Boolean   @default(false)
+  status       String    @default("A")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime? @updatedAt
+
+  profile                   Profile                    @relation(fields: [profileId], references: [id])
+  address                   Address?                   @relation(fields: [addressId], references: [id])
+  professionalCredential    ProfessionalCredential?
+  professionalDetails       ProfessionalDetails?
+  bondsAsCustomer           CustomerProfessionalBond[] @relation("BondCustomer")
+  bondsAsProfessional       CustomerProfessionalBond[] @relation("BondProfessional")
+  bondsAsSender             CustomerProfessionalBond[] @relation("BondSender")
+  favoritesGiven            FavoriteProfessional[]     @relation("FavoriteCustomer")
+  favoritesReceived         FavoriteProfessional[]     @relation("FavoriteProfessional")
+  feedbacksGiven            CustomerFeedback[]         @relation("FeedbackCustomer")
+  feedbacksReceived         CustomerFeedback[]         @relation("FeedbackProfessional")
+  routinesCreated           Routine[]                  @relation("RoutinePersonal")
+  workoutSessionsAsCustomer WorkoutSession[]           @relation("SessionCustomer")
+  customerRoutines          CustomerRoutine[]          @relation("CustomerRoutineUser")
+  exercises                 Exercise[]
+  pushSubscriptions         PushSubscription[]
+  weeklyGoals               WeeklyGoal[]
+  workoutTemplates          WorkoutTemplate[]
+  workoutSessions           WorkoutSession[]           @relation("SelfManagedSessions")
+}
+
+model Address {
+  id          String    @id @default(uuid())
+  addressLine String
+  number      String?
+  city        String
+  state       String?
+  zipCode     String?
+  country     String
+  addressType Int       @default(0)
+  latitude    Float?
+  longitude   Float?
+  status      String    @default("A")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+
+  users        User[]
+  appointments Appointment[]
+}
+
+model ProfessionalCredential {
+  id             String    @id @default(uuid())
+  professionalId String    @unique
+  type           String
+  credentialId   String?
+  biography      String?
+  status         String    @default("A")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+
+  professional User @relation(fields: [professionalId], references: [id])
+}
+
+model ProfessionalDetails {
+  id             String    @id @default(uuid())
+  professionalId String    @unique
+  attendanceMode Int       @default(0)
+  tag1           String?
+  tag2           String?
+  tag3           String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+
+  professional User @relation(fields: [professionalId], references: [id])
+}
+
+model CustomerProfessionalBond {
+  id             String    @id @default(uuid())
+  customerId     String
+  professionalId String
+  senderId       String
+  status         String    @default("P")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+
+  customer     User @relation("BondCustomer", fields: [customerId], references: [id])
+  professional User @relation("BondProfessional", fields: [professionalId], references: [id])
+  sender       User @relation("BondSender", fields: [senderId], references: [id])
+
+  appointments Appointment[]
+}
+
+model FavoriteProfessional {
+  id             String   @id @default(uuid())
+  customerId     String
+  professionalId String
+  createdAt      DateTime @default(now())
+
+  customer     User @relation("FavoriteCustomer", fields: [customerId], references: [id])
+  professional User @relation("FavoriteProfessional", fields: [professionalId], references: [id])
+
+  @@unique([customerId, professionalId])
+}
+
+model CustomerFeedback {
+  id             String    @id @default(uuid())
+  professionalId String
+  customerId     String
+  testimony      String?
+  rate           Int
+  type           Int       @default(0)
+  status         String    @default("A")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+
+  professional User @relation("FeedbackProfessional", fields: [professionalId], references: [id])
+  customer     User @relation("FeedbackCustomer", fields: [customerId], references: [id])
+}
+
+model Appointment {
+  id                         String    @id @default(uuid())
+  customerProfessionalBondId String
+  scheduledAt                DateTime
+  type                       String    @default("PR")
+  addressId                  String?
+  status                     String    @default("P")
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime? @updatedAt
+
+  bond    CustomerProfessionalBond @relation(fields: [customerProfessionalBondId], references: [id])
+  address Address?                 @relation(fields: [addressId], references: [id])
+}
+
+model ExerciseCategory {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  status    String    @default("A")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  exercises Exercise[]
+}
+
+model MuscleGroup {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  status    String    @default("A")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  muscles Muscle[]
+}
+
+model Muscle {
+  id            String    @id @default(uuid())
+  muscleGroupId String
+  name          String
+  status        String    @default("A")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime? @updatedAt
+
+  muscleGroup              MuscleGroup               @relation(fields: [muscleGroupId], references: [id])
+  primaryMuscleExercises   ExercisePrimaryMuscle[]
+  secondaryMuscleExercises ExerciseSecondaryMuscle[]
+}
+
+model Exercise {
+  id              String    @id @default(uuid())
+  categoryId      String
+  name            String
+  instruction     String?
+  imageUrl        String?
+  videoUrl        String?
+  createdByUserId String?
+  isPublished     Boolean   @default(false)
+  status          String    @default("A")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime? @updatedAt
+
+  category          ExerciseCategory          @relation(fields: [categoryId], references: [id])
+  createdByUser     User?                     @relation(fields: [createdByUserId], references: [id])
+  primaryMuscles    ExercisePrimaryMuscle[]
+  secondaryMuscles  ExerciseSecondaryMuscle[]
+  exerciseTemplates ExerciseTemplate[]
+  exerciseSessions  ExerciseSession[]
+}
+
+model ExercisePrimaryMuscle {
+  id         String    @id @default(uuid())
+  muscleId   String
+  exerciseId String
+  status     String    @default("A")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  muscle   Muscle   @relation(fields: [muscleId], references: [id])
+  exercise Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@unique([muscleId, exerciseId])
+}
+
+model ExerciseSecondaryMuscle {
+  id         String    @id @default(uuid())
+  muscleId   String
+  exerciseId String
+  status     String    @default("A")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  muscle   Muscle   @relation(fields: [muscleId], references: [id])
+  exercise Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@unique([muscleId, exerciseId])
+}
+
+model Routine {
+  id         String    @id @default(uuid())
+  personalId String
+  title      String
+  goal       String?
+  difficulty String?
+  weeks      Int?
+  status     String    @default("A")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  personal         User              @relation("RoutinePersonal", fields: [personalId], references: [id])
+  workoutTemplates WorkoutTemplate[]
+  customerRoutines CustomerRoutine[]
+  workoutSessions  WorkoutSession[]
+}
+
+model CustomerRoutine {
+  id         String    @id @default(uuid())
+  routineId  String
+  customerId String
+  status     String    @default("A")
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  routine  Routine @relation(fields: [routineId], references: [id])
+  customer User    @relation("CustomerRoutineUser", fields: [customerId], references: [id])
+
+  @@unique([routineId, customerId])
+}
+
+model WorkoutTemplate {
+  id                       String    @id @default(uuid())
+  routineId                String?
+  userId                   String?
+  title                    String
+  description              String?
+  notes                    String?
+  estimatedDurationMinutes Int?
+  order                    Int       @default(0)
+  status                   String    @default("A")
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime? @updatedAt
+
+  routine           Routine?           @relation(fields: [routineId], references: [id])
+  user              User?              @relation(fields: [userId], references: [id])
+  exerciseTemplates ExerciseTemplate[]
+  workoutSessions   WorkoutSession[]
+}
+
+model ExerciseTemplate {
+  id                String    @id @default(uuid())
+  workoutTemplateId String
+  exerciseId        String
+  order             Int       @default(0)
+  targetSets        Int       @default(0)
+  targetRepsMin     Int?
+  targetRepsMax     Int?
+  suggestedLoad     Decimal?
+  restSeconds       Int?
+  notes             String?
+  status            String    @default("A")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime? @updatedAt
+
+  workoutTemplate  WorkoutTemplate   @relation(fields: [workoutTemplateId], references: [id])
+  exercise         Exercise          @relation(fields: [exerciseId], references: [id])
+  exerciseSessions ExerciseSession[]
+}
+
+model WorkoutSession {
+  id                String    @id @default(uuid())
+  workoutTemplateId String?
+  customerId        String?
+  routineId         String?
+  userId            String?
+  titleSnapshot     String?
+  startedAt         DateTime  @default(now())
+  finishedAt        DateTime?
+  completedAt       DateTime?
+  durationMinutes   Int?
+  totalVolume       Decimal?
+  status            String    @default("IP")
+  difficultyRating  Int?
+  energyRating      Int?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime? @updatedAt
+
+  workoutTemplate  WorkoutTemplate?  @relation(fields: [workoutTemplateId], references: [id])
+  customer         User?             @relation("SessionCustomer", fields: [customerId], references: [id])
+  routine          Routine?          @relation(fields: [routineId], references: [id])
+  selfManagedUser  User?             @relation("SelfManagedSessions", fields: [userId], references: [id])
+  exerciseSessions ExerciseSession[]
+}
+
+model ExerciseSession {
+  id                 String    @id @default(uuid())
+  workoutSessionId   String
+  exerciseTemplateId String?
+  exerciseId         String?
+  order              Int       @default(0)
+  startedAt          DateTime?
+  completedAt        DateTime?
+  status             String    @default("NS")
+  notes              String?
+  plannedSets        Int?
+  plannedReps        Int?
+  completedSets      Int?
+  completedReps      Int?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime? @updatedAt
+
+  workoutSession   WorkoutSession    @relation(fields: [workoutSessionId], references: [id])
+  exerciseTemplate ExerciseTemplate? @relation(fields: [exerciseTemplateId], references: [id])
+  exercise         Exercise?         @relation(fields: [exerciseId], references: [id])
+  setSessions      SetSession[]
+}
+
+model SetSession {
+  id                String    @id @default(uuid())
+  exerciseSessionId String
+  setNumber         Int
+  load              Decimal?
+  reps              Int?
+  restSeconds       Int?
+  completed         Boolean   @default(true)
+  notes             String?
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
+  createdAt         DateTime  @default(now())
+
+  exerciseSession ExerciseSession @relation(fields: [exerciseSessionId], references: [id])
+}
+
+model PushSubscription {
+  id             String    @id @default(uuid())
+  userId         String
+  endpoint       String    @unique
+  p256dh         String
+  auth           String
+  expirationTime DateTime?
+  userAgent      String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model WeeklyGoal {
+  id             String    @id @default(uuid())
+  userId         String
+  weekStartDate  String
+  targetSessions Int
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, weekStartDate])
+}

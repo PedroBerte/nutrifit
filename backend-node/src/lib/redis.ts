@@ -1,0 +1,1 @@
+export { getRedis } from "../redis";
