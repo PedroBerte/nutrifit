@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Link,
 } from "lucide-react";
 import type { WorkoutTemplateResponse } from "@/services/api/workoutTemplate";
 import { Button } from "./ui/button";
@@ -173,46 +174,51 @@ export default function WorkoutItemCard({ workout }: WorkoutItemCardProps) {
                       </p>
                       <div className="space-y-2">
                         {workout.exerciseTemplates.map((exercise, index) => (
-                          <div
-                            key={exercise.id || index}
-                            className="flex items-start gap-2 text-sm bg-neutral-dark-03 p-2 rounded"
-                          >
-                            <span className="text-primary font-semibold min-w-[20px]">
-                              {index + 1}.
-                            </span>
-                            <div className="flex-1">
-                              <p className="font-medium">
-                                {exercise.exerciseName || "Exercício"}
-                              </p>
-                              {(exercise.targetSets ||
-                                exercise.targetRepsMin ||
-                                exercise.restSeconds) && (
+                          <div key={exercise.id || index} className="relative">
+                            {/* Biset connector */}
+                            {exercise.isBisetWithPrevious && index > 0 && (
+                              <div className="flex items-center gap-1.5 mb-1 pl-7 text-primary">
+                                <div className="w-px h-2 bg-primary/60 absolute left-[26px]" style={{ top: -8 }} />
+                                <Link size={10} />
+                                <span className="text-[10px] font-semibold uppercase tracking-wide">biset</span>
+                              </div>
+                            )}
+                            <div
+                              className={`flex items-start gap-2 text-sm bg-neutral-dark-03 p-2 rounded ${
+                                exercise.isBisetWithPrevious ? "border-l-2 border-primary" : ""
+                              }`}
+                            >
+                              <span className="text-primary font-semibold min-w-[20px]">
+                                {index + 1}.
+                              </span>
+                              <div className="flex-1">
+                                <p className="font-medium">
+                                  {exercise.exerciseName || "Exercício"}
+                                </p>
                                 <p className="text-xs text-muted-foreground mt-0.5">
-                                  {exercise.targetSets &&
-                                    `${exercise.targetSets} séries`}
-                                  {exercise.targetSets &&
-                                    (exercise.targetRepsMin ||
-                                      exercise.targetRepsMax) &&
-                                    " • "}
-                                  {(exercise.targetRepsMin ||
-                                    exercise.targetRepsMax) && (
+                                  {exercise.targetSets && `${exercise.targetSets} séries`}
+                                  {exercise.setType === "Time" && exercise.targetDurationSeconds && (
+                                    <> • {exercise.targetDurationSeconds}s</>
+                                  )}
+                                  {exercise.setType === "Calories" && exercise.targetCalories && (
+                                    <> • {exercise.targetCalories} cal</>
+                                  )}
+                                  {(!exercise.setType || exercise.setType === "Reps") && (
                                     <>
-                                      {exercise.targetRepsMin}
-                                      {exercise.targetRepsMax &&
-                                        exercise.targetRepsMin !==
-                                          exercise.targetRepsMax &&
-                                        `-${exercise.targetRepsMax}`}
-                                      {" reps"}
+                                      {(exercise.targetRepsMin || exercise.targetRepsMax) && (
+                                        <> • {exercise.targetRepsMin}
+                                          {exercise.targetRepsMax && exercise.targetRepsMin !== exercise.targetRepsMax && `-${exercise.targetRepsMax}`}
+                                          {" reps"}
+                                        </>
+                                      )}
+                                      {exercise.suggestedLoad && (
+                                        <> • {exercise.suggestedLoad}{exercise.weightUnit ?? "kg"}</>
+                                      )}
                                     </>
                                   )}
-                                  {(exercise.targetSets ||
-                                    exercise.targetRepsMin) &&
-                                    exercise.restSeconds &&
-                                    " • "}
-                                  {exercise.restSeconds &&
-                                    `${exercise.restSeconds}s descanso`}
+                                  {exercise.restSeconds && <> • {exercise.restSeconds}s descanso</>}
                                 </p>
-                              )}
+                              </div>
                             </div>
                           </div>
                         ))}

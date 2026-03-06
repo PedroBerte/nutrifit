@@ -97,8 +97,10 @@ export function UpdateProfileDrawer({
 
   async function onSubmit(data: UpdateProfileSchema) {
     try {
+      const { imageUrl, ...userDataWithoutImage } = userData;
       await api.put(`/user/${userData.id}`, {
-        ...userData,
+        ...userDataWithoutImage,
+        ...(imageUrl ? { imageUrl } : {}),
         ...data,
         dateOfBirth: data.dateOfBirth ? data.dateOfBirth.toISOString() : null,
         address: data.address?.zipCode ? data.address : null,

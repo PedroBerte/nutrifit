@@ -16,6 +16,7 @@ namespace Nutrifit.Repository
             var studentProfileId = Guid.Parse("ff35132f-d761-40e6-9e05-f5ed30c0063d");
             var personalProfileId = Guid.Parse("ad07405b-cdf2-4780-8a0e-69323be32a6c");
             var nutritionistProfileId = Guid.Parse("eff474b5-ce49-42d5-84da-d9c904b721a1");
+            var selfManagedProfileId = Guid.Parse("00000000-0000-0000-0000-000000000004");
 
             modelBuilder.Entity<ProfileEntity>().HasData(
                 new ProfileEntity
@@ -34,6 +35,12 @@ namespace Nutrifit.Repository
                 {
                     Id = nutritionistProfileId,
                     Name = "Nutricionista",
+                    Status = "A"
+                },
+                new ProfileEntity
+                {
+                    Id = selfManagedProfileId,
+                    Name = "Auto Gerido",
                     Status = "A"
                 }
             );

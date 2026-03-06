@@ -19,9 +19,14 @@ namespace Nutrifit.Services.ViewModel.Request
         public int TargetSets { get; set; }
         public int? TargetRepsMin { get; set; }
         public int? TargetRepsMax { get; set; }
+        public int? TargetDurationSeconds { get; set; }
+        public int? TargetCalories { get; set; }
         public decimal? SuggestedLoad { get; set; }
         public int? RestSeconds { get; set; }
         public string? Notes { get; set; }
+        public string SetType { get; set; } = "Reps";
+        public string WeightUnit { get; set; } = "kg";
+        public bool IsBisetWithPrevious { get; set; }
     }
 
     public class UpdateWorkoutTemplateRequest
@@ -38,8 +43,13 @@ namespace Nutrifit.Services.ViewModel.Request
         public int? TargetSets { get; set; }
         public int? TargetRepsMin { get; set; }
         public int? TargetRepsMax { get; set; }
+        public int? TargetDurationSeconds { get; set; }
+        public int? TargetCalories { get; set; }
         public decimal? SuggestedLoad { get; set; }
         public int? RestSeconds { get; set; }
         public string? Notes { get; set; }
+        public string? SetType { get; set; }
+        public string? WeightUnit { get; set; }
+        public bool? IsBisetWithPrevious { get; set; }
     }
 }

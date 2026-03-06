@@ -118,7 +118,7 @@ export async function ensurePushSubscription(
     hasKeys: !!(subscriptionDto.keys.p256dh && subscriptionDto.keys.auth),
   });
 
-  const res = await fetch(`${apiBaseUrl}/push/Subscribe`, {
+  const res = await fetch(`${apiBaseUrl}/push/subscribe`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -164,7 +164,7 @@ export async function unsubscribePush(apiBaseUrl: string, authToken: string) {
 
     // Unsubscribe no backend primeiro
     try {
-      const res = await fetch(`${apiBaseUrl}/push/Unsubscribe`, {
+      const res = await fetch(`${apiBaseUrl}/push/unsubscribe`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

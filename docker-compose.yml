@@ -24,6 +24,8 @@ services:
     image: redis:7
     container_name: nutrifit_redis
     command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
     expose: ["6379"]
     volumes:
       - redisdata_nutrifit:/data

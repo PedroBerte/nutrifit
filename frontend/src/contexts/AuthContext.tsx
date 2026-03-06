@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Unsubscribe push notifications antes de deslogar
     if (accessToken) {
       const apiUrl =
-        import.meta.env.VITE_API_URL || "https://apinutrifit.mujapira.com/api";
+        import.meta.env.VITE_API_URL || "http://localhost:5018/api";
       unsubscribePush(apiUrl, accessToken).catch(() => {});
     }
     dispatch(signOut());

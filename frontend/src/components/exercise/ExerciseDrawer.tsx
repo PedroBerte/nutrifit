@@ -342,7 +342,7 @@ export function ExerciseDrawer({
                         {exercise.primaryMuscles &&
                           exercise.primaryMuscles.length > 0 && (
                             <p className="text-xs text-muted-foreground truncate">
-                              {exercise.primaryMuscles.join(", ")}
+                              {exercise.primaryMuscles.map((m: any) => typeof m === "string" ? m : (m?.name ?? "")).filter(Boolean).join(", ")}
                             </p>
                           )}
                       </div>

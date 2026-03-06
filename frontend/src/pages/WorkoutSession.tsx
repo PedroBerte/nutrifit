@@ -74,7 +74,7 @@ export default function WorkoutSession() {
 
   const { templateId } = useParams<{ templateId: string }>();
   const [localWorkout, setLocalWorkout] = useState<LocalWorkoutSession | null>(
-    null
+    () => getLocalWorkout()
   );
   const [, forceUpdate] = useState(0); // Para forçar re-render
   const [workoutTimer, setWorkoutTimer] = useState(0);
@@ -99,7 +99,11 @@ export default function WorkoutSession() {
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
 
   // Queries
-  const { data: templateData } = useGetWorkoutTemplateById(templateId);
+  const {
+    data: templateData,
+    isLoading: isLoadingTemplate,
+    isError: isTemplateError,
+  } = useGetWorkoutTemplateById(templateId);
   const completeSession = useCompleteWorkoutSession();
 
   const template = templateData?.data;
@@ -124,6 +128,11 @@ export default function WorkoutSession() {
             exerciseImageUrl: templateEx.exerciseImageUrl, // Atualiza com URL do template
             exerciseVideoUrl: templateEx.exerciseVideoUrl, // Atualiza com URL do template
             exerciseName: templateEx.exerciseName, // Atualiza nome se mudou
+            isBisetWithPrevious: templateEx.isBisetWithPrevious ?? false,
+            setType: templateEx.setType ?? "Reps",
+            weightUnit: templateEx.weightUnit ?? "kg",
+            targetDurationSeconds: templateEx.targetDurationSeconds,
+            targetCalories: templateEx.targetCalories,
           };
         }
         
@@ -159,6 +168,11 @@ export default function WorkoutSession() {
             targetRepsMax: et.targetRepsMax,
             suggestedLoad: et.suggestedLoad,
             restSeconds: et.restSeconds,
+            setType: et.setType ?? "Reps",
+            weightUnit: et.weightUnit ?? "kg",
+            isBisetWithPrevious: et.isBisetWithPrevious ?? false,
+            targetDurationSeconds: et.targetDurationSeconds,
+            targetCalories: et.targetCalories,
           })) || [],
       };
 
@@ -187,7 +201,7 @@ export default function WorkoutSession() {
         try {
           // Busca histórico do exercício via API
           const response = await api.get<ApiResponse<PreviousSetData[]>>(
-            `/workoutSession/exercise/${exercise.exerciseId}/previous`
+            `/workoutsession/exercise/${exercise.exerciseId}/previous`
           );
 
           const previousSets = response.data.data || [];
@@ -222,34 +236,36 @@ export default function WorkoutSession() {
 
   useEffect(() => {
     if (localWorkout?.exercises && expandedExerciseIds.size === 0) {
-      // Encontra o último exercício com todas as séries completadas
-      let lastCompletedIndex = -1;
+      const groups = groupExercises(localWorkout.exercises);
+      let lastCompletedGroupIndex = -1;
 
-      for (let i = 0; i < localWorkout.exercises.length; i++) {
-        const exercise = localWorkout.exercises[i];
-        const allSetsCompleted =
-          exercise.sets.length > 0 &&
-          exercise.sets.every((set) => set.completed);
-
-        if (allSetsCompleted) {
-          lastCompletedIndex = i;
+      for (let i = 0; i < groups.length; i++) {
+        const group = groups[i];
+        let groupComplete = false;
+        if (group.type === "single") {
+          const ex = group.exercise;
+          groupComplete = ex.sets.length > 0 && ex.sets.every((s) => s.completed);
+        } else {
+          const { first, second } = group;
+          groupComplete =
+            first.sets.length > 0 && first.sets.every((s) => s.completed) &&
+            second.sets.length > 0 && second.sets.every((s) => s.completed);
         }
+        if (groupComplete) lastCompletedGroupIndex = i;
       }
 
-      // O exercício atual é o próximo após o último completado
-      const currentExerciseIndex = lastCompletedIndex + 1;
-
-      // Se o índice é válido, expande esse exercício
-      if (currentExerciseIndex < localWorkout.exercises.length) {
-        const currentExercise = localWorkout.exercises[currentExerciseIndex];
-        setExpandedExerciseIds(new Set([currentExercise.id]));
-        setCurrentExerciseId(currentExercise.id);
+      const currentGroupIndex = lastCompletedGroupIndex + 1;
+      if (currentGroupIndex < groups.length) {
+        const currentGroup = groups[currentGroupIndex];
+        const keyId = currentGroup.type === "single" ? currentGroup.exercise.id : currentGroup.first.id;
+        setExpandedExerciseIds(new Set([keyId]));
+        setCurrentExerciseId(keyId);
       } else {
-        // Se todos estão completos, expande o primeiro
-        const firstExercise = localWorkout.exercises[0];
-        if (firstExercise) {
-          setExpandedExerciseIds(new Set([firstExercise.id]));
-          setCurrentExerciseId(firstExercise.id);
+        const firstGroup = groups[0];
+        if (firstGroup) {
+          const keyId = firstGroup.type === "single" ? firstGroup.exercise.id : firstGroup.first.id;
+          setExpandedExerciseIds(new Set([keyId]));
+          setCurrentExerciseId(keyId);
         }
       }
     }
@@ -344,6 +360,8 @@ export default function WorkoutSession() {
             load: set.load,
             reps: set.reps,
             restSeconds: set.restSeconds,
+            durationSeconds: set.durationSeconds,
+            calories: set.calories,
             completed: set.completed,
             notes: set.notes,
             startedAt: set.startedAt,
@@ -426,6 +444,17 @@ export default function WorkoutSession() {
     setLocalWorkout(updatedWorkout);
   };
 
+  const handleAddBisetRound = (firstExerciseId: string, secondExerciseId: string, restSeconds?: number) => {
+    if (!localWorkout) return;
+    let updatedWorkout = addSetToExercise(localWorkout, firstExerciseId, {
+      load: undefined, reps: undefined, restSeconds: undefined, completed: false, startedAt: new Date().toISOString(),
+    });
+    updatedWorkout = addSetToExercise(updatedWorkout, secondExerciseId, {
+      load: undefined, reps: undefined, restSeconds, completed: false, startedAt: new Date().toISOString(),
+    });
+    setLocalWorkout(updatedWorkout);
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -434,7 +463,60 @@ export default function WorkoutSession() {
       .padStart(2, "0")}`;
   };
 
-  if (!template || !localWorkout) {
+  if (isLoadingTemplate && !template && !localWorkout) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p>Carregando treino...</p>
+      </div>
+    );
+  }
+
+  if (!template) {
+    const canRecoverLocalWorkout =
+      !!localWorkout &&
+      !!templateId &&
+      localWorkout.workoutTemplateId === templateId;
+
+    const handleEmergencyCancel = () => {
+      clearLocalWorkout();
+      sessionStorage.removeItem("returnToWorkoutSession");
+      toast.info("Treino local cancelado");
+      navigate("/workout", { replace: true });
+    };
+
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="w-full max-w-md rounded-lg border border-neutral-dark-02 p-4 space-y-3">
+          <h2 className="text-lg font-semibold">Não foi possível abrir este treino</h2>
+          <p className="text-sm text-muted-foreground">
+            O treino em andamento ficou indisponível. Você pode cancelar o treino local para destravar a navegação.
+          </p>
+
+          <div className="flex flex-col gap-2">
+            {canRecoverLocalWorkout && (
+              <Button variant="destructive" onClick={handleEmergencyCancel}>
+                Cancelar treino em andamento
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => navigate("/workout", { replace: true })}>
+              Ir para Início de Treinos
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/home", { replace: true })}>
+              Ir para Home
+            </Button>
+          </div>
+
+          {isTemplateError && (
+            <p className="text-xs text-muted-foreground">
+              Dica: isso pode acontecer quando a rotina/template foi removido enquanto havia uma sessão aberta.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!localWorkout) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p>Carregando treino...</p>
@@ -683,18 +765,48 @@ export default function WorkoutSession() {
 
       {/* Lista de Exercícios */}
       <div className="flex-1 py-4 gap-4 flex flex-col">
-        {localWorkout.exercises.map((exercise) => (
-          <ExerciseCard
-            key={exercise.id}
-            exercise={exercise}
-            onRegisterSet={handleRegisterSet}
-            onUpdateNotes={handleUpdateExerciseNotes}
-            onAddSet={handleAddSet}
-            isExpanded={expandedExerciseIds.has(exercise.id)}
-            navigate={navigate}
-            templateId={templateId}
-          />
-        ))}
+        {localWorkout.exercises.length === 0 && (
+          <div className="rounded-lg border border-neutral-dark-02 p-4 text-center bg-neutral-dark-03">
+            <p className="font-semibold text-neutral-white-01">Este treino ainda não possui exercícios</p>
+            <p className="text-sm text-neutral-white-02 mt-1">
+              Adicione exercícios no template para iniciar uma sessão completa.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-3"
+              onClick={() => navigate("/routines")}
+            >
+              Ir para rotinas
+            </Button>
+          </div>
+        )}
+
+        {groupExercises(localWorkout.exercises).map((group) =>
+          group.type === "single" ? (
+            <ExerciseCard
+              key={group.exercise.id}
+              exercise={group.exercise}
+              onRegisterSet={handleRegisterSet}
+              onUpdateNotes={handleUpdateExerciseNotes}
+              onAddSet={handleAddSet}
+              isExpanded={expandedExerciseIds.has(group.exercise.id)}
+              navigate={navigate}
+              templateId={templateId}
+            />
+          ) : (
+            <BisetCard
+              key={group.first.id}
+              first={group.first}
+              second={group.second}
+              onRegisterSet={handleRegisterSet}
+              onUpdateNotes={handleUpdateExerciseNotes}
+              onAddBisetRound={handleAddBisetRound}
+              isExpanded={expandedExerciseIds.has(group.first.id)}
+              navigate={navigate}
+              templateId={templateId}
+            />
+          )
+        )}
 
         {/* Botão Cancelar no final */}
         <div className="flex w-full pt-2 gap-4 justify-between items-center ">
@@ -915,6 +1027,31 @@ export default function WorkoutSession() {
 }
 
 // Componente do Card de Exercício
+// ─── Helpers de agrupamento de biset ────────────────────────────────────────
+
+type ExerciseGroup =
+  | { type: "single"; exercise: LocalExerciseSession }
+  | { type: "biset"; first: LocalExerciseSession; second: LocalExerciseSession };
+
+function groupExercises(exercises: LocalExerciseSession[]): ExerciseGroup[] {
+  const groups: ExerciseGroup[] = [];
+  let i = 0;
+  while (i < exercises.length) {
+    const current = exercises[i];
+    const next = exercises[i + 1];
+    if (next?.isBisetWithPrevious) {
+      groups.push({ type: "biset", first: current, second: next });
+      i += 2;
+    } else {
+      groups.push({ type: "single", exercise: current });
+      i++;
+    }
+  }
+  return groups;
+}
+
+// ─── ExerciseCard ────────────────────────────────────────────────────────────
+
 interface ExerciseCardProps {
   exercise: LocalExerciseSession;
   onRegisterSet: (
@@ -928,6 +1065,7 @@ interface ExerciseCardProps {
   isExpanded: boolean;
   navigate: (path: string) => void;
   templateId?: string;
+  isBiset?: boolean;
 }
 
 function ExerciseCard({
@@ -938,6 +1076,7 @@ function ExerciseCard({
   isExpanded,
   navigate,
   templateId,
+  isBiset = false,
 }: ExerciseCardProps) {
   const [exerciseRestTimer, setExerciseRestTimer] = useState(0);
   const [isExerciseRestRunning, setIsExerciseRestRunning] = useState(false);
@@ -1008,7 +1147,7 @@ function ExerciseCard({
   ).length;
 
   return (
-    <div className="bg-neutral-dark-03 rounded-lg overflow-hidden">
+    <div className={`bg-neutral-dark-03 rounded-lg overflow-hidden ${isBiset ? "border-l-2 border-primary" : ""}`}>
       {/* Cabeçalho do Exercício - Clicável para colapsar */}
       <div
         className="flex items-center justify-between p-4 cursor-pointer hover:bg-neutral-dark-03/50 transition-colors"
@@ -1096,8 +1235,12 @@ function ExerciseCard({
                 <div className="grid grid-cols-[1fr_0.95fr_1.05fr] xs:grid-cols-[auto_1fr_0.95fr_1.05fr] gap-1 xs:gap-2 text-[10px] xs:text-xs font-bold text-muted-foreground">
                   <span className="hidden xs:block">SÉRIE</span>
                   <span>ANTERIOR</span>
-                  <span className="text-center">KG</span>
-                  <span className="text-center">REPS</span>
+                  <span className="text-center">
+                    {exercise.setType === "Time" ? "SEG" : exercise.setType === "Calories" ? "CAL" : (exercise.weightUnit ?? "KG").toUpperCase()}
+                  </span>
+                  <span className="text-center">
+                    {exercise.setType === "Time" || exercise.setType === "Calories" ? "" : "REPS"}
+                  </span>
                 </div>
 
                 {/* Séries (completadas e pendentes) */}
@@ -1112,6 +1255,10 @@ function ExerciseCard({
                       targetRepsMin={exercise.targetRepsMin}
                       targetRepsMax={exercise.targetRepsMax}
                       targetSets={exercise.targetSets}
+                      setType={exercise.setType}
+                      weightUnit={exercise.weightUnit}
+                      targetDurationSeconds={exercise.targetDurationSeconds}
+                      targetCalories={exercise.targetCalories}
                     />
                   ))}
                 </AnimatePresence>
@@ -1239,6 +1386,366 @@ function ExerciseCard({
   );
 }
 
+// ─── BisetCard ───────────────────────────────────────────────────────────────
+
+interface BisetCardProps {
+  first: LocalExerciseSession;
+  second: LocalExerciseSession;
+  onRegisterSet: (exerciseId: string, load?: number, reps?: number, restSeconds?: number) => void;
+  onUpdateNotes: (exerciseId: string, notes: string) => void;
+  onAddBisetRound: (firstExerciseId: string, secondExerciseId: string, restSeconds?: number) => void;
+  isExpanded: boolean;
+  navigate: (path: string) => void;
+  templateId?: string;
+}
+
+function BisetCard({
+  first,
+  second,
+  onRegisterSet,
+  onUpdateNotes,
+  onAddBisetRound,
+  isExpanded,
+  navigate,
+  templateId,
+}: BisetCardProps) {
+  const [restTimer, setRestTimer] = useState(0);
+  const [isRestRunning, setIsRestRunning] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(!isExpanded);
+  const [showVideoModal, setShowVideoModal] = useState<"first" | "second" | null>(null);
+  const [showNotesFirst, setShowNotesFirst] = useState(false);
+  const [showNotesSecond, setShowNotesSecond] = useState(false);
+
+  const restSeconds = second.restSeconds ?? first.restSeconds;
+
+  // Countdown do timer de descanso
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRestRunning && restTimer > 0) {
+      interval = setInterval(() => {
+        setRestTimer((prev) => {
+          if (prev <= 1) {
+            setIsRestRunning(false);
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRestRunning, restTimer]);
+
+  // Escuta o evento do segundo exercício para iniciar o descanso
+  useEffect(() => {
+    const handleStartRestTimer = (event: CustomEvent) => {
+      if (event.detail.exerciseId === second.id && restSeconds) {
+        setRestTimer(restSeconds);
+        setIsRestRunning(true);
+      }
+    };
+    window.addEventListener("startRestTimer", handleStartRestTimer as EventListener);
+    return () => window.removeEventListener("startRestTimer", handleStartRestTimer as EventListener);
+  }, [second.id, restSeconds]);
+
+  const startRestTimer = () => {
+    if (restSeconds) {
+      setRestTimer(restSeconds);
+      setIsRestRunning(true);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const completedRounds = Math.min(
+    first.sets.filter((s) => s.completed).length,
+    second.sets.filter((s) => s.completed).length
+  );
+  const targetRounds = first.targetSets ?? Math.max(first.sets.length, second.sets.length);
+
+  const renderExerciseSection = (exercise: LocalExerciseSession, isFirst: boolean) => (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <div className={`w-1 h-3 rounded-full ${isFirst ? "bg-primary" : "bg-primary/50"}`} />
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide truncate">
+          {exercise.exerciseName}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-[1fr_0.95fr_1.05fr] xs:grid-cols-[auto_1fr_0.95fr_1.05fr] gap-1 xs:gap-2 text-[10px] xs:text-xs font-bold text-muted-foreground">
+        <span className="hidden xs:block">SÉRIE</span>
+        <span>ANTERIOR</span>
+        <span className="text-center">
+          {exercise.setType === "Time" ? "SEG" : exercise.setType === "Calories" ? "CAL" : (exercise.weightUnit ?? "KG").toUpperCase()}
+        </span>
+        <span className="text-center">
+          {exercise.setType === "Time" || exercise.setType === "Calories" ? "" : "REPS"}
+        </span>
+      </div>
+
+      <AnimatePresence mode="popLayout">
+        {exercise.sets.map((set) => (
+          <SetRow
+            key={set.id}
+            set={set}
+            onRegisterSet={onRegisterSet}
+            exerciseId={exercise.id}
+            restSeconds={isFirst ? undefined : restSeconds}
+            targetRepsMin={exercise.targetRepsMin}
+            targetRepsMax={exercise.targetRepsMax}
+            targetSets={exercise.targetSets}
+            setType={exercise.setType}
+            weightUnit={exercise.weightUnit}
+            targetDurationSeconds={exercise.targetDurationSeconds}
+            targetCalories={exercise.targetCalories}
+          />
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+
+  const renderActionButtons = (exercise: LocalExerciseSession, isFirst: boolean) => (
+    <div className="space-y-2">
+      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide truncate">
+        {exercise.exerciseName}
+      </p>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-shrink-0 px-2 xs:px-3"
+          onClick={() => setShowVideoModal(isFirst ? "first" : "second")}
+          disabled={!exercise.exerciseVideoUrl}
+        >
+          <Video size={16} />
+          <span className="hidden xs:inline">Vídeo</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-shrink-0 px-2 xs:px-3"
+          onClick={() => {
+            if (templateId) sessionStorage.setItem("returnToWorkoutSession", templateId);
+            navigate(`/exercise/${exercise.exerciseId}/history`);
+          }}
+        >
+          <ChartBar size={16} />
+          <span className="hidden xs:inline">Evolução</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-shrink-0 px-2 xs:px-3"
+          onClick={() => isFirst ? setShowNotesFirst((v) => !v) : setShowNotesSecond((v) => !v)}
+        >
+          <Edit2 size={16} />
+          <span className="hidden xs:inline">Notas</span>
+        </Button>
+      </div>
+      <AnimatePresence>
+        {(isFirst ? showNotesFirst : showNotesSecond) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Textarea
+              placeholder="Adicionar notas aqui..."
+              value={exercise.notes || ""}
+              onChange={(e) => onUpdateNotes(exercise.id, e.target.value)}
+              className="min-h-[60px]"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  return (
+    <div className="bg-neutral-dark-03 rounded-lg overflow-hidden border-l-2 border-primary">
+      {/* Cabeçalho */}
+      <div
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-neutral-dark-03/50 transition-colors"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <motion.div animate={{ rotate: isCollapsed ? 0 : 90 }} transition={{ duration: 0.2 }}>
+            <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
+          </motion.div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1 min-w-0">
+              <h3 className={`font-bold text-base ${isCollapsed ? "truncate" : ""}`} style={{ maxWidth: "40%" }}>
+                {first.exerciseName}
+              </h3>
+              <span className="text-primary font-bold flex-shrink-0 px-0.5">+</span>
+              <h3 className={`font-bold text-base ${isCollapsed ? "truncate" : ""}`} style={{ maxWidth: "40%" }}>
+                {second.exerciseName}
+              </h3>
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-[10px] font-semibold text-primary uppercase tracking-wide">biset</span>
+              <span className="text-muted-foreground text-xs">·</span>
+              <span className="text-xs text-muted-foreground">
+                {completedRounds} de {targetRounds} rodadas
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Timer de descanso */}
+        {!isCollapsed && restSeconds && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className={`h-auto px-3 py-1.5 rounded border transition-all flex-shrink-0 ${
+              restTimer > 0
+                ? "bg-primary/10 border-primary hover:bg-primary/20"
+                : "bg-neutral-dark-01 border-neutral-dark-03"
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (restTimer > 0) {
+                setRestTimer(0);
+                setIsRestRunning(false);
+              } else {
+                startRestTimer();
+              }
+            }}
+          >
+            <span className={`text-sm font-mono font-bold ${restTimer > 0 ? "text-primary" : "text-muted-foreground"}`}>
+              {restTimer > 0 ? formatTime(restTimer) : `${restSeconds}s`}
+            </span>
+            <span className="ml-2">
+              {restTimer > 0 ? <Trash2 size={14} /> : <Play size={14} />}
+            </span>
+          </Button>
+        )}
+      </div>
+
+      {/* Conteúdo colapsável */}
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 space-y-4">
+              {/* Sets do primeiro exercício */}
+              {renderExerciseSection(first, true)}
+
+              {/* Divisor com ícone de biset */}
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-primary/20" />
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary/60 flex-shrink-0">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                <div className="h-px flex-1 bg-primary/20" />
+              </div>
+
+              {/* Sets do segundo exercício */}
+              {renderExerciseSection(second, false)}
+
+              {/* Botão adicionar rodada */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => onAddBisetRound(first.id, second.id, restSeconds)}
+              >
+                <Plus size={16} className="mr-1" />
+                Adicionar Rodada
+              </Button>
+
+              {/* Botões de ação por exercício */}
+              {renderActionButtons(first, true)}
+              {renderActionButtons(second, false)}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de vídeo - primeiro exercício */}
+      <Drawer open={showVideoModal === "first"} onOpenChange={(open) => !open && setShowVideoModal(null)}>
+        <DrawerContent>
+          <DrawerHeader>
+            <div className="flex items-center justify-between">
+              <DrawerTitle>{first.exerciseName}</DrawerTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowVideoModal(null)}><X size={20} /></Button>
+            </div>
+            <DrawerDescription>Assista ao vídeo demonstrativo do exercício</DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-4">
+            <div className="relative w-full pb-[56.25%] bg-neutral-dark-02 rounded-lg overflow-hidden">
+              {first.exerciseVideoUrl && (
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full"
+                  src={
+                    first.exerciseVideoUrl.includes("youtube.com/watch?v=")
+                      ? first.exerciseVideoUrl.replace("watch?v=", "embed/")
+                      : first.exerciseVideoUrl.includes("youtu.be/")
+                      ? first.exerciseVideoUrl.replace("youtu.be/", "youtube.com/embed/")
+                      : first.exerciseVideoUrl
+                  }
+                  title={first.exerciseName}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
+            </div>
+          </div>
+          <DrawerFooter><Button onClick={() => setShowVideoModal(null)}>Fechar</Button></DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Modal de vídeo - segundo exercício */}
+      <Drawer open={showVideoModal === "second"} onOpenChange={(open) => !open && setShowVideoModal(null)}>
+        <DrawerContent>
+          <DrawerHeader>
+            <div className="flex items-center justify-between">
+              <DrawerTitle>{second.exerciseName}</DrawerTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowVideoModal(null)}><X size={20} /></Button>
+            </div>
+            <DrawerDescription>Assista ao vídeo demonstrativo do exercício</DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-4">
+            <div className="relative w-full pb-[56.25%] bg-neutral-dark-02 rounded-lg overflow-hidden">
+              {second.exerciseVideoUrl && (
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full"
+                  src={
+                    second.exerciseVideoUrl.includes("youtube.com/watch?v=")
+                      ? second.exerciseVideoUrl.replace("watch?v=", "embed/")
+                      : second.exerciseVideoUrl.includes("youtu.be/")
+                      ? second.exerciseVideoUrl.replace("youtu.be/", "youtube.com/embed/")
+                      : second.exerciseVideoUrl
+                  }
+                  title={second.exerciseName}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
+            </div>
+          </div>
+          <DrawerFooter><Button onClick={() => setShowVideoModal(null)}>Fechar</Button></DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </div>
+  );
+}
+
+// ─── SetRow ──────────────────────────────────────────────────────────────────
+
 // Componente de Linha de Série
 interface SetRowProps {
   set: LocalSetSession;
@@ -1247,6 +1754,10 @@ interface SetRowProps {
   targetRepsMin?: number;
   targetRepsMax?: number;
   targetSets?: number;
+  setType?: string;
+  weightUnit?: string;
+  targetDurationSeconds?: number;
+  targetCalories?: number;
   onRegisterSet: (
     exerciseId: string,
     load?: number,
@@ -1255,13 +1766,17 @@ interface SetRowProps {
   ) => void;
 }
 
-function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, targetSets, onRegisterSet }: SetRowProps) {
+function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, targetSets, setType = "Reps", weightUnit = "kg", targetDurationSeconds, targetCalories, onRegisterSet }: SetRowProps) {
   const [editData, setEditData] = useState<{
     load?: number;
     reps?: number;
+    durationSeconds?: number;
+    calories?: number;
   }>({
     load: set.load,
     reps: set.reps,
+    durationSeconds: set.durationSeconds,
+    calories: set.calories,
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -1327,7 +1842,7 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
             }
             // Se arrastou mais de 80px para a direita, volta para modo editável
             else if (info.offset.x > 80) {
-              setEditData({ load: set.load, reps: set.reps });
+              setEditData({ load: set.load, reps: set.reps, durationSeconds: set.durationSeconds, calories: set.calories });
               setIsEditing(true);
             }
           }}
@@ -1342,14 +1857,18 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
           </div>
           <span className="text-xs xs:text-sm text-muted-foreground">
             {set.previousLoad && set.previousReps
-              ? `${set.previousLoad}kg x ${set.previousReps}`
+              ? `${set.previousLoad}${weightUnit} x ${set.previousReps}`
               : "-"}
           </span>
           <span className="text-xs xs:text-sm font-mono font-bold text-green-500 text-center">
-            {set.load ? `${set.load}kg` : "-"}
+            {setType === "Time"
+              ? set.durationSeconds ? `${set.durationSeconds}s` : "-"
+              : setType === "Calories"
+              ? set.calories ? `${set.calories} cal` : "-"
+              : set.load ? `${set.load}${weightUnit}` : "-"}
           </span>
           <span className="text-xs xs:text-sm font-mono font-bold text-green-500 text-center">
-            {set.reps || "-"}
+            {setType === "Time" || setType === "Calories" ? "✓" : set.reps || "-"}
           </span>
         </motion.div>
       </motion.div>
@@ -1418,14 +1937,18 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
             // Se ambos os campos estiverem vazios, usa os valores anteriores
             const finalLoad = editData.load || set.previousLoad;
             const finalReps = editData.reps || set.previousReps;
+            const finalDurationSeconds = editData.durationSeconds || set.durationSeconds;
+            const finalCalories = editData.calories || set.calories;
 
             // Verifica se já estava completada (vindo de edição)
             const wasAlreadyCompleted = set.completed;
 
             updatedWorkout.exercises[exerciseIndex].sets[setIndex] = {
               ...set,
-              load: finalLoad,
-              reps: finalReps,
+              load: setType === "Reps" ? finalLoad : undefined,
+              reps: setType === "Reps" ? finalReps : undefined,
+              durationSeconds: setType === "Time" ? finalDurationSeconds : undefined,
+              calories: setType === "Calories" ? finalCalories : undefined,
               completed: true,
               completedAt: new Date().toISOString(),
             };
@@ -1455,41 +1978,75 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
         </div>
         <span className="text-xs xs:text-sm text-muted-foreground">
           {set.previousLoad && set.previousReps
-            ? `${set.previousLoad}kg x ${set.previousReps}`
+            ? `${set.previousLoad}${weightUnit} x ${set.previousReps}`
             : "-"}
         </span>
-        <Input
-          type="number"
-          placeholder={set.previousLoad ? `${set.previousLoad}` : "carga"}
-          className="h-8 text-xs xs:text-sm text-center"
-          value={editData.load || ""}
-          onChange={(e) =>
-            setEditData((prev) => ({
-              ...prev,
-              load: parseFloat(e.target.value) || undefined,
-            }))
-          }
-        />
-        <Input
-          type="number"
-          placeholder={(() => {
-            const isExtra = targetSets && set.setNumber > targetSets;
-            if (isExtra) return "extra";
-            const targetReps = targetRepsMax || targetRepsMin || null;
-            if (set.previousReps && targetReps) return `${set.previousReps} de ${targetReps}`;
-            if (set.previousReps) return `${set.previousReps}`;
-            if (targetReps) return `0 de ${targetReps}`;
-            return "reps";
-          })()}
-          className="h-8 text-xs xs:text-sm text-center"
-          value={editData.reps || ""}
-          onChange={(e) =>
-            setEditData((prev) => ({
-              ...prev,
-              reps: parseInt(e.target.value) || undefined,
-            }))
-          }
-        />
+        {setType === "Time" ? (
+          <Input
+            type="number"
+            placeholder={targetDurationSeconds ? `${targetDurationSeconds}s` : "seg"}
+            className="h-8 text-xs xs:text-sm text-center"
+            value={editData.durationSeconds || ""}
+            onChange={(e) =>
+              setEditData((prev) => ({
+                ...prev,
+                durationSeconds: parseInt(e.target.value) || undefined,
+              }))
+            }
+          />
+        ) : setType === "Calories" ? (
+          <Input
+            type="number"
+            placeholder={targetCalories ? `${targetCalories}` : "cal"}
+            className="h-8 text-xs xs:text-sm text-center"
+            value={editData.calories || ""}
+            onChange={(e) =>
+              setEditData((prev) => ({
+                ...prev,
+                calories: parseFloat(e.target.value) || undefined,
+              }))
+            }
+          />
+        ) : (
+          <Input
+            type="number"
+            placeholder={set.previousLoad ? `${set.previousLoad}` : "carga"}
+            className="h-8 text-xs xs:text-sm text-center"
+            value={editData.load || ""}
+            onChange={(e) =>
+              setEditData((prev) => ({
+                ...prev,
+                load: parseFloat(e.target.value) || undefined,
+              }))
+            }
+          />
+        )}
+        {setType === "Reps" ? (
+          <Input
+            type="number"
+            placeholder={(() => {
+              const isExtra = targetSets && set.setNumber > targetSets;
+              if (isExtra) return "extra";
+              const targetReps = targetRepsMax || targetRepsMin || null;
+              if (set.previousReps && targetReps) return `${set.previousReps} de ${targetReps}`;
+              if (set.previousReps) return `${set.previousReps}`;
+              if (targetReps) return `0 de ${targetReps}`;
+              return "reps";
+            })()}
+            className="h-8 text-xs xs:text-sm text-center"
+            value={editData.reps || ""}
+            onChange={(e) =>
+              setEditData((prev) => ({
+                ...prev,
+                reps: parseInt(e.target.value) || undefined,
+              }))
+            }
+          />
+        ) : (
+          <span className="text-xs text-muted-foreground text-center self-center">
+            {setType === "Time" ? "seg" : "cal"}
+          </span>
+        )}
       </motion.div>
     </motion.div>
   );

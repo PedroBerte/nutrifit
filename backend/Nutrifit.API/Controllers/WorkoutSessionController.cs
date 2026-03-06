@@ -26,6 +26,7 @@ namespace Nutrifit.API.Controllers
         }
 
         [HttpPost("complete")]
+        [HttpPost("~/api/workout-sessions/complete")]
         public async Task<IActionResult> CompleteWorkoutSession([FromBody] CompleteWorkoutSessionRequest request)
         {
             try
@@ -37,6 +38,44 @@ namespace Nutrifit.API.Controllers
                     return BadRequest(response);
 
                 return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("~/api/workout-sessions/start")]
+        public async Task<IActionResult> StartWorkoutSession([FromBody] StartWorkoutSessionRequest request)
+        {
+            try
+            {
+                var customerId = GetUserId();
+                var response = await _workoutSessionService.StartWorkoutSessionAsync(customerId, request);
+
+                if (!response.Success)
+                    return BadRequest(response);
+
+                return Ok(response.Data);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("~/api/workout-sessions/{sessionId:guid}/finish")]
+        public async Task<IActionResult> FinishWorkoutSession(Guid sessionId, [FromBody] CompleteWorkoutSessionRequest request)
+        {
+            try
+            {
+                var customerId = GetUserId();
+                var response = await _workoutSessionService.FinishWorkoutSessionAsync(customerId, sessionId, request);
+
+                if (!response.Success)
+                    return BadRequest(response);
+
+                return Ok(response.Data);
             }
             catch (Exception ex)
             {

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Nutrifit.Repository;
 using Nutrifit.Repository.Entities;
+using Nutrifit.Services.Constants;
 using Nutrifit.Services.Services.Interfaces;
 using Nutrifit.Services.ViewModel.Request;
 using Nutrifit.Services.ViewModel.Response;
@@ -29,8 +30,12 @@ public class RoutineService : IRoutineService
             if (personal == null)
                 return ApiResponse.CreateFailure("Personal não encontrado");
 
-            if (personal.Profile.Name != "Personal")
-                return ApiResponse.CreateFailure("Apenas Personal Trainers podem criar rotinas");
+
+            var isPersonal = personal.ProfileId == Guid.Parse(ProfilesConstants.PERSONAL);
+            var isSelfManaged = personal.ProfileId == Guid.Parse(ProfilesConstants.SELF_MANAGED);
+
+            if (!isPersonal && !isSelfManaged)
+                return ApiResponse.CreateFailure("Apenas Personal Trainers e usuários auto geridos podem criar rotinas");
 
             var routine = new RoutineEntity
             {

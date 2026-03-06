@@ -1,4 +1,4 @@
-// src/routes/layouts/AppLayoutWithNav.tsx
+// src/routes/layouts/AppDefaultLayout.tsx
 import Navbar from "@/components/Navbar";
 import BottomBar from "@/components/BottomBar";
 import { Outlet } from "react-router-dom";
@@ -14,13 +14,18 @@ export default function AppDefaultLayout({
   isMenuButtonVisible,
 }: AppLayoutWithNavbarProps) {
   return (
-    <div className="flex flex-col w-full bg-neutral-dark-01">
+    <SidebarProvider defaultOpen={false} className="h-dvh overflow-hidden">
+      {/* SidebarProvider renders as flex-row — AppSidebar (right) + content column */}
+      <div className="flex flex-col flex-1 min-w-0 h-dvh overflow-hidden bg-neutral-dark-01">
+        <header className="shrink-0 sticky top-0 z-40 bg-neutral-dark-01 px-4 py-3 border-b border-border/5">
+          <Navbar isMenuButtonVisible={isMenuButtonVisible} />
+        </header>
+        <main className="flex-1 overflow-y-auto px-4 pb-8 md:px-6">
+          <Outlet />
+        </main>
+        <BottomBar />
+      </div>
       <AppSidebar />
-      <Navbar isMenuButtonVisible={isMenuButtonVisible} />
-      <main className="flex-1 pb-20">
-        <Outlet />
-      </main>
-      <BottomBar />
-    </div>
+    </SidebarProvider>
   );
 }

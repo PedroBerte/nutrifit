@@ -82,6 +82,9 @@ export function CreateExerciseDrawer({
 
   const { data: categories } = useGetExerciseCategories();
   const { data: muscleGroups } = useGetMuscleGroups();
+  const muscleGroupsList = Array.isArray(muscleGroups?.data)
+    ? muscleGroups.data
+    : [];
   const createExercise = useCreateExercise();
   const updateExercise = useUpdateExercise(exerciseToEdit?.id || "");
   const deleteExercise = useDeleteExercise();
@@ -304,7 +307,7 @@ export function CreateExerciseDrawer({
 
               <div className="space-y-3">
                 <Label>Músculos Primários *</Label>
-                {muscleGroups?.data?.map((group) => (
+                {muscleGroupsList.map((group) => (
                   <div key={group.id} className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">
                       {group.name}
@@ -344,7 +347,7 @@ export function CreateExerciseDrawer({
 
               <div className="space-y-3">
                 <Label>Músculos Secundários</Label>
-                {muscleGroups?.data?.map((group) => (
+                {muscleGroupsList.map((group) => (
                   <div key={group.id} className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">
                       {group.name}

@@ -17,9 +17,9 @@ export default function Navbar({ isMenuButtonVisible = true }: NavbarProps) {
   const { data: activeBond } = useGetBondAsCustomer();
 
   const isOnHome =
-    (user?.profile === UserProfiles.PERSONAL &&
-      location.pathname === "/personal") ||
-    (user?.profile === UserProfiles.STUDENT &&
+    location.pathname === "/home" ||
+    ((user?.profile === UserProfiles.STUDENT ||
+      user?.profile === UserProfiles.SELF_MANAGED) &&
       location.pathname === "/workout");
 
   const { toggleSidebar, setOpenMobile } = useSidebar();

@@ -23,9 +23,13 @@ namespace Nutrifit.Services.Services
             var port = int.TryParse(s["Port"], out var p) ? p : 587;
             var useStartTls = bool.TryParse(s["UseStartTls"], out var startTls) ? startTls : true;
             var user = s["User"]!;
-            var pass = s["AppPassword"]!;
+            // Google often displays app passwords grouped with spaces; normalize before auth.
+            var pass = (s["AppPassword"] ?? string.Empty).Replace(" ", string.Empty);
             var fromName = s["FromName"] ?? user;
             var fromAddress = s["FromAddress"] ?? user;
+
+            if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(pass))
+                throw new InvalidOperationException("SMTP credentials are missing. Configure Smtp:User and Smtp:AppPassword.");
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(fromName, fromAddress));

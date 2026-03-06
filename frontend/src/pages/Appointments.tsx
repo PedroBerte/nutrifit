@@ -242,7 +242,7 @@ export function Appointments() {
   );
 
   return (
-    <div className="space-y-8 p-4 pb-20 max-w-4xl mx-auto">
+    <div className="space-y-8 py-4 pb-20 max-w-4xl mx-auto">
       {/* Consultas Pendentes */}
       {categorizedAppointments.pending.length > 0 && (
         <motion.div

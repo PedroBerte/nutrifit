@@ -2,22 +2,22 @@ import { api } from "@/lib/axios";
 import { useQuery } from "@tanstack/react-query";
 
 export const addFavorite = async (professionalId: string) => {
-  const response = await api.post(`/Favorite/${professionalId}`);
+  const response = await api.post(`/favorite/${professionalId}`);
   return response.data;
 };
 
 export const removeFavorite = async (professionalId: string) => {
-  const response = await api.delete(`/Favorite/${professionalId}`);
+  const response = await api.delete(`/favorite/${professionalId}`);
   return response.data;
 };
 
 export const getFavorites = async () => {
-  const response = await api.get("/Favorite");
+  const response = await api.get("/favorite");
   return response.data;
 };
 
 export const checkFavorite = async (professionalId: string) => {
-  const response = await api.get(`/Favorite/check/${professionalId}`);
+  const response = await api.get(`/favorite/check/${professionalId}`);
   return response.data.isFavorite; // Retorna apenas o boolean
 };
 

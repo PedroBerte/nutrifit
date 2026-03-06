@@ -4,6 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
 using Nutrifit.Repository;
+using Nutrifit.Repository.Entities;
+using Nutrifit.Services.Constants;
 using Nutrifit.Services.Services;
 using Nutrifit.Services.Services.Interfaces;
 using Serilog;
@@ -84,6 +86,8 @@ builder.Services.AddScoped<IWorkoutSessionService, WorkoutSessionService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IGeocodingService, GeocodingService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<ISelfManagedWorkoutService, SelfManagedWorkoutService>();
 
 builder.Services.AddCors(o =>
 {
@@ -129,6 +133,7 @@ using (var scope = app.Services.CreateScope())
             try
             {
                 db.Database.Migrate();
+                await EnsureDefaultProfilesAsync(db);
                 logger.LogInformation("EF Core migrations aplicadas com sucesso.");
                 break;
             }
@@ -168,3 +173,34 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static async Task EnsureDefaultProfilesAsync(NutrifitContext db)
+{
+    var requiredProfiles = new[]
+    {
+        (Guid.Parse(ProfilesConstants.STUDENT), "Estudante"),
+        (Guid.Parse(ProfilesConstants.PERSONAL), "Personal"),
+        (Guid.Parse(ProfilesConstants.NUTRITIONIST), "Nutricionista"),
+        (Guid.Parse(ProfilesConstants.SELF_MANAGED), "Auto Gerido")
+    };
+
+    var existingIds = await db.Profiles
+        .Select(x => x.Id)
+        .ToListAsync();
+
+    var toInsert = requiredProfiles
+        .Where(x => !existingIds.Contains(x.Item1))
+        .Select(x => new ProfileEntity
+        {
+            Id = x.Item1,
+            Name = x.Item2,
+            Status = "A",
+            CreatedAt = DateTime.UtcNow
+        })
+        .ToList();
+
+    if (toInsert.Count == 0) return;
+
+    db.Profiles.AddRange(toInsert);
+    await db.SaveChangesAsync();
+}

@@ -1,6 +1,6 @@
 ﻿import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -31,6 +31,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, ImageIcon, Video, Upload } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion } from "motion/react";
@@ -68,6 +76,11 @@ const exerciseConfigSchema = z.object({
   notes: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  setType: z.enum(["Reps", "Time", "Calories"]).default("Reps"),
+  weightUnit: z.enum(["kg", "lbs"]).default("kg"),
+  isBisetWithPrevious: z.boolean().default(false),
+  targetDurationSeconds: z.number().optional(),
+  targetCalories: z.number().optional(),
 });
 
 type ExerciseConfigForm = z.infer<typeof exerciseConfigSchema>;
@@ -134,8 +147,15 @@ export function NewWorkoutTemplate() {
       notes: "",
       imageUrl: "",
       videoUrl: "",
+      setType: "Reps",
+      weightUnit: "kg",
+      isBisetWithPrevious: false,
+      targetDurationSeconds: undefined,
+      targetCalories: undefined,
     },
   });
+
+  const watchedSetType = useWatch({ control: exerciseForm.control, name: "setType" });
 
   const handleExerciseSelect = (
     exerciseId: string,
@@ -160,6 +180,11 @@ export function NewWorkoutTemplate() {
       notes: "",
       imageUrl: exerciseImageUrl || "",
       videoUrl: exerciseVideoUrl || "",
+      setType: "Reps",
+      weightUnit: "kg",
+      isBisetWithPrevious: false,
+      targetDurationSeconds: undefined,
+      targetCalories: undefined,
     });
   };
 
@@ -180,6 +205,11 @@ export function NewWorkoutTemplate() {
       notes: exercise.notes || "",
       imageUrl: exercise.exerciseImageUrl || "",
       videoUrl: "",
+      setType: (exercise.setType as "Reps" | "Time" | "Calories") || "Reps",
+      weightUnit: (exercise.weightUnit as "kg" | "lbs") || "kg",
+      isBisetWithPrevious: exercise.isBisetWithPrevious ?? false,
+      targetDurationSeconds: exercise.targetDurationSeconds,
+      targetCalories: exercise.targetCalories,
     });
   };
 
@@ -214,6 +244,11 @@ export function NewWorkoutTemplate() {
                   restSeconds: data.restSeconds,
                   notes: data.notes,
                   exerciseImageUrl: data.imageUrl || ex.exerciseImageUrl,
+                  setType: data.setType,
+                  weightUnit: data.weightUnit,
+                  isBisetWithPrevious: data.isBisetWithPrevious,
+                  targetDurationSeconds: data.targetDurationSeconds,
+                  targetCalories: data.targetCalories,
                 }
               : ex
           )
@@ -232,6 +267,11 @@ export function NewWorkoutTemplate() {
           suggestedLoad: data.suggestedLoad,
           restSeconds: data.restSeconds,
           notes: data.notes,
+          setType: data.setType,
+          weightUnit: data.weightUnit,
+          isBisetWithPrevious: data.isBisetWithPrevious,
+          targetDurationSeconds: data.targetDurationSeconds,
+          targetCalories: data.targetCalories,
         };
         setConfiguredExercises((prev) => [...prev, configured]);
       }
@@ -299,14 +339,26 @@ export function NewWorkoutTemplate() {
     const parts: string[] = [];
     parts.push(`${ex.targetSets} séries`);
 
-    if (ex.targetRepsMin && ex.targetRepsMax) {
-      parts.push(`${ex.targetRepsMin}-${ex.targetRepsMax} reps`);
-    } else if (ex.targetRepsMin) {
-      parts.push(`${ex.targetRepsMin}+ reps`);
-    }
+    const setType = ex.setType ?? "Reps";
 
-    if (ex.suggestedLoad) {
-      parts.push(`${ex.suggestedLoad}kg`);
+    if (setType === "Time") {
+      if (ex.targetDurationSeconds) {
+        parts.push(`${ex.targetDurationSeconds}s`);
+      }
+    } else if (setType === "Calories") {
+      if (ex.targetCalories) {
+        parts.push(`${ex.targetCalories} cal`);
+      }
+    } else {
+      if (ex.targetRepsMin && ex.targetRepsMax) {
+        parts.push(`${ex.targetRepsMin}-${ex.targetRepsMax} reps`);
+      } else if (ex.targetRepsMin) {
+        parts.push(`${ex.targetRepsMin}+ reps`);
+      }
+      if (ex.suggestedLoad) {
+        const unit = ex.weightUnit ?? "kg";
+        parts.push(`${ex.suggestedLoad}${unit}`);
+      }
     }
 
     if (ex.restSeconds) {
@@ -506,85 +558,185 @@ export function NewWorkoutTemplate() {
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={exerciseForm.control}
-                    name="targetRepsMin"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Reps Mínimas</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="8"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? parseInt(e.target.value)
-                                  : undefined
-                              )
-                            }
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={exerciseForm.control}
-                    name="targetRepsMax"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Reps Máximas</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="12"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? parseInt(e.target.value)
-                                  : undefined
-                              )
-                            }
-                            value={field.value || ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
+                {/* Tipo de Série */}
                 <FormField
                   control={exerciseForm.control}
-                  name="suggestedLoad"
+                  name="setType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Carga Sugerida (kg)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="20"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseFloat(e.target.value)
-                                : undefined
-                            )
-                          }
-                          value={field.value || ""}
-                        />
-                      </FormControl>
+                      <FormLabel>Tipo de Série</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Reps">Repetições</SelectItem>
+                          <SelectItem value="Time">Tempo / Isometria</SelectItem>
+                          <SelectItem value="Calories">Calorias (AirBike, etc)</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {/* Campos condicionais por tipo de série */}
+                {watchedSetType === "Reps" && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={exerciseForm.control}
+                        name="targetRepsMin"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Reps Mínimas</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="8"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value ? parseInt(e.target.value) : undefined
+                                  )
+                                }
+                                value={field.value || ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={exerciseForm.control}
+                        name="targetRepsMax"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Reps Máximas</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="12"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value ? parseInt(e.target.value) : undefined
+                                  )
+                                }
+                                value={field.value || ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-2">
+                        <FormField
+                          control={exerciseForm.control}
+                          name="suggestedLoad"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Carga Sugerida</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="20"
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value ? parseFloat(e.target.value) : undefined
+                                    )
+                                  }
+                                  value={field.value || ""}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <FormField
+                        control={exerciseForm.control}
+                        name="weightUnit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Unidade</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="kg">kg</SelectItem>
+                                <SelectItem value="lbs">lbs</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {watchedSetType === "Time" && (
+                  <FormField
+                    control={exerciseForm.control}
+                    name="targetDurationSeconds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Duração Alvo (segundos)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="30"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value ? parseInt(e.target.value) : undefined
+                              )
+                            }
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {watchedSetType === "Calories" && (
+                  <FormField
+                    control={exerciseForm.control}
+                    name="targetCalories"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Calorias Alvo</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="20"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value ? parseFloat(e.target.value) : undefined
+                              )
+                            }
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={exerciseForm.control}
@@ -599,9 +751,7 @@ export function NewWorkoutTemplate() {
                           {...field}
                           onChange={(e) =>
                             field.onChange(
-                              e.target.value
-                                ? parseInt(e.target.value)
-                                : undefined
+                              e.target.value ? parseInt(e.target.value) : undefined
                             )
                           }
                           value={field.value || ""}
@@ -611,6 +761,52 @@ export function NewWorkoutTemplate() {
                     </FormItem>
                   )}
                 />
+
+                {/* Biset: só aparece se não for o primeiro exercício */}
+                {configuredExercises.length > 0 && !editingExercise && (
+                  <FormField
+                    control={exerciseForm.control}
+                    name="isBisetWithPrevious"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-neutral-dark-03 p-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Biset com exercício anterior</FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Executa este exercício em sequência com o anterior, sem descanso entre eles
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                )}
+                {editingExercise && configuredExercises.findIndex(e => e.id === editingExercise.id) > 0 && (
+                  <FormField
+                    control={exerciseForm.control}
+                    name="isBisetWithPrevious"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-neutral-dark-03 p-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Biset com exercício anterior</FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Executa este exercício em sequência com o anterior, sem descanso entre eles
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={exerciseForm.control}

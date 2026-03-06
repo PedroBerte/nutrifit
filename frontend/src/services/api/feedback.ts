@@ -7,7 +7,7 @@ export function useGetProfessionalFeedbacks(professionalId: string | null | unde
     queryKey: ["getProfessionalFeedbacks", professionalId],
     queryFn: async () => {
       if (!professionalId) throw new Error("ID do profissional é obrigatório");
-      const request = await api.get<FeedbackType[]>(`/user/${professionalId}/feedbacks`);
+      const request = await api.get<FeedbackType[]>(`/feedback/professional/${professionalId}`);
       return request.data;
     },
     enabled: !!professionalId,
@@ -58,7 +58,7 @@ export function useGetBondFeedback(
         const response = await api.get<FeedbackResponse>(
           `/feedback/bond?customerId=${customerId}&professionalId=${professionalId}`
         );
-        return response.data;
+        return response.data || null;
       } catch (error: any) {
         if (error.response?.status === 404) {
           return null;
