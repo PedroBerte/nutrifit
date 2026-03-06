@@ -63,6 +63,27 @@ function fromBackendPaginated<T>(raw: unknown): ApiResponse<PaginatedResponse<T>
   });
 }
 
+function toRoutineItems(items: unknown[]): RoutineType[] {
+  return items
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+
+      const candidate = item as Record<string, unknown>;
+      const nested = candidate.routine;
+
+      // Supports both payloads:
+      // 1) [{ routine: {...} }]
+      // 2) [{...routine}]
+      const routine =
+        nested && typeof nested === "object"
+          ? (nested as RoutineType)
+          : (candidate as unknown as RoutineType);
+
+      return routine?.id ? routine : null;
+    })
+    .filter((routine): routine is RoutineType => !!routine);
+}
+
 export function useCreateRoutine() {
   return useMutation({
     mutationKey: ["createRoutine"],
@@ -192,9 +213,10 @@ export function useGetMyAssignedRoutines(
     queryKey: ["getMyAssignedRoutines", page, pageSize],
     queryFn: async () => {
       const request = await api.get(`/routine/my-assigned-routines?page=${page}&pageSize=${pageSize}`);
-      const paginated = fromBackendPaginated<{ routine: RoutineType }>(request.data);
+      const paginated = fromBackendPaginated<unknown>(request.data);
+      const routineItems = toRoutineItems(paginated.data?.items ?? []);
       return ok({
-        items: (paginated.data?.items || []).map((item) => item.routine),
+        items: routineItems,
         pagination: paginated.data?.pagination ?? {
           currentPage: page,
           pageSize,
@@ -217,9 +239,10 @@ export function useGetCustomerRoutines(
     queryFn: async () => {
       if (!customerId) throw new Error("ID do cliente é obrigatório");
       const request = await api.get(`/routine/customer/${customerId}?page=${page}&pageSize=${pageSize}`);
-      const paginated = fromBackendPaginated<{ routine: RoutineType }>(request.data);
+      const paginated = fromBackendPaginated<unknown>(request.data);
+      const routineItems = toRoutineItems(paginated.data?.items ?? []);
       return ok({
-        items: (paginated.data?.items || []).map((item) => item.routine),
+        items: routineItems,
         pagination: paginated.data?.pagination ?? {
           currentPage: page,
           pageSize,
@@ -252,12 +275,22 @@ export function useGetRoutineCustomers(routineId: string | null | undefined) {
         `/routine/${routineId}/customers`
       );
       const data = request.data;
-      return ok({
-        assignedCustomers: (data.assigned || []).map((x) => ({
+      const assignedCustomers = (data.assigned || []).reduce<
+        RoutineCustomersResponse["assignedCustomers"]
+      >((acc, x) => {
+        if (!x?.customer?.id) return acc;
+
+        acc.push({
           ...x.customer,
           assignedAt: x.createdAt,
-          expiresAt: x.expiresAt,
-        })),
+          expiresAt: x.expiresAt ?? undefined,
+        });
+
+        return acc;
+      }, []);
+
+      return ok({
+        assignedCustomers,
         availableCustomers: [],
       } as RoutineCustomersResponse);
     },
