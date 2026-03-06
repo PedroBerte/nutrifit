@@ -189,15 +189,24 @@ export function useGetActiveStudents(
           search ? `&search=${encodeURIComponent(search)}` : ""
         }`
       );
-      const mapped: ActiveStudentResponse[] = (request.data.data || []).map((item) => ({
-        bondId: item.id,
-        studentId: item.customer.id,
-        studentName: item.customer.name,
-        studentEmail: item.customer.email,
-        studentImageUrl: item.customer.imageUrl,
-        bondCreatedAt: item.createdAt,
-        bondStatus: item.status,
-      }));
+      const mapped = (request.data.data || []).reduce<ActiveStudentResponse[]>(
+        (acc, item) => {
+          if (!item?.customer?.id) return acc;
+
+          acc.push({
+            bondId: item.id,
+            studentId: item.customer.id,
+            studentName: item.customer.name,
+            studentEmail: item.customer.email,
+            studentImageUrl: item.customer.imageUrl,
+            bondCreatedAt: item.createdAt,
+            bondStatus: item.status,
+          });
+
+          return acc;
+        },
+        []
+      );
 
       return {
         success: true,

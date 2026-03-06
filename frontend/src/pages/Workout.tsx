@@ -65,6 +65,8 @@ export default function Workout() {
     ? myRoutinesResponse?.data?.items || []
     : assignedRoutinesResponse?.data?.items || [];
 
+  const validRoutines = routines.filter((routine) => Boolean(routine?.id));
+
   const isLoadingRoutines = isSelfManagedUser
     ? isLoadingMyRoutines
     : isLoadingAssignedRoutines;
@@ -403,7 +405,7 @@ export default function Workout() {
             </div>
           )}
 
-          {!isLoadingRoutines && routines.length === 0 && (
+          {!isLoadingRoutines && validRoutines.length === 0 && (
             <motion.div 
               className="flex flex-col flex-1 items-center justify-center px-4"
               initial={{ opacity: 0, y: 20 }}
@@ -485,8 +487,8 @@ export default function Workout() {
           )}
 
           {!isLoadingRoutines &&
-            routines.length > 0 &&
-            routines.map((routine) => (
+            validRoutines.length > 0 &&
+            validRoutines.map((routine) => (
               <AssignedRoutineCard key={routine.id} routine={routine} />
             ))}
 
