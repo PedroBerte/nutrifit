@@ -2,13 +2,9 @@ import {
   ArrowRightFromLine,
   Calendar,
   ChevronUp,
-  ClosedCaption,
   Dumbbell,
   Home,
-  Inbox,
   LogOut,
-  Search,
-  Settings,
   User2,
   Users,
 } from "lucide-react";
@@ -48,19 +44,36 @@ const items: {
     title: "Início",
     url: "/home",
     icon: Home,
-    profiles: [UserProfiles.PERSONAL, UserProfiles.NUTRITIONIST],
+    profiles: [
+      UserProfiles.PERSONAL,
+      UserProfiles.NUTRITIONIST,
+      UserProfiles.STUDENT,
+      UserProfiles.SELF_MANAGED,
+    ],
   },
   {
-    title: "Treinos",
+    title: "Meus treinos",
     url: "/workout",
     icon: Dumbbell,
-    profiles: [UserProfiles.STUDENT],
+    profiles: [UserProfiles.STUDENT, UserProfiles.SELF_MANAGED],
   },
   {
-    title: "Treinos",
+    title: "Histórico de treinos",
+    url: "/workout/history",
+    icon: Dumbbell,
+    profiles: [UserProfiles.SELF_MANAGED, UserProfiles.STUDENT],
+  },
+  {
+    title: "Meu perfil",
+    url: "/profile",
+    icon: User2,
+    profiles: [UserProfiles.SELF_MANAGED],
+  },
+  {
+    title: "Gerenciar rotinas",
     url: "/routines",
     icon: Dumbbell,
-    profiles: [UserProfiles.PERSONAL],
+    profiles: [UserProfiles.PERSONAL, UserProfiles.SELF_MANAGED],
   },
   {
     title: "Agenda",
@@ -106,6 +119,13 @@ export function AppSidebar() {
   const { toggleSidebar, setOpenMobile } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Prefer DB value (always fresh) over JWT value (stale after profile change)
+  const currentUserProfile = (userData?.profile?.id ?? user?.profile) as UserProfiles | undefined;
+
+  function canAccessItem(itemProfiles: UserProfiles[]) {
+    return !!currentUserProfile && itemProfiles.includes(currentUserProfile);
+  }
 
   // Fecha a sidebar quando a rota mudar
   useEffect(() => {
@@ -158,9 +178,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
               {items
-                .filter((item) =>
-                  item.profiles.includes(user?.profile as UserProfiles)
-                )
+                .filter((item) => canAccessItem(item.profiles))
                 .map((item) => {
                   const isActive = location.pathname === item.url;
                   return (

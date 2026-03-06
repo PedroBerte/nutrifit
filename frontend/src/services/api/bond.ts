@@ -166,13 +166,51 @@ export function useGetActiveStudents(
     queryKey: ["getActiveStudents", page, pageSize, search],
     queryFn: async () => {
       const request = await api.get<
-        ApiResponse<PaginatedResponse<ActiveStudentResponse>>
+        {
+          total: number;
+          page: number;
+          pageSize: number;
+          data: Array<{
+            id: string;
+            customerId: string;
+            professionalId: string;
+            status: string;
+            createdAt: string;
+            customer: {
+              id: string;
+              name: string;
+              email: string;
+              imageUrl?: string;
+            };
+          }>;
+        }
       >(
         `/bond/active-students?page=${page}&pageSize=${pageSize}${
           search ? `&search=${encodeURIComponent(search)}` : ""
         }`
       );
-      return request.data;
+      const mapped: ActiveStudentResponse[] = (request.data.data || []).map((item) => ({
+        bondId: item.id,
+        studentId: item.customer.id,
+        studentName: item.customer.name,
+        studentEmail: item.customer.email,
+        studentImageUrl: item.customer.imageUrl,
+        bondCreatedAt: item.createdAt,
+        bondStatus: item.status,
+      }));
+
+      return {
+        success: true,
+        data: {
+          items: mapped,
+          pagination: {
+            currentPage: request.data.page,
+            pageSize: request.data.pageSize,
+            totalPages: Math.ceil(request.data.total / request.data.pageSize),
+            totalCount: request.data.total,
+          },
+        },
+      } as ApiResponse<PaginatedResponse<ActiveStudentResponse>>;
     },
     retry: 1,
   });

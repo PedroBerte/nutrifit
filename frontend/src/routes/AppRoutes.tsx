@@ -25,10 +25,12 @@ import { EditWorkoutTemplate } from "@/pages/EditWorkoutTemplate";
 import WorkoutSession from "@/pages/WorkoutSession";
 import WorkoutSessionDetails from "@/pages/WorkoutSessionDetails";
 import ProfessionalsList from "@/pages/ProfessionalsList";
-import PersonalHome from "@/pages/PersonalHome";
 import ExerciseHistory from "@/pages/ExerciseHistory";
+import SelfManagedWorkoutHistory from "@/pages/SelfManagedWorkoutHistory";
 import { Appointments } from "@/pages/Appointments";
 import ProfessionalAgenda from "@/pages/ProfessionalAgenda";
+import SelfManagedWorkoutNew from "@/pages/SelfManagedWorkoutNew";
+import SelfManagedWorkoutSession from "@/pages/SelfManagedWorkoutSession";
 
 export function AppRoutes() {
   return (
@@ -38,6 +40,7 @@ export function AppRoutes() {
 
         <Route path="login" element={<Login />} />
         <Route path="login/callback" element={<Callback />} />
+        <Route path="auth/validate" element={<Callback />} />
 
         <Route element={<RegisterFormLayout />}>
           <Route path="first-access" element={<FirstAccess />} />
@@ -49,11 +52,11 @@ export function AppRoutes() {
             <Route path="profile" element={<Profile />} />
             <Route path="diet" element={<Diet />} />
 
-            {/* Student-Only Routes */}
+            {/* Student + Self-Managed Routes */}
             <Route
               path="workout"
               element={
-                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT, UserProfiles.SELF_MANAGED]}>
                   <Workout />
                 </RoleGuard>
               }
@@ -61,16 +64,40 @@ export function AppRoutes() {
             <Route
               path="workout/session/:templateId"
               element={
-                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT, UserProfiles.SELF_MANAGED]}>
                   <WorkoutSession />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="workout/self-managed/new"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT, UserProfiles.SELF_MANAGED]}>
+                  <SelfManagedWorkoutNew />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="workout/self-managed/session/:sessionId"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT, UserProfiles.SELF_MANAGED]}>
+                  <SelfManagedWorkoutSession />
                 </RoleGuard>
               }
             />
             <Route
               path="exercise/:exerciseId/history"
               element={
-                <RoleGuard allowedProfiles={[UserProfiles.STUDENT]}>
+                <RoleGuard allowedProfiles={[UserProfiles.STUDENT, UserProfiles.SELF_MANAGED]}>
                   <ExerciseHistory />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="workout/history"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.SELF_MANAGED, UserProfiles.STUDENT]}>
+                  <SelfManagedWorkoutHistory />
                 </RoleGuard>
               }
             />
@@ -108,14 +135,6 @@ export function AppRoutes() {
             />
 
             {/* Professional-Only Routes */}
-            <Route
-              path="personal"
-              element={
-                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
-                  <PersonalHome />
-                </RoleGuard>
-              }
-            />
             <Route
               path="agenda"
               element={
@@ -159,7 +178,7 @@ export function AppRoutes() {
             <Route
               path="routines"
               element={
-                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL, UserProfiles.SELF_MANAGED]}>
                   <RoutinesList />
                 </RoleGuard>
               }
@@ -167,7 +186,7 @@ export function AppRoutes() {
             <Route
               path="routines/new"
               element={
-                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL, UserProfiles.SELF_MANAGED]}>
                   <NewRoutine />
                 </RoleGuard>
               }
@@ -175,7 +194,7 @@ export function AppRoutes() {
             <Route
               path="routines/:routineId"
               element={
-                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL, UserProfiles.SELF_MANAGED]}>
                   <RoutineDetails />
                 </RoleGuard>
               }
@@ -183,7 +202,7 @@ export function AppRoutes() {
             <Route
               path="routines/:routineId/workouts/new"
               element={
-                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL, UserProfiles.SELF_MANAGED]}>
                   <NewWorkoutTemplate />
                 </RoleGuard>
               }
@@ -191,13 +210,15 @@ export function AppRoutes() {
             <Route
               path="routines/:routineId/workouts/:templateId"
               element={
-                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL]}>
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL, UserProfiles.SELF_MANAGED]}>
                   <EditWorkoutTemplate />
                 </RoleGuard>
               }
             />
           </Route>
         </Route>
+
+        <Route path="*" element={<Navigate to="/home" replace />} />
       </Route>
     </Routes>
   );

@@ -8,6 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { FeedbackButton } from "@/components/feedback";
 import PersonalSemVinculo from "@/assets/personal/PersonalSemVinculo.png";
 import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useGetUserById } from "@/services/api/user";
+import { UserProfiles } from "@/types/user";
 import {
     Dialog,
     DialogContent,
@@ -23,7 +26,20 @@ export default function MyProfessionals() {
     const { mutate: deleteBond, isPending: isDeleting } = useDeleteBond();
     const [cancelError, setCancelError] = useState<string | null>(null);
     const { data: bond, isLoading } = useGetBondAsCustomer();
+    const { user } = useAuth();
+    const { data: userData } = useGetUserById(user?.id);
     const navigate = useNavigate();
+
+    const rawProfileValue =
+        typeof user?.raw?.profile === "string" ? user.raw.profile.toLowerCase() : "";
+    const isSelfManagedUser =
+        userData?.profileId === UserProfiles.SELF_MANAGED || rawProfileValue === "selfmanaged";
+    const isImplicitSelfBond =
+        !!bond &&
+        bond.status === "A" &&
+        !!bond.customerId &&
+        !!bond.professionalId &&
+        bond.customerId === bond.professionalId;
 
     return (
         <motion.div
@@ -38,6 +54,57 @@ export default function MyProfessionals() {
 
             {isLoading ? (
                 <div className="text-center text-neutral-white-02 py-8">Carregando...</div>
+            ) : isSelfManagedUser && (!bond || isImplicitSelfBond) ? (
+                <div className="relative bg-gradient-to-br from-primary/5 via-primary/3 to-transparent rounded-lg p-6 border border-primary/20 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50 pointer-events-none" />
+                    <div className="relative flex flex-col items-start gap-4">
+                        <div className="flex gap-4 items-center w-full">
+                            <AvatarImage
+                                imageUrl={userData?.imageUrl}
+                                name={userData?.name ?? user?.name}
+                                size="xl"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-neutral-white-01 text-lg truncate">
+                                    {userData?.name ?? user?.name ?? "Você"}
+                                </h3>
+                                <p className="text-sm text-neutral-white-02">
+                                    Modo auto gerido ativo
+                                </p>
+                                <p className="text-xs text-neutral-white-02 mt-2">
+                                    Seu vínculo profissional é implícito com você mesmo.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 w-full pt-2 border-t border-neutral-white-01/10">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate("/routines")}
+                                className="flex-1 border-primary/30 hover:border-primary hover:bg-primary/10"
+                            >
+                                Gerenciar rotinas
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate("/workout")}
+                                className="flex-1 border-primary/30 hover:border-primary hover:bg-primary/10"
+                            >
+                                Executar treino
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate("/professionalsList")}
+                                className="flex-1 border-primary/30 hover:border-primary hover:bg-primary/10"
+                            >
+                                Encontrar profissionais
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             ) : !bond || (bond.status !== "A" && bond.status !== "P") ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-4">
                     <img

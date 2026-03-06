@@ -847,6 +847,11 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<Guid>("ExerciseId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsBisetWithPrevious")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -857,6 +862,13 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<int?>("RestSeconds")
                         .HasColumnType("integer");
 
+                    b.Property<string>("SetType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Reps");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -864,6 +876,12 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<decimal?>("SuggestedLoad")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
+
+                    b.Property<int?>("TargetCalories")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TargetDurationSeconds")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("TargetRepsMax")
                         .HasColumnType("integer");
@@ -876,6 +894,13 @@ namespace Nutrifit.Repository.Migrations
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("WeightUnit")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("kg");
 
                     b.Property<Guid>("WorkoutTemplateId")
                         .HasColumnType("uuid");
@@ -1332,6 +1357,13 @@ namespace Nutrifit.Repository.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Nutricionista",
                             Status = "A"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000004"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Auto Gerido",
+                            Status = "A"
                         });
                 });
 
@@ -1427,6 +1459,179 @@ namespace Nutrifit.Repository.Migrations
                     b.HasIndex("PersonalId");
 
                     b.ToTable("Routines", (string)null);
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.SelfManagedExerciseTemplateEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<Guid?>("ExerciseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExerciseName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RestSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SetType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Reps");
+
+                    b.Property<decimal?>("SuggestedLoad")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int?>("TargetRepsMax")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TargetRepsMin")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TargetSets")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WeightUnit")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("kg");
+
+                    b.Property<Guid>("WorkoutTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("WorkoutTemplateId", "Order");
+
+                    b.ToTable("SelfManagedExerciseTemplates", (string)null);
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.SelfManagedWorkoutSessionEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasDefaultValue("IP");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal?>("TotalVolume")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("WorkoutTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkoutTemplateId");
+
+                    b.HasIndex("UserId", "StartedAt");
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("SelfManagedWorkoutSessions", (string)null);
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.SelfManagedWorkoutTemplateEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("EstimatedDurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasDefaultValue("A");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Order");
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("SelfManagedWorkoutTemplates", (string)null);
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.SetSessionEntity", b =>
@@ -1541,6 +1746,34 @@ namespace Nutrifit.Repository.Migrations
                     b.HasIndex("ProfileId");
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WeeklyGoalEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<int>("GoalDays")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("WeeklyGoals", (string)null);
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutEntity", b =>
@@ -2096,6 +2329,53 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("Personal");
                 });
 
+            modelBuilder.Entity("Nutrifit.Repository.Entities.SelfManagedExerciseTemplateEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.ExerciseEntity", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Nutrifit.Repository.Entities.SelfManagedWorkoutTemplateEntity", "WorkoutTemplate")
+                        .WithMany("Exercises")
+                        .HasForeignKey("WorkoutTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("WorkoutTemplate");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.SelfManagedWorkoutSessionEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nutrifit.Repository.Entities.SelfManagedWorkoutTemplateEntity", "WorkoutTemplate")
+                        .WithMany("Sessions")
+                        .HasForeignKey("WorkoutTemplateId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("User");
+
+                    b.Navigation("WorkoutTemplate");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.SelfManagedWorkoutTemplateEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Nutrifit.Repository.Entities.SetSessionEntity", b =>
                 {
                     b.HasOne("Nutrifit.Repository.Entities.ExerciseSessionEntity", "ExerciseSession")
@@ -2123,6 +2403,17 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("Address");
 
                     b.Navigation("Profile");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.WeeklyGoalEntity", b =>
+                {
+                    b.HasOne("Nutrifit.Repository.Entities.UserEntity", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.WorkoutEntity", b =>
@@ -2250,6 +2541,13 @@ namespace Nutrifit.Repository.Migrations
                     b.Navigation("CustomerRoutines");
 
                     b.Navigation("Workouts");
+                });
+
+            modelBuilder.Entity("Nutrifit.Repository.Entities.SelfManagedWorkoutTemplateEntity", b =>
+                {
+                    b.Navigation("Exercises");
+
+                    b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("Nutrifit.Repository.Entities.UserEntity", b =>

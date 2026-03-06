@@ -21,6 +21,32 @@ namespace Nutrifit.Services.Services
             _serviceScopeFactory = serviceScopeFactory;
         }
 
+        public async Task<ApiResponse> StartWorkoutSessionAsync(Guid customerId, StartWorkoutSessionRequest request)
+        {
+            var template = await _context.WorkoutTemplates
+                .FirstOrDefaultAsync(wt => wt.Id == request.WorkoutTemplateId && wt.Status == "A");
+
+            if (template == null)
+                return ApiResponse.CreateFailure("Template de treino não encontrado.");
+
+            var session = new WorkoutSessionEntity
+            {
+                Id = Guid.NewGuid(),
+                WorkoutTemplateId = request.WorkoutTemplateId,
+                CustomerId = customerId,
+                RoutineId = template.RoutineId,
+                StartedAt = DateTime.UtcNow,
+                Status = "IP",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.WorkoutSessions.Add(session);
+            await _context.SaveChangesAsync();
+
+            return ApiResponse.CreateSuccess("Sessão iniciada com sucesso.", new { sessionId = session.Id });
+        }
+
         public async Task<ApiResponse> CompleteWorkoutSessionAsync(Guid customerId, CompleteWorkoutSessionRequest request)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -112,6 +138,96 @@ namespace Nutrifit.Services.Services
                 await transaction.CommitAsync();
 
                 _ = SendWorkoutCompletionNotificationAsync(customerId, request.WorkoutTemplateId);
+
+                return ApiResponse.CreateSuccess("Treino finalizado com sucesso!", session.Id);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return ApiResponse.CreateFailure($"Erro ao finalizar treino: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse> FinishWorkoutSessionAsync(Guid customerId, Guid sessionId, CompleteWorkoutSessionRequest request)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var session = await _context.WorkoutSessions
+                    .Include(ws => ws.ExerciseSessions)
+                        .ThenInclude(es => es.SetSessions)
+                    .FirstOrDefaultAsync(ws => ws.Id == sessionId && ws.CustomerId == customerId);
+
+                if (session == null)
+                    return ApiResponse.CreateFailure("Sessão não encontrada.");
+
+                if (session.Status == "C")
+                    return ApiResponse.CreateFailure("Sessão já finalizada.");
+
+                session.WorkoutTemplateId = request.WorkoutTemplateId;
+                session.StartedAt = request.StartedAt;
+                session.CompletedAt = DateTime.UtcNow;
+                session.Status = "C";
+                session.DurationMinutes = request.DurationMinutes;
+                session.DifficultyRating = request.DifficultyRating;
+                session.EnergyRating = request.EnergyRating;
+                session.Notes = request.Notes;
+                session.UpdatedAt = DateTime.UtcNow;
+
+                _context.SetSessions.RemoveRange(session.ExerciseSessions.SelectMany(x => x.SetSessions));
+                _context.ExerciseSessions.RemoveRange(session.ExerciseSessions);
+
+                decimal totalVolume = 0;
+                foreach (var exerciseData in request.ExerciseSessions)
+                {
+                    var exerciseSession = new ExerciseSessionEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        WorkoutSessionId = session.Id,
+                        ExerciseTemplateId = exerciseData.ExerciseTemplateId,
+                        ExerciseId = exerciseData.ExerciseId,
+                        Order = exerciseData.Order,
+                        StartedAt = exerciseData.StartedAt ?? DateTime.UtcNow,
+                        CompletedAt = exerciseData.CompletedAt,
+                        Status = exerciseData.Status,
+                        Notes = exerciseData.Notes,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    _context.ExerciseSessions.Add(exerciseSession);
+
+                    foreach (var setData in exerciseData.Sets)
+                    {
+                        var setSession = new SetSessionEntity
+                        {
+                            Id = Guid.NewGuid(),
+                            ExerciseSessionId = exerciseSession.Id,
+                            SetNumber = setData.SetNumber,
+                            Load = setData.Load,
+                            Reps = setData.Reps,
+                            RestSeconds = setData.RestSeconds,
+                            Completed = setData.Completed,
+                            Notes = setData.Notes,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _context.SetSessions.Add(setSession);
+
+                        if (setData.Load.HasValue && setData.Reps.HasValue)
+                        {
+                            totalVolume += setData.Load.Value * setData.Reps.Value;
+                        }
+                    }
+                }
+
+                session.TotalVolume = totalVolume;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _ = SendWorkoutCompletionNotificationAsync(customerId, session.WorkoutTemplateId);
 
                 return ApiResponse.CreateSuccess("Treino finalizado com sucesso!", session.Id);
             }

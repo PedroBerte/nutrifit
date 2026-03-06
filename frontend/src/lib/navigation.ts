@@ -4,9 +4,7 @@
  * cada rota sabe para qual rota pai deve voltar.
  */
 
-import { UserProfiles } from "@/types/user";
-
-type RoutePattern = {
+ type RoutePattern = {
   pattern: RegExp;
   getParent: (match: RegExpMatchArray, userProfile?: string | null) => string;
 };
@@ -73,38 +71,36 @@ const routePatterns: RoutePattern[] = [
     getParent: () => "/routines",
   },
   {
-    // /routines -> /personal
+    // /routines -> /home
     pattern: /^\/routines$/,
-    getParent: () => "/personal",
+    getParent: () => "/home",
   },
   {
-    // /students -> /personal
+    // /students -> /home
     pattern: /^\/students$/,
-    getParent: () => "/personal",
+    getParent: () => "/home",
   },
   {
-    // /bond -> /personal
+    // /bond -> /home
     pattern: /^\/bond$/,
-    getParent: () => "/personal",
+    getParent: () => "/home",
   },
   {
-    // /agenda -> /personal
+    // /agenda -> /home
     pattern: /^\/agenda$/,
-    getParent: () => "/personal",
+    getParent: () => "/home",
   },
 
   // Shared routes
   {
-    // /profile -> home baseado no perfil
+    // /profile -> /home
     pattern: /^\/profile$/,
-    getParent: (_, userProfile) =>
-      userProfile === UserProfiles.PERSONAL ? "/personal" : "/workout",
+    getParent: () => "/home",
   },
   {
-    // /diet -> home baseado no perfil
+    // /diet -> /home
     pattern: /^\/diet$/,
-    getParent: (_, userProfile) =>
-      userProfile === UserProfiles.PERSONAL ? "/personal" : "/workout",
+    getParent: () => "/home",
   },
   {
     // /appointments -> /workout (student)
@@ -139,5 +135,5 @@ export function getParentRoute(
   }
 
   // Fallback: volta para a home do perfil
-  return userProfile === UserProfiles.PERSONAL ? "/personal" : "/workout";
+  return "/home";
 }

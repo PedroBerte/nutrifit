@@ -10,9 +10,7 @@ export function useGetAppointmentsByBondId(bondId: string) {
   return useQuery({
     queryKey: ["getAppointmentsByBondId", bondId],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        `/appointment/bond/${bondId}`
-      );
+      const request = await api.get<AppointmentType[]>(`/appointment/bond/${bondId}`);
       return request.data;
     },
     enabled: !!bondId,
@@ -36,9 +34,7 @@ export function useGetCustomerPendingAppointments() {
   return useQuery({
     queryKey: ["getCustomerPendingAppointments"],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        "/appointment/customer/pending"
-      );
+      const request = await api.get<AppointmentType[]>("/appointment/customer/pending");
       return request.data;
     },
     retry: 1,
@@ -49,9 +45,7 @@ export function useGetCustomerAppointments() {
   return useQuery({
     queryKey: ["getCustomerAppointments"],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        "/appointment/customer/all"
-      );
+      const request = await api.get<AppointmentType[]>("/appointment/customer/all");
       return request.data;
     },
     retry: 1,
@@ -62,9 +56,7 @@ export function useGetProfessionalAppointments() {
   return useQuery({
     queryKey: ["getProfessionalAppointments"],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        "/appointment/professional/all"
-      );
+      const request = await api.get<AppointmentType[]>("/appointment/professional/all");
       return request.data;
     },
     retry: 1,
@@ -75,9 +67,7 @@ export function useGetProfessionalUpcomingAppointments(limit?: number) {
   return useQuery({
     queryKey: ["getProfessionalUpcomingAppointments", limit],
     queryFn: async () => {
-      const request = await api.get<AppointmentType[]>(
-        "/appointment/professional/all"
-      );
+      const request = await api.get<AppointmentType[]>("/appointment/professional/all");
       const now = new Date();
       const upcoming = request.data
         .filter((apt) => {

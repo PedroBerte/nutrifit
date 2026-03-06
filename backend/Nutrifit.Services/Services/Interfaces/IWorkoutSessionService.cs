@@ -9,6 +9,8 @@ namespace Nutrifit.Services.Services.Interfaces
     public interface IWorkoutSessionService
     {
         // Session Management
+        Task<ApiResponse> StartWorkoutSessionAsync(Guid customerId, StartWorkoutSessionRequest request);
+        Task<ApiResponse> FinishWorkoutSessionAsync(Guid customerId, Guid sessionId, CompleteWorkoutSessionRequest request);
         Task<ApiResponse> CompleteWorkoutSessionAsync(Guid customerId, CompleteWorkoutSessionRequest request);
         Task<ApiResponse> GetWorkoutSessionByIdAsync(Guid sessionId);
         Task<ApiResponse> GetCustomerWorkoutHistoryAsync(Guid customerId, int page = 1, int pageSize = 20);

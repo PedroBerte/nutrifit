@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGetUserById } from "@/services/api/user";
+import { useGetUserById, useUpdateUser } from "@/services/api/user";
 import { Button } from "@/components/ui/button";
 import { UserProfiles } from "@/types/user";
 import { UpdateProfileDrawer } from "@/components/profile/UpdateProfileDrawer";
@@ -11,7 +11,6 @@ import {
   Calendar,
   Mail,
   Phone,
-  MapPin,
   User,
   LogOut,
   Dumbbell,
@@ -24,8 +23,9 @@ import {
   Loader2,
   Users,
   X,
+  ShieldCheck,
+  ShieldOff,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { useGetBondAsCustomer, useUpdateBond } from "@/services/api/bond";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { toast } from "sonner";
@@ -54,9 +54,11 @@ export default function Profile() {
     refetch: refetchBond,
   } = useGetBondAsCustomer();
   const updateBondMutation = useUpdateBond();
+  const updateUserMutation = useUpdateUser();
   const [isUpdateDrawerOpen, setIsUpdateDrawerOpen] = useState(false);
   const [showUnbondDialog, setShowUnbondDialog] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showSelfManagedDialog, setShowSelfManagedDialog] = useState(false);
 
   if (isLoading) {
     return (
@@ -95,9 +97,14 @@ export default function Profile() {
         label: "Aluno",
         color: "bg-purple-500/10 text-purple-400 border-purple-500/20",
       },
+      [UserProfiles.SELF_MANAGED]: {
+        icon: <ShieldCheck className="w-4 h-4" />,
+        label: "Auto Gerido",
+        color: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+      },
     };
 
-    const profileId = userData.profile?.id || UserProfiles.STUDENT;
+    const profileId = userData!.profile?.id || UserProfiles.STUDENT;
     const badge = badges[profileId] || badges[UserProfiles.STUDENT];
 
     return (
@@ -161,11 +168,31 @@ export default function Profile() {
     }
   };
 
+  const isSelfManaged = userData?.profile?.id === UserProfiles.SELF_MANAGED;
+  const isStudent = userData?.profile?.id === UserProfiles.STUDENT;
+
+  const handleToggleSelfManaged = async () => {
+    if (!userData) return;
+    const newProfileId = isSelfManaged ? UserProfiles.STUDENT : UserProfiles.SELF_MANAGED;
+    try {
+      await updateUserMutation.mutateAsync({ ...userData, profileId: newProfileId });
+      toast.success(
+        isSelfManaged
+          ? "Modo auto gerido desativado. Faça login novamente para aplicar."
+          : "Modo auto gerido ativado. Faça login novamente para aplicar."
+      );
+      setShowSelfManagedDialog(false);
+      refetch();
+    } catch {
+      toast.error("Erro ao alterar modo. Tente novamente.");
+    }
+  };
+
   return (
-    <div className="min-h-screen pt-2 bg-neutral-dark-01">
-      {/* Header com gradiente */}
+    <div className="py-4">
+      {/* Header */}
       <motion.div
-        className="flex items-center justify-between max-w-4xl mx-auto"
+        className="flex items-center justify-between max-w-4xl mx-auto mb-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -200,18 +227,16 @@ export default function Profile() {
 
           {/* Card de perfil */}
           <motion.div
-            className="w-full max-w-4xl mx-auto mt-4 xs:mt-6 overflow-hidden border shadow-xl bg-neutral-dark-03 rounded-xl xs:rounded-2xl border-neutral-white-01/5"
+            className="md:col-span-2 overflow-hidden border shadow-xl bg-neutral-dark-03 rounded-xl xs:rounded-2xl border-neutral-white-01/5"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            {/* Banner top - mais suave e com gradiente radial */}
-            <div className="relative h-16 xs:h-24 overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5">
-              <div className="absolute inset-0 bg-gradient-to-t from-neutral-dark-03 via-transparent to-transparent" />
-            </div>
+            {/* Banner top */}
+            <div className="h-16 xs:h-20 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5" />
 
             {/* Conteúdo do perfil */}
-            <div className="px-4 xs:px-6 pb-4 xs:pb-6 -mt-12 xs:-mt-16">
+            <div className="px-4 xs:px-6 pb-4 xs:pb-6 -mt-10 xs:-mt-12 bg-neutral-dark-03">
               <div className="flex flex-col items-start gap-4 xs:gap-6 sm:flex-row sm:items-end">
                 {/* Avatar */}
                 <div className="relative">
@@ -226,7 +251,7 @@ export default function Profile() {
                     </h2>
                   </div>
                   <div className="flex flex-wrap gap-1.5 xs:gap-2">
-                    {userData.profile?.id !== UserProfiles.STUDENT && getProfileBadge()}
+                    {getProfileBadge()}
                     {userData.professionalCredential && (
                       <div className="inline-flex items-center gap-1 xs:gap-1.5 px-2 xs:px-3 py-1 xs:py-1.5 rounded-full border text-[10px] xs:text-xs font-medium bg-amber-500/10 text-amber-400 border-amber-500/20">
                         <Award className="w-3 h-3 xs:w-4 xs:h-4" />
@@ -368,6 +393,54 @@ export default function Profile() {
                   Nenhum vínculo ativo no momento
                 </p>
               )}
+            </motion.div>
+          )}
+
+          {/* Modo Auto Gerido - apenas para STUDENT e SELF_MANAGED */}
+          {(isStudent || isSelfManaged) && (
+            <motion.div
+              className="p-4 xs:p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.45 }}
+            >
+              <div className="flex items-center gap-2 mb-3 xs:mb-4">
+                <div className="flex items-center justify-center w-7 h-7 xs:w-8 xs:h-8 rounded-lg bg-orange-500/10">
+                  <ShieldCheck className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-orange-400" />
+                </div>
+                <h3 className="font-semibold text-sm xs:text-base text-neutral-white-01">
+                  Modo Auto Gerido
+                </h3>
+              </div>
+
+              <p className="text-xs xs:text-sm text-neutral-white-02 mb-4 leading-relaxed">
+                {isSelfManaged
+                  ? "Você está no modo auto gerido. Crie e execute seus próprios treinos sem precisar de um personal trainer."
+                  : "No modo auto gerido você pode criar e executar seus próprios treinos, sem depender de um personal trainer."}
+              </p>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSelfManagedDialog(true)}
+                className={
+                  isSelfManaged
+                    ? "border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
+                    : "border-orange-500/30 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/50"
+                }
+              >
+                {isSelfManaged ? (
+                  <>
+                    <ShieldOff className="w-4 h-4 mr-2" />
+                    Desativar modo auto gerido
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4 mr-2" />
+                    Ativar modo auto gerido
+                  </>
+                )}
+              </Button>
             </motion.div>
           )}
 
@@ -553,6 +626,46 @@ export default function Profile() {
           </Button>
         </motion.div>
       </div>
+
+      {/* Self-managed toggle Dialog */}
+      <Dialog open={showSelfManagedDialog} onOpenChange={setShowSelfManagedDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isSelfManaged ? "Desativar modo auto gerido?" : "Ativar modo auto gerido?"}
+            </DialogTitle>
+            <DialogDescription>
+              {isSelfManaged
+                ? "Você voltará a ser um aluno e precisará de um personal trainer para receber treinos."
+                : "Você poderá criar e executar seus próprios treinos sem um personal trainer."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-3">
+            <p className="text-sm text-muted-foreground">
+              {isSelfManaged
+                ? "Seus treinos auto geridos serão mantidos. Para receber rotinas personalizadas, vincule-se a um personal."
+                : "Você ainda poderá se vincular a um personal trainer quando quiser."}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              ⚠️ É necessário fazer login novamente para aplicar a mudança.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSelfManagedDialog(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant={isSelfManaged ? "destructive" : "default"}
+              onClick={handleToggleSelfManaged}
+              disabled={updateUserMutation.isPending}
+            >
+              {updateUserMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
+              ) : isSelfManaged ? "Desativar" : "Ativar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Unbind Confirmation Dialog */}
       <Dialog open={showUnbondDialog} onOpenChange={setShowUnbondDialog}>

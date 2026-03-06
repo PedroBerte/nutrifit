@@ -37,6 +37,10 @@ namespace Nutrifit.Repository
         public DbSet<WorkoutSessionEntity> WorkoutSessions => Set<WorkoutSessionEntity>();
         public DbSet<ExerciseSessionEntity> ExerciseSessions => Set<ExerciseSessionEntity>();
         public DbSet<SetSessionEntity> SetSessions => Set<SetSessionEntity>();
+        public DbSet<WeeklyGoalEntity> WeeklyGoals => Set<WeeklyGoalEntity>();
+        public DbSet<SelfManagedWorkoutTemplateEntity> SelfManagedWorkoutTemplates => Set<SelfManagedWorkoutTemplateEntity>();
+        public DbSet<SelfManagedExerciseTemplateEntity> SelfManagedExerciseTemplates => Set<SelfManagedExerciseTemplateEntity>();
+        public DbSet<SelfManagedWorkoutSessionEntity> SelfManagedWorkoutSessions => Set<SelfManagedWorkoutSessionEntity>();
 
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
         {
@@ -604,6 +608,9 @@ namespace Nutrifit.Repository
 
                 e.Property(x => x.SuggestedLoad).HasPrecision(10, 2);
                 e.Property(x => x.Notes).HasMaxLength(500);
+                e.Property(x => x.SetType).IsRequired().HasMaxLength(20).HasDefaultValue("Reps");
+                e.Property(x => x.WeightUnit).IsRequired().HasMaxLength(10).HasDefaultValue("kg");
+                e.Property(x => x.IsBisetWithPrevious).HasDefaultValue(false);
 
                 e.Property(x => x.CreatedAt)
                     .HasColumnType("timestamp without time zone")
@@ -743,6 +750,130 @@ namespace Nutrifit.Repository
                     .OnDelete(DeleteBehavior.Cascade);
 
                 e.HasIndex(x => new { x.ExerciseSessionId, x.SetNumber });
+            });
+
+            b.Entity<WeeklyGoalEntity>(e =>
+            {
+                e.ToTable("WeeklyGoals");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.GoalDays).IsRequired();
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.Property(x => x.UpdatedAt)
+                    .HasColumnType("timestamp without time zone");
+
+                e.HasOne(x => x.User)
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasIndex(x => x.UserId).IsUnique();
+            });
+
+            b.Entity<SelfManagedWorkoutTemplateEntity>(e =>
+            {
+                e.ToTable("SelfManagedWorkoutTemplates");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.Title).IsRequired().HasMaxLength(200);
+                e.Property(x => x.Description).HasMaxLength(1000);
+                e.Property(x => x.Status).HasMaxLength(1).HasDefaultValue("A");
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.Property(x => x.UpdatedAt)
+                    .HasColumnType("timestamp without time zone");
+
+                e.HasOne(x => x.User)
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasMany(x => x.Exercises)
+                    .WithOne(x => x.WorkoutTemplate)
+                    .HasForeignKey(x => x.WorkoutTemplateId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasMany(x => x.Sessions)
+                    .WithOne(x => x.WorkoutTemplate)
+                    .HasForeignKey(x => x.WorkoutTemplateId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                e.HasIndex(x => new { x.UserId, x.Order });
+                e.HasIndex(x => new { x.UserId, x.Status });
+            });
+
+            b.Entity<SelfManagedExerciseTemplateEntity>(e =>
+            {
+                e.ToTable("SelfManagedExerciseTemplates");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.ExerciseName).IsRequired().HasMaxLength(200);
+                e.Property(x => x.SuggestedLoad).HasPrecision(10, 2);
+                e.Property(x => x.Notes).HasMaxLength(500);
+                e.Property(x => x.SetType).IsRequired().HasMaxLength(20).HasDefaultValue("Reps");
+                e.Property(x => x.WeightUnit).IsRequired().HasMaxLength(10).HasDefaultValue("kg");
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(x => x.WorkoutTemplate)
+                    .WithMany(x => x.Exercises)
+                    .HasForeignKey(x => x.WorkoutTemplateId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasOne(x => x.Exercise)
+                    .WithMany()
+                    .HasForeignKey(x => x.ExerciseId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                e.HasIndex(x => new { x.WorkoutTemplateId, x.Order });
+            });
+
+            b.Entity<SelfManagedWorkoutSessionEntity>(e =>
+            {
+                e.ToTable("SelfManagedWorkoutSessions");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.Title).IsRequired().HasMaxLength(200);
+                e.Property(x => x.Status).HasMaxLength(2).HasDefaultValue("IP");
+                e.Property(x => x.TotalVolume).HasPrecision(12, 2);
+                e.Property(x => x.Notes).HasMaxLength(1000);
+
+                e.Property(x => x.StartedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .IsRequired();
+
+                e.Property(x => x.CompletedAt)
+                    .HasColumnType("timestamp without time zone");
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(x => x.User)
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasOne(x => x.WorkoutTemplate)
+                    .WithMany(x => x.Sessions)
+                    .HasForeignKey(x => x.WorkoutTemplateId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                e.HasIndex(x => new { x.UserId, x.StartedAt });
+                e.HasIndex(x => new { x.UserId, x.Status });
             });
 
             DatabaseSeeder.Seed(b);

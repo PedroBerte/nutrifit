@@ -79,18 +79,120 @@ public class UserService : IUserService
     {
         try
         {
-            var existing = await _context.Users.FindAsync(user.Id);
+            var existing = await _context.Users
+                .Include(x => x.Address)
+                .Include(x => x.ProfessionalCredential)
+                .Include(x => x.Profile)
+                .FirstOrDefaultAsync(x => x.Id == user.Id);
+
             if (existing == null)
                 throw new InvalidOperationException("usuário não encontrado para atualização.");
-            _context.Entry(existing).CurrentValues.SetValues(user);
+
+            existing.Name = user.Name;
+            existing.Email = user.Email;
+            existing.ProfileId = user.ProfileId;
+            existing.PhoneNumber = user.PhoneNumber;
+            existing.Sex = user.Sex;
+            existing.DateOfBirth = user.DateOfBirth;
+            existing.ImageUrl = user.ImageUrl;
+
+            if (!string.IsNullOrWhiteSpace(user.Password))
+                existing.Password = user.Password;
+
+            if (user.Address != null)
+            {
+                if (existing.AddressId.HasValue && existing.Address != null)
+                {
+                    existing.Address.AddressLine = user.Address.AddressLine;
+                    existing.Address.Number = user.Address.Number;
+                    existing.Address.City = user.Address.City;
+                    existing.Address.State = user.Address.State;
+                    existing.Address.ZipCode = user.Address.ZipCode;
+                    existing.Address.Country = user.Address.Country;
+                    existing.Address.AddressType = user.Address.AddressType;
+                    existing.Address.Latitude = user.Address.Latitude;
+                    existing.Address.Longitude = user.Address.Longitude;
+                    existing.Address.UpdatedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    var newAddress = new AddressEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        AddressLine = user.Address.AddressLine,
+                        Number = user.Address.Number,
+                        City = user.Address.City,
+                        State = user.Address.State,
+                        ZipCode = user.Address.ZipCode,
+                        Country = user.Address.Country,
+                        AddressType = user.Address.AddressType,
+                        Latitude = user.Address.Latitude,
+                        Longitude = user.Address.Longitude,
+                        Status = string.IsNullOrWhiteSpace(user.Address.Status) ? "A" : user.Address.Status,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.Addresses.Add(newAddress);
+                    existing.AddressId = newAddress.Id;
+                }
+            }
+
+            if (user.ProfessionalCredential != null && await IsProfessionalProfileAsync(existing.ProfileId))
+            {
+                if (existing.ProfessionalCredential == null)
+                {
+                    existing.ProfessionalCredential = new ProfessionalCredentialEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        ProfessionalId = existing.Id,
+                        Type = user.ProfessionalCredential.Type,
+                        CredentialId = user.ProfessionalCredential.CredentialId,
+                        Biography = user.ProfessionalCredential.Biography,
+                        Status = string.IsNullOrWhiteSpace(user.ProfessionalCredential.Status)
+                            ? "A"
+                            : user.ProfessionalCredential.Status,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                }
+                else
+                {
+                    existing.ProfessionalCredential.Type = user.ProfessionalCredential.Type;
+                    existing.ProfessionalCredential.CredentialId = user.ProfessionalCredential.CredentialId;
+                    existing.ProfessionalCredential.Biography = user.ProfessionalCredential.Biography;
+                    existing.ProfessionalCredential.Status = string.IsNullOrWhiteSpace(user.ProfessionalCredential.Status)
+                        ? existing.ProfessionalCredential.Status
+                        : user.ProfessionalCredential.Status;
+                    existing.ProfessionalCredential.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+
             existing.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+
+            await _context.Entry(existing).Reference(x => x.Address).LoadAsync();
+            await _context.Entry(existing).Reference(x => x.ProfessionalCredential).LoadAsync();
+            await _context.Entry(existing).Reference(x => x.Profile).LoadAsync();
+
             return existing;
         }
         catch (Exception ex)
         {
             throw new Exception("Erro ao atualizar usuário.", ex);
         }
+    }
+
+    private async Task<bool> IsProfessionalProfileAsync(Guid profileId)
+    {
+        var profileName = await _context.Profiles
+            .Where(x => x.Id == profileId)
+            .Select(x => x.Name)
+            .FirstOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(profileName))
+            return false;
+
+        var normalized = profileName.Trim().ToLowerInvariant();
+        return normalized.Contains("personal") || normalized.Contains("nutricionista") || normalized.Contains("nutritionist");
     }
 
     public async Task DeleteAsync(Guid id)

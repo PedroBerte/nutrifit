@@ -9,7 +9,6 @@ import { persistor, store } from "./store/index.ts";
 import { Provider } from "react-redux";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { AppRoutes } from "./routes/AppRoutes.tsx";
-import { SidebarProvider } from "./components/ui/sidebar.tsx";
 
 registerSW({
   onNeedRefresh() {

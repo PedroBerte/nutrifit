@@ -7,6 +7,8 @@ export interface LocalSetSession {
   load?: number;
   reps?: number;
   restSeconds?: number;
+  durationSeconds?: number;
+  calories?: number;
   completed: boolean;
   notes?: string;
   startedAt?: string;
@@ -33,6 +35,11 @@ export interface LocalExerciseSession {
   targetRepsMax?: number;
   suggestedLoad?: number;
   restSeconds?: number;
+  setType?: string;
+  weightUnit?: string;
+  isBisetWithPrevious?: boolean;
+  targetDurationSeconds?: number;
+  targetCalories?: number;
 }
 
 export interface LocalWorkoutSession {
@@ -200,6 +207,8 @@ export function skipExercise(
 
 export function calculateTotalVolume(workout: LocalWorkoutSession): number {
   return workout.exercises.reduce((total, exercise) => {
+    // Only count load×reps for "Reps" type exercises
+    if (exercise.setType && exercise.setType !== "Reps") return total;
     const exerciseVolume = exercise.sets.reduce((sum, set) => {
       if (set.load && set.reps) {
         return sum + set.load * set.reps;

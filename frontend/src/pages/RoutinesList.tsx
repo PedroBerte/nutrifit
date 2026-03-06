@@ -14,9 +14,9 @@ export default function RoutinesList() {
   const [search, setSearch] = useState("");
 
   const filteredRoutines = useMemo(() => {
-    if (!routines?.data?.items) return [];
-    if (!search.trim()) return routines.data.items;
-    return routines.data.items.filter((routine) =>
+    const items = Array.isArray(routines?.data?.items) ? routines.data.items : [];
+    if (!search.trim()) return items;
+    return items.filter((routine) =>
       routine.title.toLowerCase().includes(search.toLowerCase())
     );
   }, [routines, search]);

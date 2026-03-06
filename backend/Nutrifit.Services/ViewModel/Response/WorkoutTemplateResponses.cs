@@ -29,9 +29,14 @@ namespace Nutrifit.Services.ViewModel.Response
         public int TargetSets { get; set; }
         public int? TargetRepsMin { get; set; }
         public int? TargetRepsMax { get; set; }
+        public int? TargetDurationSeconds { get; set; }
+        public int? TargetCalories { get; set; }
         public decimal? SuggestedLoad { get; set; }
         public int? RestSeconds { get; set; }
         public string? Notes { get; set; }
+        public string SetType { get; set; } = string.Empty;
+        public string WeightUnit { get; set; } = string.Empty;
+        public bool IsBisetWithPrevious { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }
