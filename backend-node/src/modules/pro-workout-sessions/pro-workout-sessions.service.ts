@@ -66,7 +66,7 @@ export async function finishProSession(
     notes?: string;
     difficultyRating?: number;
     energyRating?: number;
-    exercises?: Array<{ exerciseTemplateId: string; sets: Array<{ setNumber: number; load?: number; reps?: number; restSeconds?: number; completed?: boolean; notes?: string }> }>;
+    exercises?: Array<{ exerciseTemplateId: string; sets: Array<{ setNumber: number; load?: number; reps?: number; restSeconds?: number; durationSeconds?: number; calories?: number; completed?: boolean; notes?: string }> }>;
   }
 ) {
   const session = await getProSessionById(customerId, sessionId);

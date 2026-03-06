@@ -5,7 +5,6 @@ import { useDispatch } from "react-redux";
 import { BounceLoader } from "react-spinners";
 import { decodeAndNormalizeJwt } from "@/lib/jwt";
 import { signInFromJwt } from "@/store/authSlice";
-import { UserProfiles } from "@/types/user";
 import { motion } from "motion/react";
 
 export default function Callback() {
@@ -57,12 +56,11 @@ export default function Callback() {
         );
       }
 
-      if (decoded.profile) {
-        if (decoded.profile === UserProfiles.PERSONAL) {
-          navigate("/personal", { replace: true });
-        } else {
-          navigate("/workout", { replace: true });
-        }
+      if (decoded.firstAccess) {
+        // Usuário auto-provisionado, ainda não completou o cadastro
+        navigate("/first-access?token=" + token, { replace: true });
+      } else if (decoded.profile) {
+        navigate("/home", { replace: true });
       } else {
         navigate("/first-access?token=" + token, { replace: true });
       }

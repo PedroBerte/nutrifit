@@ -17,6 +17,8 @@ export const finishSessionSchema = z.object({
       load: z.number().nonnegative().optional(),
       reps: z.number().int().nonnegative().optional(),
       restSeconds: z.number().int().nonnegative().optional(),
+      durationSeconds: z.number().int().nonnegative().optional(),
+      calories: z.number().nonnegative().optional(),
       completed: z.boolean().optional().default(true),
       notes: z.string().optional(),
     })),

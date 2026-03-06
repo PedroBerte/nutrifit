@@ -95,7 +95,7 @@ export default function WorkoutSessionDetails() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="flex flex-col h-full bg-neutral-dark-01 p-4 gap-4"
+      className="flex flex-col h-full bg-neutral-dark-01 py-4 gap-4"
     >
       {/* Header */}
       <div className="flex items-center gap-3">

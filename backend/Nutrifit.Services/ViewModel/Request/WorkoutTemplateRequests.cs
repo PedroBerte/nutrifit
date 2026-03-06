@@ -22,6 +22,11 @@ namespace Nutrifit.Services.ViewModel.Request
         public decimal? SuggestedLoad { get; set; }
         public int? RestSeconds { get; set; }
         public string? Notes { get; set; }
+        public string SetType { get; set; } = "Reps";
+        public string WeightUnit { get; set; } = "kg";
+        public bool IsBisetWithPrevious { get; set; } = false;
+        public int? TargetDurationSeconds { get; set; }
+        public decimal? TargetCalories { get; set; }
     }
 
     public class UpdateWorkoutTemplateRequest
@@ -41,5 +46,10 @@ namespace Nutrifit.Services.ViewModel.Request
         public decimal? SuggestedLoad { get; set; }
         public int? RestSeconds { get; set; }
         public string? Notes { get; set; }
+        public string? SetType { get; set; }
+        public string? WeightUnit { get; set; }
+        public bool? IsBisetWithPrevious { get; set; }
+        public int? TargetDurationSeconds { get; set; }
+        public decimal? TargetCalories { get; set; }
     }
 }

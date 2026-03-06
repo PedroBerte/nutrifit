@@ -18,6 +18,11 @@ export const addExerciseSchema = z.object({
   suggestedLoad: z.number().positive().optional(),
   restSeconds: z.number().int().nonnegative().optional(),
   notes: z.string().optional(),
+  setType: z.string().optional().default("Reps"),
+  weightUnit: z.string().optional().default("kg"),
+  isBisetWithPrevious: z.boolean().optional().default(false),
+  targetDurationSeconds: z.number().int().nonnegative().optional(),
+  targetCalories: z.number().nonnegative().optional(),
 });
 
 export const updateExerciseTemplateSchema = addExerciseSchema.partial();

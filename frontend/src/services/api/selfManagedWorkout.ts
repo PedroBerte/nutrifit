@@ -101,6 +101,18 @@ export function useStartSelfManagedWorkoutSession() {
   });
 }
 
+export function useGetMySelfManagedWorkoutSessions(enabled: boolean = true) {
+  return useQuery({
+    queryKey: ["getMySelfManagedWorkoutSessions"],
+    queryFn: async () => {
+      const request = await api.get<SelfManagedWorkoutSession[]>("/workouts/sessions");
+      return request.data;
+    },
+    enabled,
+    retry: 1,
+  });
+}
+
 export function useGetSelfManagedWorkoutSession(sessionId: string | null | undefined) {
   return useQuery({
     queryKey: ["getSelfManagedWorkoutSession", sessionId],

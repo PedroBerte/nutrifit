@@ -51,7 +51,16 @@ export async function sendMagicLinkHandler(request: Request, response: Response)
 }
 
 export async function validateMagicLinkHandler(request: Request, response: Response) {
-  const { token } = request.query as { token: string };
+  const tokenFromBody =
+    typeof request.body?.token === "string" ? request.body.token : undefined;
+  const tokenFromQuery =
+    typeof request.query?.token === "string" ? request.query.token : undefined;
+  const token = tokenFromBody ?? tokenFromQuery;
+
+  if (!token || token.trim().length === 0) {
+    return response.status(400).json({ message: "Token is required" });
+  }
+
   const jwt = await validateMagicLink(token);
   return response.status(200).json({ token: jwt });
 }

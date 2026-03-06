@@ -53,7 +53,12 @@ export default function Workout() {
   }, []);
 
   const routines = routinesResponse?.data?.items || [];
-  const isSelfManagedUser = userData?.profileId === UserProfiles.SELF_MANAGED;
+  const rawProfileValue =
+    typeof user?.raw?.profile === "string" ? user.raw.profile.toLowerCase() : "";
+  const isSelfManagedUser =
+    userData?.profileId === UserProfiles.SELF_MANAGED ||
+    user?.profile === UserProfiles.SELF_MANAGED ||
+    rawProfileValue === "selfmanaged";
   const {
     data: selfManagedWorkouts,
     isLoading: isLoadingSelfManagedWorkouts,
@@ -301,7 +306,7 @@ export default function Workout() {
     <div className="flex flex-1 py-4 flex-col gap-4">
       <p className="font-bold text-2xl">Meus Treinos</p>
 
-      {studentBond && studentBond.status === "A" && (
+      {studentBond && studentBond.status === "A" && !isSelfManagedUser && (
         <div className="flex gap-3 mt-2 items-start">
           <div
             className={cn(
@@ -446,7 +451,7 @@ export default function Workout() {
                     className="w-full border-primary/30 hover:border-primary hover:bg-primary/10"
                     onClick={() => navigate("/routines")}
                   >
-                    Criar treino no modo personal
+                    Criar treino no fluxo completo
                   </Button>
                 )}
 

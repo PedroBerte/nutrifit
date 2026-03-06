@@ -63,7 +63,7 @@ export async function deleteTemplate(templateId: string, personalId: string) {
 export async function addExerciseToTemplate(
   templateId: string,
   personalId: string,
-  data: { exerciseId: string; order?: number; targetSets: number; targetRepsMin?: number; targetRepsMax?: number; suggestedLoad?: number; restSeconds?: number; notes?: string }
+  data: { exerciseId: string; order?: number; targetSets: number; targetRepsMin?: number; targetRepsMax?: number; suggestedLoad?: number; restSeconds?: number; notes?: string; setType?: string; weightUnit?: string; isBisetWithPrevious?: boolean; targetDurationSeconds?: number; targetCalories?: number }
 ) {
   await assertPersonalOwnsTemplate(templateId, personalId);
   return prisma.exerciseTemplate.create({

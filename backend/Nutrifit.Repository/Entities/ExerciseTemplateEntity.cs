@@ -17,6 +17,17 @@ namespace Nutrifit.Repository.Entities
         public int? RestSeconds { get; set; }
         public string? Notes { get; set; }
 
+        // Tipo do set: "Reps" | "Time" | "Calories"
+        public string SetType { get; set; } = "Reps";
+        // Unidade de peso: "kg" | "lbs"
+        public string WeightUnit { get; set; } = "kg";
+        // Biset: indica se este exercício deve ser executado em biset com o anterior
+        public bool IsBisetWithPrevious { get; set; } = false;
+        // Alvo de duração em segundos (para SetType = "Time")
+        public int? TargetDurationSeconds { get; set; }
+        // Alvo de calorias (para SetType = "Calories")
+        public decimal? TargetCalories { get; set; }
+
         // Status: A = Ativo, I = Inativo (soft delete)
         public string Status { get; set; } = "A";
 

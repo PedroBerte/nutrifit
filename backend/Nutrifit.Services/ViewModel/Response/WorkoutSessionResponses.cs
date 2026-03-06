@@ -45,6 +45,9 @@ namespace Nutrifit.Services.ViewModel.Response
         public int? TargetRepsMin { get; set; }
         public int? TargetRepsMax { get; set; }
         public decimal? SuggestedLoad { get; set; }
+        public string SetType { get; set; } = "Reps";
+        public string WeightUnit { get; set; } = "kg";
+        public bool IsBisetWithPrevious { get; set; } = false;
     }
 
     public class SetSessionResponse
@@ -55,6 +58,8 @@ namespace Nutrifit.Services.ViewModel.Response
         public decimal? Load { get; set; }
         public int? Reps { get; set; }
         public int? RestSeconds { get; set; }
+        public int? DurationSeconds { get; set; }
+        public decimal? Calories { get; set; }
         public bool Completed { get; set; }
         public string? Notes { get; set; }
         public DateTime StartedAt { get; set; }

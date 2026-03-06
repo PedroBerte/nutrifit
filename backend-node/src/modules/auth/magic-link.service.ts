@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import { getRedis } from "../../redis";
 import { prisma } from "../../prisma";
 import { AppError } from "../../common/app-error";
 import { createAccessToken } from "./auth.service";
@@ -17,30 +16,15 @@ function cleanupExpiredMagicLinks() {
 }
 
 async function setMagicLinkUser(tokenHash: string, userId: string) {
-  try {
-    const redis = getRedis();
-    await redis.set(`ml:${tokenHash}`, userId, "EX", ML_TTL_SECONDS);
-    return;
-  } catch {
-    cleanupExpiredMagicLinks();
-    memoryMagicLinks.set(tokenHash, {
-      userId,
-      expiresAt: Date.now() + ML_TTL_SECONDS * 1000,
-    });
-  }
+  cleanupExpiredMagicLinks();
+  memoryMagicLinks.set(tokenHash, {
+    userId,
+    expiresAt: Date.now() + ML_TTL_SECONDS * 1000,
+  });
 }
 
 async function consumeMagicLinkUser(tokenHash: string): Promise<string | null> {
-  try {
-    const redis = getRedis();
-    const userId = await redis.get(`ml:${tokenHash}`);
-    if (userId) {
-      await redis.del(`ml:${tokenHash}`);
-      return userId;
-    }
-  } catch {
-    cleanupExpiredMagicLinks();
-  }
+  cleanupExpiredMagicLinks();
 
   const memoryToken = memoryMagicLinks.get(tokenHash);
   if (!memoryToken) {
@@ -138,6 +122,8 @@ export async function validateMagicLink(rawToken: string): Promise<string> {
     email: user.email,
     isAdmin: user.isAdmin,
     profile: user.profile.name,
+    // firstAccess = true when auto-provisioned (no address yet = registration not completed)
+    firstAccess: !user.addressId,
   };
 
   return createAccessToken(claims);

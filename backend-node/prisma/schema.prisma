@@ -289,19 +289,24 @@ model WorkoutTemplate {
 }
 
 model ExerciseTemplate {
-  id                String    @id @default(uuid())
-  workoutTemplateId String
-  exerciseId        String
-  order             Int       @default(0)
-  targetSets        Int       @default(0)
-  targetRepsMin     Int?
-  targetRepsMax     Int?
-  suggestedLoad     Decimal?
-  restSeconds       Int?
-  notes             String?
-  status            String    @default("A")
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime? @updatedAt
+  id                    String    @id @default(uuid())
+  workoutTemplateId     String
+  exerciseId            String
+  order                 Int       @default(0)
+  targetSets            Int       @default(0)
+  targetRepsMin         Int?
+  targetRepsMax         Int?
+  suggestedLoad         Decimal?
+  restSeconds           Int?
+  notes                 String?
+  setType               String    @default("Reps")
+  weightUnit            String    @default("kg")
+  isBisetWithPrevious   Boolean   @default(false)
+  targetDurationSeconds Int?
+  targetCalories        Decimal?
+  status                String    @default("A")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime? @updatedAt
 
   workoutTemplate  WorkoutTemplate   @relation(fields: [workoutTemplateId], references: [id])
   exercise         Exercise          @relation(fields: [exerciseId], references: [id])
@@ -364,6 +369,8 @@ model SetSession {
   load              Decimal?
   reps              Int?
   restSeconds       Int?
+  durationSeconds   Int?
+  calories          Decimal?
   completed         Boolean   @default(true)
   notes             String?
   startedAt         DateTime  @default(now())

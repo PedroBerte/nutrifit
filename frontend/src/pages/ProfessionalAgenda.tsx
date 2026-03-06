@@ -225,7 +225,7 @@ export default function ProfessionalAgenda() {
   }
 
   return (
-    <div className="flex flex-col h-full gap-3 p-4 pb-20 overflow-x-hidden">
+    <div className="flex flex-col h-full gap-3 py-4 pb-20 overflow-x-hidden">
       <div className="flex items-center justify-between">
         <motion.h1
           initial={{ opacity: 0, y: -20 }}

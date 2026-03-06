@@ -2,13 +2,9 @@ import {
   ArrowRightFromLine,
   Calendar,
   ChevronUp,
-  ClosedCaption,
   Dumbbell,
   Home,
-  Inbox,
   LogOut,
-  Search,
-  Settings,
   User2,
   Users,
 } from "lucide-react";
@@ -48,19 +44,36 @@ const items: {
     title: "Início",
     url: "/home",
     icon: Home,
-    profiles: [UserProfiles.PERSONAL, UserProfiles.NUTRITIONIST],
+    profiles: [
+      UserProfiles.PERSONAL,
+      UserProfiles.NUTRITIONIST,
+      UserProfiles.STUDENT,
+      UserProfiles.SELF_MANAGED,
+    ],
   },
   {
-    title: "Treinos",
+    title: "Meus treinos",
     url: "/workout",
     icon: Dumbbell,
-    profiles: [UserProfiles.STUDENT],
+    profiles: [UserProfiles.STUDENT, UserProfiles.SELF_MANAGED],
   },
   {
-    title: "Treinos",
+    title: "Histórico de treinos",
+    url: "/workout/history",
+    icon: Dumbbell,
+    profiles: [UserProfiles.SELF_MANAGED, UserProfiles.STUDENT],
+  },
+  {
+    title: "Meu perfil",
+    url: "/profile",
+    icon: User2,
+    profiles: [UserProfiles.SELF_MANAGED],
+  },
+  {
+    title: "Gerenciar rotinas",
     url: "/routines",
     icon: Dumbbell,
-    profiles: [UserProfiles.PERSONAL],
+    profiles: [UserProfiles.PERSONAL, UserProfiles.SELF_MANAGED],
   },
   {
     title: "Agenda",
@@ -107,27 +120,11 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const rawProfileValue =
-    typeof user?.raw?.profile === "string" ? user.raw.profile.toLowerCase() : "";
-  const currentUserProfile = user?.profile as UserProfiles | undefined;
-  const isSelfManagedUser =
-    currentUserProfile === UserProfiles.SELF_MANAGED ||
-    rawProfileValue === "selfmanaged";
+  // Prefer DB value (always fresh) over JWT value (stale after profile change)
+  const currentUserProfile = (userData?.profile?.id ?? user?.profile) as UserProfiles | undefined;
 
   function canAccessItem(itemProfiles: UserProfiles[]) {
-    if (currentUserProfile && itemProfiles.includes(currentUserProfile)) {
-      return true;
-    }
-
-    if (
-      isSelfManagedUser &&
-      (itemProfiles.includes(UserProfiles.STUDENT) ||
-        itemProfiles.includes(UserProfiles.PERSONAL))
-    ) {
-      return true;
-    }
-
-    return false;
+    return !!currentUserProfile && itemProfiles.includes(currentUserProfile);
   }
 
   // Fecha a sidebar quando a rota mudar

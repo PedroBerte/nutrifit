@@ -847,6 +847,9 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<Guid>("ExerciseId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsBisetWithPrevious")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -857,6 +860,11 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<int?>("RestSeconds")
                         .HasColumnType("integer");
 
+                    b.Property<string>("SetType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Reps");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -864,6 +872,13 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<decimal?>("SuggestedLoad")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("TargetCalories")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int?>("TargetDurationSeconds")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("TargetRepsMax")
                         .HasColumnType("integer");
@@ -876,6 +891,11 @@ namespace Nutrifit.Repository.Migrations
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("WeightUnit")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasDefaultValue("kg");
 
                     b.Property<Guid>("WorkoutTemplateId")
                         .HasColumnType("uuid");
@@ -1435,6 +1455,10 @@ namespace Nutrifit.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("Calories")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<bool>("Completed")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1447,6 +1471,9 @@ namespace Nutrifit.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("ExerciseSessionId")
                         .HasColumnType("uuid");

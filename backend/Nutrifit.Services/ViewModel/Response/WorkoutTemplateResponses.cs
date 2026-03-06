@@ -32,6 +32,11 @@ namespace Nutrifit.Services.ViewModel.Response
         public decimal? SuggestedLoad { get; set; }
         public int? RestSeconds { get; set; }
         public string? Notes { get; set; }
+        public string SetType { get; set; } = "Reps";
+        public string WeightUnit { get; set; } = "kg";
+        public bool IsBisetWithPrevious { get; set; } = false;
+        public int? TargetDurationSeconds { get; set; }
+        public decimal? TargetCalories { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

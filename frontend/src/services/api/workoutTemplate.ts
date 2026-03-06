@@ -10,6 +10,9 @@ type RawExerciseTemplate = {
   id: string;
   workoutTemplateId: string;
   exerciseId: string;
+  exerciseName?: string;
+  exerciseImageUrl?: string;
+  exerciseVideoUrl?: string;
   order: number;
   targetSets: number;
   targetRepsMin?: number;
@@ -17,6 +20,11 @@ type RawExerciseTemplate = {
   suggestedLoad?: number;
   restSeconds?: number;
   notes?: string;
+  setType?: string;
+  weightUnit?: string;
+  isBisetWithPrevious?: boolean;
+  targetDurationSeconds?: number;
+  targetCalories?: number;
   createdAt: string;
   exercise?: {
     name: string;
@@ -45,9 +53,9 @@ function adaptTemplate(template: RawWorkoutTemplate): WorkoutTemplateResponse {
       id: item.id,
       workoutTemplateId: item.workoutTemplateId,
       exerciseId: item.exerciseId,
-      exerciseName: item.exercise?.name || "Exercício",
-      exerciseImageUrl: item.exercise?.imageUrl,
-      exerciseVideoUrl: item.exercise?.videoUrl,
+      exerciseName: item.exerciseName || item.exercise?.name || "Exercício",
+      exerciseImageUrl: item.exerciseImageUrl || item.exercise?.imageUrl,
+      exerciseVideoUrl: item.exerciseVideoUrl || item.exercise?.videoUrl,
       order: item.order,
       targetSets: item.targetSets,
       targetRepsMin: item.targetRepsMin,
@@ -55,6 +63,11 @@ function adaptTemplate(template: RawWorkoutTemplate): WorkoutTemplateResponse {
       suggestedLoad: item.suggestedLoad,
       restSeconds: item.restSeconds,
       notes: item.notes,
+      setType: item.setType ?? "Reps",
+      weightUnit: item.weightUnit ?? "kg",
+      isBisetWithPrevious: item.isBisetWithPrevious ?? false,
+      targetDurationSeconds: item.targetDurationSeconds,
+      targetCalories: item.targetCalories,
       createdAt: item.createdAt,
     })),
   };
@@ -69,6 +82,11 @@ export interface ExerciseTemplateRequest {
   suggestedLoad?: number;
   restSeconds?: number;
   notes?: string;
+  setType: string;
+  weightUnit: string;
+  isBisetWithPrevious: boolean;
+  targetDurationSeconds?: number;
+  targetCalories?: number;
 }
 
 export interface CreateWorkoutTemplateRequest {
@@ -94,6 +112,11 @@ export interface UpdateExerciseTemplateRequest {
   suggestedLoad?: number;
   restSeconds?: number;
   notes?: string;
+  setType?: string;
+  weightUnit?: string;
+  isBisetWithPrevious?: boolean;
+  targetDurationSeconds?: number;
+  targetCalories?: number;
 }
 
 export interface ExerciseTemplateResponse {
@@ -110,6 +133,11 @@ export interface ExerciseTemplateResponse {
   suggestedLoad?: number;
   restSeconds?: number;
   notes?: string;
+  setType: string;
+  weightUnit: string;
+  isBisetWithPrevious: boolean;
+  targetDurationSeconds?: number;
+  targetCalories?: number;
   createdAt: string;
 }
 

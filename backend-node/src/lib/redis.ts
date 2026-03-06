@@ -1,1 +1,2 @@
-export { getRedis } from "../redis";
+// Redis removed
+

@@ -33,6 +33,8 @@ namespace Nutrifit.Services.ViewModel.Request
         public decimal? Load { get; set; }
         public int? Reps { get; set; }
         public int? RestSeconds { get; set; }
+        public int? DurationSeconds { get; set; }
+        public decimal? Calories { get; set; }
         public bool Completed { get; set; } = true;
         public string? Notes { get; set; }
         public DateTime? StartedAt { get; set; }

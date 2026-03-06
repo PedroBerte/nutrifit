@@ -15,6 +15,7 @@ router.post("/workout-sessions/complete", ensureAuthenticated, async (req, res) 
       startedAt?: string; completedAt?: string; status?: string; notes?: string;
       sets?: Array<{
         setNumber: number; load?: number; reps?: number; restSeconds?: number;
+        durationSeconds?: number; calories?: number;
         completed?: boolean; notes?: string; startedAt?: string; completedAt?: string;
       }>;
     }>;
@@ -43,6 +44,7 @@ router.post("/workout-sessions/complete", ensureAuthenticated, async (req, res) 
           setSessions: {
             create: (exercise.sets ?? []).map((set) => ({
               setNumber: set.setNumber, load: set.load, reps: set.reps, restSeconds: set.restSeconds,
+              durationSeconds: set.durationSeconds, calories: set.calories,
               completed: set.completed ?? true, notes: set.notes,
               startedAt: set.startedAt ? new Date(set.startedAt) : undefined,
               completedAt: set.completedAt ? new Date(set.completedAt) : undefined,
@@ -212,10 +214,17 @@ router.get("/workout-sessions/:sessionId", ensureAuthenticated, async (req, res)
       targetRepsMax: es.exerciseTemplate?.targetRepsMax,
       suggestedLoad: es.exerciseTemplate?.suggestedLoad ? Number(es.exerciseTemplate.suggestedLoad) : undefined,
       restSeconds: es.exerciseTemplate?.restSeconds,
+      setType: es.exerciseTemplate?.setType ?? "Reps",
+      weightUnit: es.exerciseTemplate?.weightUnit ?? "kg",
+      isBisetWithPrevious: es.exerciseTemplate?.isBisetWithPrevious ?? false,
+      targetDurationSeconds: es.exerciseTemplate?.targetDurationSeconds,
+      targetCalories: es.exerciseTemplate?.targetCalories ? Number(es.exerciseTemplate.targetCalories) : undefined,
       setSessions: es.setSessions.map((ss) => ({
         id: ss.id, exerciseSessionId: ss.exerciseSessionId, setNumber: ss.setNumber,
         load: ss.load ? Number(ss.load) : undefined, reps: ss.reps,
         restSeconds: ss.restSeconds, completed: ss.completed, notes: ss.notes,
+        durationSeconds: ss.durationSeconds,
+        calories: ss.calories ? Number(ss.calories) : undefined,
         startedAt: ss.startedAt, completedAt: ss.completedAt,
       })),
     })),

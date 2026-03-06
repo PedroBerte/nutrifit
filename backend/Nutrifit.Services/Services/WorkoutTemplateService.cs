@@ -56,6 +56,11 @@ namespace Nutrifit.Services.Services
                             SuggestedLoad = exerciseReq.SuggestedLoad,
                             RestSeconds = exerciseReq.RestSeconds,
                             Notes = exerciseReq.Notes,
+                            SetType = exerciseReq.SetType,
+                            WeightUnit = exerciseReq.WeightUnit,
+                            IsBisetWithPrevious = exerciseReq.IsBisetWithPrevious,
+                            TargetDurationSeconds = exerciseReq.TargetDurationSeconds,
+                            TargetCalories = exerciseReq.TargetCalories,
                             Status = "A",
                             CreatedAt = DateTime.UtcNow
                         };
@@ -173,6 +178,11 @@ namespace Nutrifit.Services.Services
                             SuggestedLoad = et.SuggestedLoad,
                             RestSeconds = et.RestSeconds,
                             Notes = et.Notes,
+                            SetType = et.SetType,
+                            WeightUnit = et.WeightUnit,
+                            IsBisetWithPrevious = et.IsBisetWithPrevious,
+                            TargetDurationSeconds = et.TargetDurationSeconds,
+                            TargetCalories = et.TargetCalories,
                             CreatedAt = et.CreatedAt
                         }).ToList()
                 };
@@ -224,6 +234,11 @@ namespace Nutrifit.Services.Services
                             SuggestedLoad = et.SuggestedLoad,
                             RestSeconds = et.RestSeconds,
                             Notes = et.Notes,
+                            SetType = et.SetType,
+                            WeightUnit = et.WeightUnit,
+                            IsBisetWithPrevious = et.IsBisetWithPrevious,
+                            TargetDurationSeconds = et.TargetDurationSeconds,
+                            TargetCalories = et.TargetCalories,
                             CreatedAt = et.CreatedAt
                         }).ToList()
                 }).ToList();
@@ -259,6 +274,11 @@ namespace Nutrifit.Services.Services
                     SuggestedLoad = request.SuggestedLoad,
                     RestSeconds = request.RestSeconds,
                     Notes = request.Notes,
+                    SetType = request.SetType,
+                    WeightUnit = request.WeightUnit,
+                    IsBisetWithPrevious = request.IsBisetWithPrevious,
+                    TargetDurationSeconds = request.TargetDurationSeconds,
+                    TargetCalories = request.TargetCalories,
                     Status = "A",
                     CreatedAt = DateTime.UtcNow
                 };
@@ -306,6 +326,21 @@ namespace Nutrifit.Services.Services
 
                 if (request.Notes != null)
                     exerciseTemplate.Notes = request.Notes;
+
+                if (request.SetType != null)
+                    exerciseTemplate.SetType = request.SetType;
+
+                if (request.WeightUnit != null)
+                    exerciseTemplate.WeightUnit = request.WeightUnit;
+
+                if (request.IsBisetWithPrevious.HasValue)
+                    exerciseTemplate.IsBisetWithPrevious = request.IsBisetWithPrevious.Value;
+
+                if (request.TargetDurationSeconds.HasValue)
+                    exerciseTemplate.TargetDurationSeconds = request.TargetDurationSeconds;
+
+                if (request.TargetCalories.HasValue)
+                    exerciseTemplate.TargetCalories = request.TargetCalories;
 
                 exerciseTemplate.UpdatedAt = DateTime.UtcNow;
 

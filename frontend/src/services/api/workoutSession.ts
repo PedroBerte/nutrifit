@@ -31,6 +31,8 @@ export interface SetSessionData {
   load?: number;
   reps?: number;
   restSeconds?: number;
+  durationSeconds?: number;
+  calories?: number;
   completed: boolean;
   notes?: string;
   startedAt?: string;
@@ -45,6 +47,8 @@ export interface SetSessionResponse {
   load?: number;
   reps?: number;
   restSeconds?: number;
+  durationSeconds?: number;
+  calories?: number;
   completed: boolean;
   notes?: string;
   startedAt: string;
@@ -71,6 +75,9 @@ export interface ExerciseSessionResponse {
   targetRepsMax?: number;
   suggestedLoad?: number;
   restSeconds?: number;
+  setType?: string;
+  weightUnit?: string;
+  isBisetWithPrevious?: boolean;
 }
 
 export interface WorkoutSessionResponse {

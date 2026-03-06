@@ -15,32 +15,18 @@ export function RoleGuard({
   redirectTo = "/home",
 }: RoleGuardProps) {
   const { user } = useAuth();
-  const { data: userData, isLoading: isLoadingUserData } = useGetUserById(
-    user?.id
-  );
+  const { data: userData, isLoading } = useGetUserById(user?.id);
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (isLoadingUserData) {
-    return null;
-  }
+  if (isLoading) return null;
 
-  const serverProfile = userData?.profileId as UserProfiles | undefined;
-  const userProfile = (serverProfile ?? user.profile) as UserProfiles;
+  // Prefer DB value (fresh) over JWT value (stale after profile change)
+  const userProfile = (userData?.profile?.id ?? user.profile) as UserProfiles;
 
-  const rawProfileValue =
-    typeof user.raw?.profile === "string" ? user.raw.profile.toLowerCase() : "";
-  const isSelfManagedUser =
-    userProfile === UserProfiles.SELF_MANAGED || rawProfileValue === "selfmanaged";
-
-  const selfManagedHasAccess =
-    isSelfManagedUser &&
-    (allowedProfiles.includes(UserProfiles.STUDENT) ||
-      allowedProfiles.includes(UserProfiles.PERSONAL));
-
-  if (!allowedProfiles.includes(userProfile) && !selfManagedHasAccess) {
+  if (!allowedProfiles.includes(userProfile)) {
     return <Navigate to={redirectTo} replace />;
   }
 

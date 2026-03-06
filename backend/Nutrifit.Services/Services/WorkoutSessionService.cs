@@ -91,6 +91,8 @@ namespace Nutrifit.Services.Services
                             Load = setData.Load,
                             Reps = setData.Reps,
                             RestSeconds = setData.RestSeconds,
+                            DurationSeconds = setData.DurationSeconds,
+                            Calories = setData.Calories,
                             Completed = setData.Completed,
                             Notes = setData.Notes,
                             CreatedAt = DateTime.UtcNow
@@ -202,6 +204,9 @@ namespace Nutrifit.Services.Services
                         TargetRepsMin = es.ExerciseTemplate?.TargetRepsMin,
                         TargetRepsMax = es.ExerciseTemplate?.TargetRepsMax,
                         SuggestedLoad = es.ExerciseTemplate?.SuggestedLoad,
+                        SetType = es.ExerciseTemplate?.SetType ?? "Reps",
+                        WeightUnit = es.ExerciseTemplate?.WeightUnit ?? "kg",
+                        IsBisetWithPrevious = es.ExerciseTemplate?.IsBisetWithPrevious ?? false,
                         SetSessions = es.SetSessions.OrderBy(ss => ss.SetNumber).Select(ss => new SetSessionResponse
                         {
                             Id = ss.Id,
@@ -210,6 +215,8 @@ namespace Nutrifit.Services.Services
                             Load = ss.Load,
                             Reps = ss.Reps,
                             RestSeconds = ss.RestSeconds,
+                            DurationSeconds = ss.DurationSeconds,
+                            Calories = ss.Calories,
                             Completed = ss.Completed,
                             Notes = ss.Notes
                         }).ToList()

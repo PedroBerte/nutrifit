@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { GripVertical, Edit, Trash2 } from "lucide-react";
+import { GripVertical, Edit, Trash2, Link } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -15,6 +15,11 @@ export interface SortableExerciseData {
   restSeconds?: number;
   notes?: string;
   order: number;
+  setType?: string;
+  weightUnit?: string;
+  isBisetWithPrevious?: boolean;
+  targetDurationSeconds?: number;
+  targetCalories?: number;
 }
 
 interface SortableExerciseItemProps<T extends SortableExerciseData> {
@@ -50,10 +55,17 @@ export function SortableExerciseItem<T extends SortableExerciseData>({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 xs:gap-3 p-2 xs:p-3 bg-neutral-dark-01 rounded-lg ${
+      className={`relative flex items-center gap-2 xs:gap-3 p-2 xs:p-3 bg-neutral-dark-01 rounded-lg ${
         isDragging ? "shadow-lg ring-2 ring-primary" : ""
-      }`}
+      } ${exercise.isBisetWithPrevious ? "border-l-2 border-primary ml-4" : ""}`}
     >
+      {/* Biset connector indicator */}
+      {exercise.isBisetWithPrevious && (
+        <div className="absolute -top-3 left-4 flex items-center gap-1 text-primary">
+          <Link className="h-3 w-3" />
+          <span className="text-[10px] font-medium">biset</span>
+        </div>
+      )}
       {/* Grip para arrastar */}
       <button
         type="button"
