@@ -106,6 +106,7 @@ const exerciseConfigSchema = z.object({
 });
 
 type ExerciseConfigForm = z.infer<typeof exerciseConfigSchema>;
+type ExerciseConfigFormInput = z.input<typeof exerciseConfigSchema>;
 
 export function EditWorkoutTemplate() {
   const navigate = useNavigate();
@@ -176,7 +177,7 @@ export function EditWorkoutTemplate() {
     },
   });
 
-  const exerciseForm = useForm<ExerciseConfigForm>({
+  const exerciseForm = useForm<ExerciseConfigFormInput, unknown, ExerciseConfigForm>({
     resolver: zodResolver(exerciseConfigSchema),
     defaultValues: {
       targetSets: "3",

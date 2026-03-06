@@ -84,9 +84,12 @@ const exerciseConfigSchema = z.object({
 });
 
 type ExerciseConfigForm = z.infer<typeof exerciseConfigSchema>;
+type ExerciseConfigFormInput = z.input<typeof exerciseConfigSchema>;
 
 interface ConfiguredExercise extends SortableExerciseData {
-  // Herda todos os campos de SortableExerciseData
+  setType: string;
+  weightUnit: string;
+  isBisetWithPrevious: boolean;
 }
 
 export function NewWorkoutTemplate() {
@@ -136,7 +139,7 @@ export function NewWorkoutTemplate() {
     },
   });
 
-  const exerciseForm = useForm<ExerciseConfigForm>({
+  const exerciseForm = useForm<ExerciseConfigFormInput, unknown, ExerciseConfigForm>({
     resolver: zodResolver(exerciseConfigSchema),
     defaultValues: {
       targetSets: 3,
