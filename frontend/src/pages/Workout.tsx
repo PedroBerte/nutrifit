@@ -462,7 +462,7 @@ export default function Workout() {
                     className="w-full border-primary/30 hover:border-primary hover:bg-primary/10"
                     onClick={() => navigate("/routines")}
                   >
-                    Criar treino no fluxo completo
+                    Criar treino no
                   </Button>
                 )}
 
