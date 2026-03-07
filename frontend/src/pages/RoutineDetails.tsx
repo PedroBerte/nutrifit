@@ -23,18 +23,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Plus, Settings, FileX2, Loader2 } from "lucide-react";
-import { GOAL_OPTIONS, DIFFICULTY_OPTIONS } from "@/constants/routine";
+import {
+  GOAL_OPTIONS,
+  DIFFICULTY_OPTIONS,
+  getGoalLabel,
+  getDifficultyLabel,
+} from "@/constants/routine";
 import { Spinner } from "@/components/ui/spinner";
 import { motion } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
 
 const updateRoutineSchema = z.object({
-  title: z
-    .string()
-    .min(1, "O título é obrigatório")
-    .max(200, "Título muito longo"),
-  goal: z.string(),
-  difficulty: z.string(),
+  title: z.string().max(200, "Título muito longo").optional(),
+  goal: z.string().optional(),
+  difficulty: z.string().optional(),
 });
 
 type UpdateRoutineFormData = z.infer<typeof updateRoutineSchema>;
@@ -63,51 +65,56 @@ export default function RoutineDetails() {
         goal: routine.data.goal || "",
         difficulty: routine.data.difficulty || "",
       };
-      form.reset(formData, { keepDefaultValues: false });
+      form.reset({ title: "", goal: "", difficulty: "" }, { keepDefaultValues: false });
       setOriginalData(formData); // Guarda os dados originais
       setHasChanges(false); // Reseta o estado de mudanças
-
-      const goal = routine.data.goal || "";
-      const difficulty = routine.data.difficulty || "";
-      setTimeout(() => {
-        form.setValue("goal", goal, { shouldValidate: false });
-        form.setValue("difficulty", difficulty, { shouldValidate: false });
-      }, 0);
     }
-  }, [routine?.data]);
+  }, [routine?.data, form]);
 
   // Observa mudanças no formulário
   useEffect(() => {
     const subscription = form.watch((values) => {
       if (!originalData) return;
 
-      // Compara se há diferenças entre os valores atuais e os originais
-      const isDifferent =
-        values.title !== originalData.title ||
-        values.goal !== originalData.goal ||
-        values.difficulty !== originalData.difficulty;
+      const titleChanged = !!values.title?.trim() && values.title.trim() !== originalData.title;
+      const goalChanged = !!values.goal && values.goal !== originalData.goal;
+      const difficultyChanged =
+        !!values.difficulty && values.difficulty !== originalData.difficulty;
+
+      // Exibe ações apenas quando houver alterações reais digitadas/selecionadas.
+      const isDifferent = titleChanged || goalChanged || difficultyChanged;
 
       setHasChanges(isDifferent);
     });
     return () => subscription.unsubscribe();
-  }, [form.watch, originalData]);
+  }, [form, originalData]);
 
   const handleSubmit = async (data: UpdateRoutineFormData) => {
     if (!routineId) return;
 
     try {
+      const title = data.title?.trim() || originalData?.title || "";
+      const goal = data.goal || originalData?.goal || undefined;
+      const difficulty = data.difficulty || originalData?.difficulty || undefined;
+
+      if (!title) {
+        toast.error("Título é obrigatório");
+        return;
+      }
+
       const response = await updateRoutine.mutateAsync({
         routineId,
         data: {
-          title: data.title.trim(),
-          goal: data.goal || undefined,
-          difficulty: data.difficulty || undefined,
+          title,
+          goal,
+          difficulty,
         },
       });
 
       if (response.success) {
         // Atualiza os dados originais após salvar
-        setOriginalData(data);
+        setOriginalData({ title, goal: goal || "", difficulty: difficulty || "" });
+        form.reset({ title: "", goal: "", difficulty: "" });
         setHasChanges(false);
         toast.success("Alterações salvas com sucesso!");
       } else {
@@ -123,11 +130,8 @@ export default function RoutineDetails() {
   };
 
   const handleCancel = () => {
-    if (originalData) {
-      // Restaura os valores originais
-      form.reset(originalData);
-      setHasChanges(false);
-    }
+    form.reset({ title: "", goal: "", difficulty: "" });
+    setHasChanges(false);
   };
 
   const handleNewWorkout = () => {
@@ -185,9 +189,10 @@ export default function RoutineDetails() {
                       <FormLabel>Título</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Nome do treino"
+                          placeholder={originalData?.title || "Nome do treino"}
                           maxLength={200}
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -204,7 +209,7 @@ export default function RoutineDetails() {
                       <FormItem>
                         <FormLabel>Objetivo</FormLabel>
                         <Select
-                          value={field.value}
+                          value={field.value || undefined}
                           onValueChange={(value) => {
                             console.log("✏️ Goal mudou para:", value);
                             field.onChange(value);
@@ -212,7 +217,13 @@ export default function RoutineDetails() {
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione um objetivo" />
+                              <SelectValue
+                                placeholder={
+                                  originalData?.goal
+                                    ? getGoalLabel(originalData.goal)
+                                    : "Selecione um objetivo"
+                                }
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -247,7 +258,7 @@ export default function RoutineDetails() {
                       <FormItem>
                         <FormLabel>Nível</FormLabel>
                         <Select
-                          value={field.value}
+                          value={field.value || undefined}
                           onValueChange={(value) => {
                             console.log("✏️ Difficulty mudou para:", value);
                             field.onChange(value);
@@ -255,7 +266,13 @@ export default function RoutineDetails() {
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione um nível" />
+                              <SelectValue
+                                placeholder={
+                                  originalData?.difficulty
+                                    ? getDifficultyLabel(originalData.difficulty)
+                                    : "Selecione um nível"
+                                }
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>

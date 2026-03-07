@@ -16,4 +16,6 @@ public interface IRoutineService
     Task<ApiResponse> GetRoutineCustomersAsync(Guid routineId, Guid personalId);
     Task<ApiResponse> GetRoutinesNearExpiryAsync(Guid personalId, int daysThreshold = 7);
     Task<ApiResponse> UpdateCustomerRoutineExpiryAsync(Guid routineId, Guid customerId, Guid personalId, DateTime? expiresAt);
+    Task<ApiResponse> ImportRoutineAsync(Guid userId, ImportRoutineRequest request);
+    Task<ApiResponse> ExportRoutineAsync(Guid routineId, Guid userId);
 }

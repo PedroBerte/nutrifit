@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Services.Services.Interfaces;
 using Nutrifit.Services.ViewModel.Request;
+using System.Text.Json;
 using System.Security.Claims;
 
 namespace Nutrifit.API.Controllers;
@@ -290,6 +291,58 @@ public class RoutineController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = $"Erro ao atualizar data de vencimento: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Importa uma rotina completa a partir de um JSON estruturado
+    /// </summary>
+    [HttpPost("import")]
+    public async Task<IActionResult> ImportRoutine([FromBody] ImportRoutineRequest request)
+    {
+        try
+        {
+            var userId = GetUserId();
+            var result = await _routineService.ImportRoutineAsync(userId, request);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao importar rotina: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Exporta uma rotina para JSON no formato de importação
+    /// </summary>
+    [HttpGet("{routineId}/export")]
+    public async Task<IActionResult> ExportRoutine(Guid routineId)
+    {
+        try
+        {
+            var userId = GetUserId();
+            var result = await _routineService.ExportRoutineAsync(routineId, userId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            var exportPayload = result.Data;
+            var fileName = $"routine-{routineId}.json";
+            var json = JsonSerializer.Serialize(exportPayload, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            return File(System.Text.Encoding.UTF8.GetBytes(json), "application/json", fileName);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao exportar rotina: {ex.Message}" });
         }
     }
 }

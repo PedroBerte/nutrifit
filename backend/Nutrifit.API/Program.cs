@@ -92,7 +92,27 @@ builder.Services.AddScoped<ISelfManagedWorkoutService, SelfManagedWorkoutService
 builder.Services.AddCors(o =>
 {
     o.AddPolicy("front", p => p
-        .WithOrigins("http://localhost:5173", "https://localhost:5173", "http://localhost:5052", "https://localhost:5052", "https://nutrifit.mujapira.com")
+        .SetIsOriginAllowed(origin =>
+        {
+            if (string.Equals(origin, "https://nutrifit.mujapira.com", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                return false;
+
+            var isHttp = uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
+            if (!isHttp)
+                return false;
+
+            var validPort = uri.Port == 5173 || uri.Port == 5052;
+            if (!validPort)
+                return false;
+
+            var host = uri.Host;
+            return host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                || host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase)
+                || host.Equals("172.30.240.1", StringComparison.OrdinalIgnoreCase);
+        })
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials()

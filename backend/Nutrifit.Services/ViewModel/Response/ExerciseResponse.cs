@@ -10,6 +10,8 @@ public class ExerciseResponse
     public Guid? CreatedByUserId { get; set; }
     public bool IsPublished { get; set; }
     public bool IsCustom { get; set; }
+    public string Status { get; set; } = "A";
+    public bool IsPendingReview { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public List<string> PrimaryMuscles { get; set; } = new();
     public List<string> SecondaryMuscles { get; set; } = new();

@@ -48,6 +48,7 @@ import {
   Trash2,
   Loader2,
   AlertTriangle,
+  CheckCheck,
   ImageIcon,
   Video,
   Upload,
@@ -128,6 +129,7 @@ export function EditWorkoutTemplate() {
     useState<ExerciseTemplateResponse | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [localExercises, setLocalExercises] = useState<ExerciseTemplateResponse[]>([]);
+  const [isReviewingPending, setIsReviewingPending] = useState(false);
 
   const { data: templateResponse, isLoading: loadingTemplate } =
     useGetWorkoutTemplateById(templateId);
@@ -305,11 +307,17 @@ export function EditWorkoutTemplate() {
     };
 
     try {
-      // Atualizar mídia do exercício se houver alteração
+      // Atualizar mídia do exercício se houver alteração, ou promover exercício pendente para ativo.
       const currentImageUrl = editingExerciseTemplate?.exerciseImageUrl || "";
       const currentVideoUrl = editingExerciseTemplate?.exerciseVideoUrl || "";
+      const shouldPromotePendingExercise =
+        !!editingExerciseTemplate?.isPendingReview;
       
-      if (data.imageUrl !== currentImageUrl || data.videoUrl !== currentVideoUrl) {
+      if (
+        shouldPromotePendingExercise ||
+        data.imageUrl !== currentImageUrl ||
+        data.videoUrl !== currentVideoUrl
+      ) {
         await updateExerciseMedia.mutateAsync({
           exerciseId: selectedExercise.id,
           data: {
@@ -460,6 +468,37 @@ export function EditWorkoutTemplate() {
     }
   };
 
+  const pendingExercises = localExercises.filter((exercise) => exercise.isPendingReview);
+
+  const handleReviewAllPendingExercises = async () => {
+    if (pendingExercises.length === 0) {
+      toast.info("Não há exercícios pendentes neste treino.");
+      return;
+    }
+
+    setIsReviewingPending(true);
+    try {
+      await Promise.all(
+        pendingExercises.map((exercise) =>
+          updateExerciseMedia.mutateAsync({
+            exerciseId: exercise.exerciseId,
+            data: {
+              imageUrl: undefined,
+              videoUrl: undefined,
+            },
+          })
+        )
+      );
+
+      toast.success(`${pendingExercises.length} exercício(s) revisado(s) com sucesso.`);
+    } catch (error) {
+      console.error("Erro ao revisar exercícios pendentes:", error);
+      toast.error("Erro ao revisar todos os exercícios pendentes.");
+    } finally {
+      setIsReviewingPending(false);
+    }
+  };
+
   if (loadingTemplate) {
     return (
       <div className="container mx-auto p-6 max-w-4xl flex items-center justify-center min-h-[50vh]">
@@ -583,6 +622,24 @@ export function EditWorkoutTemplate() {
                   <h1 className="text-2xl font-semibold text-neutral-white-01">
                     Exercícios
                   </h1>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleReviewAllPendingExercises}
+                    disabled={isReviewingPending || pendingExercises.length === 0}
+                  >
+                    {isReviewingPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Revisando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCheck className="mr-2 h-4 w-4" />
+                        Revisar Pendentes ({pendingExercises.length})
+                      </>
+                    )}
+                  </Button>
                 </div>
                 <div className="space-y-3">
                   <DndContext

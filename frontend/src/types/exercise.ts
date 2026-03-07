@@ -10,6 +10,8 @@ export interface ExerciseType {
   createdByUserId?: string;
   isPublished?: boolean;
   isCustom?: boolean;
+  status?: string;
+  isPendingReview?: boolean;
 }
 
 export interface ExerciseCategory {

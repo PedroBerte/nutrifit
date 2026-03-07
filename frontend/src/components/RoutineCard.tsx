@@ -1,4 +1,4 @@
-import { BookText, ChartColumnBig, Send, Target, Trash2 } from "lucide-react";
+import { BookText, ChartColumnBig, Download, Send, Target, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -12,7 +12,7 @@ import {
 } from "./ui/dialog";
 import { getDifficultyLabel, getGoalLabel } from "@/constants/routine";
 import AssignRoutineDrawer from "./AssignRoutineDrawer";
-import { useDeleteRoutine } from "@/services/api/routine";
+import { useDeleteRoutine, useExportRoutine } from "@/services/api/routine";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/contexts/ToastContext";
 import { Loader2 } from "lucide-react";
@@ -37,6 +37,7 @@ export default function RoutineCard({
   const toast = useToast();
 
   const deleteMutation = useDeleteRoutine();
+  const exportMutation = useExportRoutine();
 
   const handleDetails = () => {
     navigate(`/routines/${id}`);
@@ -44,6 +45,20 @@ export default function RoutineCard({
 
   const handleSend = () => {
     setIsDrawerOpen(true);
+  };
+
+  const handleExport = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    try {
+      await exportMutation.mutateAsync(id);
+      toast.success(`Rotina "${title}" exportada com sucesso!`);
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao exportar rotina.";
+      toast.error(errorMessage);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -116,6 +131,14 @@ export default function RoutineCard({
         >
           <Send />
           Atribuir
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleExport}
+          disabled={exportMutation.isPending}
+        >
+          <Download />
+          {exportMutation.isPending ? "Exportando..." : "Exportar JSON"}
         </Button>
       </article>
 

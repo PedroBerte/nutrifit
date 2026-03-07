@@ -24,7 +24,8 @@ public class ExerciseService : IExerciseService
         var userGuid = !string.IsNullOrEmpty(userId) ? Guid.Parse(userId) : (Guid?)null;
 
         var exercises = await _context.Exercises
-            .Where(e => e.Status == "A" && (e.CreatedByUserId == null || e.CreatedByUserId == userGuid || e.IsPublished))
+            .Where(e => (e.Status == "A" || (e.Status == "P" && e.CreatedByUserId == userGuid))
+                && (e.CreatedByUserId == null || e.CreatedByUserId == userGuid || e.IsPublished))
             .Include(e => e.Category)
             .Include(e => e.PrimaryMuscles)
                 .ThenInclude(pm => pm.Muscle)
@@ -45,6 +46,8 @@ public class ExerciseService : IExerciseService
             CreatedByUserId = e.CreatedByUserId,
             IsPublished = e.IsPublished,
             IsCustom = e.CreatedByUserId != null,
+            Status = e.Status,
+            IsPendingReview = e.Status == "P",
             CategoryName = e.Category.Name,
             PrimaryMuscles = e.PrimaryMuscles.Select(pm => pm.Muscle.Name).ToList(),
             SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
@@ -108,7 +111,8 @@ public class ExerciseService : IExerciseService
         var userGuid = !string.IsNullOrEmpty(userId) ? Guid.Parse(userId) : (Guid?)null;
 
         var query = _context.Exercises
-            .Where(e => e.Status == "A" && (e.CreatedByUserId == null || e.CreatedByUserId == userGuid || e.IsPublished))
+            .Where(e => (e.Status == "A" || (e.Status == "P" && e.CreatedByUserId == userGuid))
+                && (e.CreatedByUserId == null || e.CreatedByUserId == userGuid || e.IsPublished))
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -142,6 +146,8 @@ public class ExerciseService : IExerciseService
             CreatedByUserId = e.CreatedByUserId,
             IsPublished = e.IsPublished,
             IsCustom = e.CreatedByUserId != null,
+            Status = e.Status,
+            IsPendingReview = e.Status == "P",
             CategoryName = e.Category.Name,
             PrimaryMuscles = e.PrimaryMuscles.Select(pm => pm.Muscle.Name).ToList(),
             SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
@@ -345,7 +351,7 @@ public class ExerciseService : IExerciseService
         var exercise = await _context.Exercises
             .Include(e => e.PrimaryMuscles)
             .Include(e => e.SecondaryMuscles)
-            .FirstOrDefaultAsync(e => e.Id == exerciseId && e.Status == "A");
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && (e.Status == "A" || e.Status == "P"));
 
         if (exercise == null)
         {
@@ -418,6 +424,8 @@ public class ExerciseService : IExerciseService
         exercise.ImageUrl = request.ImageUrl;
         exercise.VideoUrl = request.VideoUrl;
         exercise.IsPublished = request.IsPublished;
+        if (exercise.Status == "P")
+            exercise.Status = "A";
         exercise.UpdatedAt = DateTime.UtcNow;
 
         // Remover músculos antigos
@@ -456,7 +464,7 @@ public class ExerciseService : IExerciseService
     public async Task<ApiResponse> DeleteExerciseAsync(Guid exerciseId, Guid userId)
     {
         var exercise = await _context.Exercises
-            .FirstOrDefaultAsync(e => e.Id == exerciseId && e.Status == "A");
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && (e.Status == "A" || e.Status == "P"));
 
         if (exercise == null)
         {
@@ -493,7 +501,7 @@ public class ExerciseService : IExerciseService
     public async Task<ApiResponse> UpdateExerciseMediaAsync(Guid exerciseId, UpdateExerciseMediaRequest request)
     {
         var exercise = await _context.Exercises
-            .FirstOrDefaultAsync(e => e.Id == exerciseId && e.Status == "A");
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && (e.Status == "A" || e.Status == "P"));
 
         if (exercise == null)
         {
@@ -511,6 +519,9 @@ public class ExerciseService : IExerciseService
         if (request.VideoUrl != null)
             exercise.VideoUrl = string.IsNullOrWhiteSpace(request.VideoUrl) ? null : request.VideoUrl;
 
+        if (exercise.Status == "P")
+            exercise.Status = "A";
+
         exercise.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -527,7 +538,7 @@ public class ExerciseService : IExerciseService
         var skip = (page - 1) * pageSize;
 
         var exercises = await _context.Exercises
-            .Where(e => e.Status == "A" && e.CreatedByUserId == userId)
+            .Where(e => (e.Status == "A" || e.Status == "P") && e.CreatedByUserId == userId)
             .Include(e => e.Category)
             .Include(e => e.PrimaryMuscles)
                 .ThenInclude(pm => pm.Muscle)
@@ -548,6 +559,8 @@ public class ExerciseService : IExerciseService
             CreatedByUserId = e.CreatedByUserId,
             IsPublished = e.IsPublished,
             IsCustom = true,
+            Status = e.Status,
+            IsPendingReview = e.Status == "P",
             CategoryName = e.Category.Name,
             PrimaryMuscles = e.PrimaryMuscles.Select(pm => pm.Muscle.Name).ToList(),
             SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()

@@ -8,6 +8,8 @@ export interface SortableExerciseData {
   exerciseId: string;
   exerciseName: string;
   exerciseImageUrl?: string;
+  exerciseStatus?: string;
+  isPendingReview?: boolean;
   targetSets: number;
   targetRepsMin?: number;
   targetRepsMax?: number;
@@ -95,6 +97,9 @@ export function SortableExerciseItem<T extends SortableExerciseData>({
         <p className="font-medium text-sm xs:text-base truncate">
           {exercise.exerciseName}
         </p>
+        {exercise.isPendingReview && (
+          <p className="text-[10px] xs:text-xs text-amber-400">Pendente de revisão</p>
+        )}
         <p className="text-xs xs:text-sm text-muted-foreground truncate">
           {formatSummary(exercise)}
         </p>

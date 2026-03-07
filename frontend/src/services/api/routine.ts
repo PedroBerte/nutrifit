@@ -6,6 +6,8 @@ import type {
   RoutineType,
   RoutineCustomersResponse,
   RoutineExpiryType,
+  ImportRoutineRequest,
+  ImportRoutineResult,
 } from "@/types/routine";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -261,38 +263,52 @@ export function useGetRoutineCustomers(routineId: string | null | undefined) {
     queryKey: ["getRoutineCustomers", routineId],
     queryFn: async () => {
       if (!routineId) throw new Error("ID da rotina é obrigatório");
-      const request = await api.get<{
-        assigned: Array<{
-          customer: {
-            id: string;
-            name: string;
-            email: string;
+      const request = await api.get(`/routine/${routineId}/customers`);
+      const root = (request.data && typeof request.data === "object"
+        ? (request.data as Record<string, unknown>)
+        : {}) as Record<string, unknown>;
+      const payload = (root.data && typeof root.data === "object"
+        ? (root.data as Record<string, unknown>)
+        : root) as Record<string, unknown>;
+
+      const rawAssigned = Array.isArray(payload.assignedCustomers)
+        ? payload.assignedCustomers
+        : [];
+      const rawAvailable = Array.isArray(payload.availableCustomers)
+        ? payload.availableCustomers
+        : [];
+
+      const assignedCustomers = rawAssigned
+        .map((item) => {
+          if (!item || typeof item !== "object") return null;
+          const x = item as Record<string, unknown>;
+          return {
+            id: String(x.id || ""),
+            name: String(x.name || ""),
+            email: String(x.email || ""),
+            imageUrl: (x.imageUrl as string | undefined) || (x.videoUrl as string | undefined),
+            assignedAt: (x.assignedAt as string | undefined) || undefined,
+            expiresAt: (x.expiresAt as string | undefined) || undefined,
           };
-          createdAt: string;
-          expiresAt?: string | null;
-        }>;
-      }>(
-        `/routine/${routineId}/customers`
-      );
-      const data = request.data;
-      const assignedCustomers = (data.assigned || []).reduce<
-        RoutineCustomersResponse["assignedCustomers"]
-      >((acc, x) => {
-        if (!x?.customer?.id) return acc;
+        })
+        .filter((x) => !!x?.id);
 
-        acc.push({
-          ...x.customer,
-          assignedAt: x.createdAt,
-          expiresAt: x.expiresAt ?? undefined,
-        });
+      const availableCustomers = rawAvailable
+        .map((item) => {
+          if (!item || typeof item !== "object") return null;
+          const x = item as Record<string, unknown>;
+          return {
+            id: String(x.id || ""),
+            name: String(x.name || ""),
+            email: String(x.email || ""),
+            imageUrl: (x.imageUrl as string | undefined) || (x.videoUrl as string | undefined),
+            assignedAt: undefined,
+            expiresAt: undefined,
+          };
+        })
+        .filter((x) => !!x?.id);
 
-        return acc;
-      }, []);
-
-      return ok({
-        assignedCustomers,
-        availableCustomers: [],
-      } as RoutineCustomersResponse);
+      return ok({ assignedCustomers, availableCustomers } as RoutineCustomersResponse);
     },
     enabled: !!routineId,
     retry: 1,
@@ -320,5 +336,47 @@ export function useGetRoutinesNearExpiry(daysThreshold: number = 5) {
       return ok(mapped as RoutineExpiryType[]);
     },
     retry: 1,
+  });
+}
+
+export function useImportRoutine() {
+  return useMutation({
+    mutationKey: ["importRoutine"],
+    retry: 0,
+    mutationFn: async (data: ImportRoutineRequest) => {
+      const request = await api.post(`/routine/import`, data);
+      const payload = (request.data && typeof request.data === "object"
+        ? (request.data as Record<string, unknown>)
+        : {}) as Record<string, unknown>;
+      const result = (payload.data && typeof payload.data === "object"
+        ? (payload.data as ImportRoutineResult)
+        : (request.data as ImportRoutineResult));
+
+      return ok(result, "Routine imported");
+    },
+  });
+}
+
+export function useExportRoutine() {
+  return useMutation({
+    mutationKey: ["exportRoutine"],
+    retry: 0,
+    mutationFn: async (routineId: string) => {
+      const response = await api.get(`/routine/${routineId}/export`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `routine-${routineId}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      return ok(true, "Routine exported");
+    },
   });
 }

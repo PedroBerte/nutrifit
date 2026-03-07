@@ -39,6 +39,8 @@ type RawExerciseTemplate = {
   exerciseName?: string;
   exerciseImageUrl?: string;
   exerciseVideoUrl?: string;
+  exerciseStatus?: string;
+  isPendingReview?: boolean;
   order: number;
   targetSets: number;
   targetRepsMin?: number;
@@ -82,6 +84,8 @@ function adaptTemplate(template: RawWorkoutTemplate): WorkoutTemplateResponse {
       exerciseName: item.exerciseName || item.exercise?.name || "Exercício",
       exerciseImageUrl: item.exerciseImageUrl || item.exercise?.imageUrl,
       exerciseVideoUrl: item.exerciseVideoUrl || item.exercise?.videoUrl,
+      exerciseStatus: item.exerciseStatus || "A",
+      isPendingReview: item.isPendingReview ?? false,
       order: item.order,
       targetSets: item.targetSets,
       targetRepsMin: item.targetRepsMin,
@@ -152,6 +156,8 @@ export interface ExerciseTemplateResponse {
   exerciseName: string;
   exerciseImageUrl?: string;
   exerciseVideoUrl?: string;
+  exerciseStatus?: string;
+  isPendingReview?: boolean;
   order: number;
   targetSets: number;
   targetRepsMin?: number;
@@ -243,13 +249,26 @@ export function useUpdateWorkoutTemplate() {
       templateId: string;
       data: UpdateWorkoutTemplateRequest;
     }) => {
-      const request = await api.put<RawWorkoutTemplate>(
+      const request = await api.put(
         `/workouttemplate/${templateId}`,
         data
       );
+
+      const payload =
+        request.data && typeof request.data === "object"
+          ? (request.data as Record<string, unknown>)
+          : {};
+
       const raw = unwrapApiData<RawWorkoutTemplate>(request.data);
-      if (!raw) throw new Error("Resposta inválida ao atualizar template.");
-      return ok(adaptTemplate(raw), "Template updated");
+      if (raw && typeof raw === "object" && "id" in raw) {
+        return ok(adaptTemplate(raw), "Template updated");
+      }
+
+      // Backend update endpoint returns ApiResponse with message and no data.
+      const message =
+        (typeof payload.message === "string" && payload.message) ||
+        "Template updated";
+      return ok(true, message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

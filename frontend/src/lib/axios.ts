@@ -5,7 +5,7 @@ import { signOut } from "@/store/authSlice";
 
 export const api = axios.create({
   baseURL:
-    import.meta.env.VITE_API_URL || "http://localhost:5018/api",
+    import.meta.env.VITE_API_URL || "http://localhost:5051/api",
 });
 
 api.interceptors.request.use(async (config) => {

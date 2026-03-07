@@ -25,6 +25,8 @@ namespace Nutrifit.Services.ViewModel.Response
         public string ExerciseName { get; set; } = string.Empty;
         public string? ExerciseImageUrl { get; set; }
         public string? ExerciseVideoUrl { get; set; }
+        public string ExerciseStatus { get; set; } = "A";
+        public bool IsPendingReview { get; set; }
         public int Order { get; set; }
         public int TargetSets { get; set; }
         public int? TargetRepsMin { get; set; }
