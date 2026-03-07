@@ -4,6 +4,7 @@ import {
   ChevronUp,
   Dumbbell,
   Home,
+  LayoutDashboard,
   LogOut,
   User2,
   Users,
@@ -39,6 +40,7 @@ const items: {
   url: string;
   icon: typeof Home;
   profiles: UserProfiles[];
+  adminOnly?: boolean;
 }[] = [
   {
     title: "Início",
@@ -111,6 +113,18 @@ const items: {
     icon: Users,
     profiles: [UserProfiles.STUDENT],
   },
+  {
+    title: "Backoffice",
+    url: "/admin",
+    icon: LayoutDashboard,
+    profiles: [
+      UserProfiles.PERSONAL,
+      UserProfiles.NUTRITIONIST,
+      UserProfiles.STUDENT,
+      UserProfiles.SELF_MANAGED,
+    ],
+    adminOnly: true,
+  },
 ];
 
 export function AppSidebar() {
@@ -123,8 +137,14 @@ export function AppSidebar() {
   // Prefer DB value (always fresh) over JWT value (stale after profile change)
   const currentUserProfile = (userData?.profile?.id ?? user?.profile) as UserProfiles | undefined;
 
-  function canAccessItem(itemProfiles: UserProfiles[]) {
-    return !!currentUserProfile && itemProfiles.includes(currentUserProfile);
+  function canAccessItem(itemProfiles: UserProfiles[], adminOnly?: boolean) {
+    const profileAllowed = !!currentUserProfile && itemProfiles.includes(currentUserProfile);
+
+    if (adminOnly) {
+      return profileAllowed && !!user?.isAdmin;
+    }
+
+    return profileAllowed;
   }
 
   // Fecha a sidebar quando a rota mudar
@@ -178,7 +198,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
               {items
-                .filter((item) => canAccessItem(item.profiles))
+                .filter((item) => canAccessItem(item.profiles, item.adminOnly))
                 .map((item) => {
                   const isActive = location.pathname === item.url;
                   return (

@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useDispatch } from "react-redux";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetUserById, useUpdateUser } from "@/services/api/user";
+import { useActivateAdmin } from "@/services/api/admin";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { UserProfiles } from "@/types/user";
+import { signInFromJwt } from "@/store/authSlice";
 import { UpdateProfileDrawer } from "@/components/profile/UpdateProfileDrawer";
 import { ProfileImageUpload } from "@/components/profile/ProfileImageUpload";
 import {
@@ -55,10 +59,14 @@ export default function Profile() {
   } = useGetBondAsCustomer();
   const updateBondMutation = useUpdateBond();
   const updateUserMutation = useUpdateUser();
+  const activateAdminMutation = useActivateAdmin();
+  const dispatch = useDispatch();
   const [isUpdateDrawerOpen, setIsUpdateDrawerOpen] = useState(false);
   const [showUnbondDialog, setShowUnbondDialog] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showSelfManagedDialog, setShowSelfManagedDialog] = useState(false);
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const [adminCode, setAdminCode] = useState("");
 
   if (isLoading) {
     return (
@@ -170,6 +178,7 @@ export default function Profile() {
 
   const isSelfManaged = userData?.profile?.id === UserProfiles.SELF_MANAGED;
   const isStudent = userData?.profile?.id === UserProfiles.STUDENT;
+  const isAdmin = !!(user?.isAdmin || userData?.isAdmin);
 
   const handleToggleSelfManaged = async () => {
     if (!userData) return;
@@ -185,6 +194,24 @@ export default function Profile() {
       refetch();
     } catch {
       toast.error("Erro ao alterar modo. Tente novamente.");
+    }
+  };
+
+  const handleActivateAdmin = async () => {
+    if (!adminCode.trim()) {
+      toast.error("Informe o código GUID de admin.");
+      return;
+    }
+
+    try {
+      const response = await activateAdminMutation.mutateAsync(adminCode.trim());
+      dispatch(signInFromJwt({ accessToken: response.accessToken, tokenType: response.tokenType }));
+      toast.success("Perfil atualizado para admin. Acesso liberado ao backoffice.");
+      setShowAdminDialog(false);
+      setAdminCode("");
+      refetch();
+    } catch {
+      toast.error("Código inválido ou erro ao ativar admin.");
     }
   };
 
@@ -444,6 +471,50 @@ export default function Profile() {
             </motion.div>
           )}
 
+          <motion.div
+            className="p-4 xs:p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5 md:col-span-2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.47 }}
+          >
+            <div className="flex items-center gap-2 mb-3 xs:mb-4">
+              <div className="flex items-center justify-center w-7 h-7 xs:w-8 xs:h-8 rounded-lg bg-sky-500/10">
+                <ShieldCheck className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-sky-400" />
+              </div>
+              <h3 className="font-semibold text-sm xs:text-base text-neutral-white-01">
+                Administração
+              </h3>
+            </div>
+
+            {isAdmin ? (
+              <div className="space-y-3">
+                <p className="text-xs xs:text-sm text-neutral-white-02">
+                  Sua conta já possui permissão de administrador.
+                </p>
+                <Button
+                  variant="outline"
+                  className="border-sky-500/30 text-sky-300 hover:bg-sky-500/10 hover:border-sky-500/50"
+                  onClick={() => navigate("/admin")}
+                >
+                  Abrir backoffice
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs xs:text-sm text-neutral-white-02">
+                  Tem um código de administrador? Ative sua conta para acessar o backoffice.
+                </p>
+                <Button
+                  variant="outline"
+                  className="border-sky-500/30 text-sky-300 hover:bg-sky-500/10 hover:border-sky-500/50"
+                  onClick={() => setShowAdminDialog(true)}
+                >
+                  Ativar Admin
+                </Button>
+              </div>
+            )}
+          </motion.div>
+
           {/* Informações de Contato */}
           <motion.div
             className="p-4 xs:p-5 border bg-neutral-dark-03 rounded-xl border-neutral-white-01/5"
@@ -662,6 +733,39 @@ export default function Profile() {
               {updateUserMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
               ) : isSelfManaged ? "Desativar" : "Ativar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ativar acesso de administrador</DialogTitle>
+            <DialogDescription>
+              Digite o código GUID para liberar acesso ao backoffice.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-3 space-y-2">
+            <Input
+              value={adminCode}
+              onChange={(e) => setAdminCode(e.target.value)}
+              placeholder="00000000-0000-0000-0000-000000000000"
+            />
+            <p className="text-xs text-muted-foreground">
+              O código precisa estar configurado no backend em <code>Admin:ActivationCode</code>.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAdminDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleActivateAdmin} disabled={activateAdminMutation.isPending}>
+              {activateAdminMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Validando...</>
+              ) : (
+                "Ativar"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

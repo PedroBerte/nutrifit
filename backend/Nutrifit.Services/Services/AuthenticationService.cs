@@ -232,6 +232,31 @@ namespace Nutrifit.Services.Services
       return IssueJwt(request);
     }
 
+    public async Task<string> IssueJwtForUserAsync(Guid userId)
+    {
+      var user = await _context.Users
+          .Include(x => x.Profile)
+          .FirstOrDefaultAsync(u => u.Id == userId);
+
+      if (user is null)
+      {
+        throw new InvalidOperationException("Usuário não encontrado.");
+      }
+
+      var request = new IssueJwtTokenRequest
+      {
+        Id = user.Id,
+        Name = user.Name,
+        Email = user.Email,
+        Profile = user.ProfileId,
+        IsAdmin = user.IsAdmin,
+        Invited = false,
+        ProfessionalInviterId = null
+      };
+
+      return IssueJwt(request);
+    }
+
     private string IssueJwt(IssueJwtTokenRequest request)
     {
       var cfg = _cfg.GetSection("Jwt");

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import App from "@/App";
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleGuard } from "./RoleGuard";
+import { AdminGuard } from "./AdminGuard";
 import { UserProfiles } from "@/types/user";
 import Login from "@/pages/login/Login";
 import Callback from "@/pages/login/CallbackLogin";
@@ -31,6 +32,7 @@ import { Appointments } from "@/pages/Appointments";
 import ProfessionalAgenda from "@/pages/ProfessionalAgenda";
 import SelfManagedWorkoutNew from "@/pages/SelfManagedWorkoutNew";
 import SelfManagedWorkoutSession from "@/pages/SelfManagedWorkoutSession";
+import AdminBackoffice from "@/pages/AdminBackoffice";
 
 export function AppRoutes() {
   return (
@@ -51,6 +53,14 @@ export function AppRoutes() {
             <Route path="home" element={<Home />} />
             <Route path="profile" element={<Profile />} />
             <Route path="diet" element={<Diet />} />
+            <Route
+              path="admin"
+              element={
+                <AdminGuard>
+                  <AdminBackoffice />
+                </AdminGuard>
+              }
+            />
 
             {/* Student + Self-Managed Routes */}
             <Route

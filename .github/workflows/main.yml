@@ -30,6 +30,7 @@ jobs:
           MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}
           MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}
           MINIO_PUBLIC_ENDPOINT=${{ secrets.MINIO_PUBLIC_ENDPOINT }}
+          ADMIN_ACTIVATION_CODE=${{ secrets.ADMIN_ACTIVATION_CODE }}
           EOF
 
       - name: Subir stack

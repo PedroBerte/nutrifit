@@ -12,6 +12,8 @@ using Serilog;
 using StackExchange.Redis;
 using System.Text;
 
+LoadDotEnvIfPresent();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
@@ -193,6 +195,52 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static void LoadDotEnvIfPresent()
+{
+    // .NET does not load .env by default when running outside Docker Compose.
+    var current = new DirectoryInfo(Directory.GetCurrentDirectory());
+
+    while (current is not null)
+    {
+        var envPath = Path.Combine(current.FullName, ".env");
+        if (File.Exists(envPath))
+        {
+            foreach (var rawLine in File.ReadAllLines(envPath))
+            {
+                var line = rawLine.Trim();
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+                    continue;
+
+                var separatorIndex = line.IndexOf('=');
+                if (separatorIndex <= 0)
+                    continue;
+
+                var key = line[..separatorIndex].Trim();
+                if (string.IsNullOrEmpty(key))
+                    continue;
+
+                // Preserve existing environment variables if already set externally.
+                if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
+                    continue;
+
+                var value = line[(separatorIndex + 1)..].Trim().Trim('"');
+                Environment.SetEnvironmentVariable(key, value);
+
+                // Support docker-style flat key in .env for local dotnet run.
+                if (key.Equals("ADMIN_ACTIVATION_CODE", StringComparison.OrdinalIgnoreCase)
+                    && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("Admin__ActivationCode")))
+                {
+                    Environment.SetEnvironmentVariable("Admin__ActivationCode", value);
+                }
+            }
+
+            break;
+        }
+
+        current = current.Parent;
+    }
+}
 
 static async Task EnsureDefaultProfilesAsync(NutrifitContext db)
 {

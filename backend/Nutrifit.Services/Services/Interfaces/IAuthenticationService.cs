@@ -10,5 +10,6 @@ namespace Nutrifit.Services.Services.Interfaces
     {
         Task SendAccessEmailAsync(string email, string baseAppUrl, string ip, string ua, bool invited = false, Guid? professionalInviterId = null);
         Task<string> ValidateSession(string token);
+        Task<string> IssueJwtForUserAsync(Guid userId);
     }
 }
