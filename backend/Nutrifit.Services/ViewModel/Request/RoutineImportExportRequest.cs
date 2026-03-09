@@ -41,4 +41,13 @@ public class ImportedExercisePayload
     public string WeightUnit { get; set; } = "kg";
     public string? Notes { get; set; }
     public bool IsBisetWithPrevious { get; set; }
+    public List<ImportedStepPayload> Steps { get; set; } = new();
+}
+
+public class ImportedStepPayload
+{
+    public string Name { get; set; } = string.Empty;
+    public int Order { get; set; }
+    public int? DurationSeconds { get; set; }
+    public string? Notes { get; set; }
 }

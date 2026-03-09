@@ -720,6 +720,26 @@ public class RoutineService : IRoutineService
                             WorkoutOrder = workoutTemplate.Order,
                             ExerciseOrder = exercisePayload.Order
                         });
+
+                        if (exercisePayload.Steps != null && exercisePayload.Steps.Any())
+                        {
+                            foreach (var stepPayload in exercisePayload.Steps.OrderBy(s => s.Order))
+                            {
+                                if (string.IsNullOrWhiteSpace(stepPayload.Name))
+                                    continue;
+
+                                _context.ExerciseSteps.Add(new ExerciseStepEntity
+                                {
+                                    Id = Guid.NewGuid(),
+                                    ExerciseId = exerciseEntity.Id,
+                                    Name = stepPayload.Name.Trim(),
+                                    Order = stepPayload.Order,
+                                    DurationSeconds = stepPayload.DurationSeconds,
+                                    Notes = stepPayload.Notes,
+                                    CreatedAt = DateTime.UtcNow
+                                });
+                            }
+                        }
                     }
                     else if (!string.IsNullOrWhiteSpace(exercisePayload.ExerciseType)
                         && exerciseEntity.ExerciseType != exercisePayload.ExerciseType)
