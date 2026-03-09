@@ -57,6 +57,7 @@ export interface RoutineExpiryType {
 
 export interface ImportedExercisePayload {
   exerciseName: string;
+  exerciseType?: string;
   order: number;
   targetSets: number;
   targetRepsMin?: number | null;

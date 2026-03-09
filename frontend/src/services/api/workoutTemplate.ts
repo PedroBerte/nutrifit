@@ -41,6 +41,7 @@ type RawExerciseTemplate = {
   exerciseVideoUrl?: string;
   exerciseStatus?: string;
   isPendingReview?: boolean;
+  exerciseType?: string;
   order: number;
   targetSets: number;
   targetRepsMin?: number;
@@ -86,6 +87,7 @@ function adaptTemplate(template: RawWorkoutTemplate): WorkoutTemplateResponse {
       exerciseVideoUrl: item.exerciseVideoUrl || item.exercise?.videoUrl,
       exerciseStatus: item.exerciseStatus || "A",
       isPendingReview: item.isPendingReview ?? false,
+      exerciseType: item.exerciseType || "Standard",
       order: item.order,
       targetSets: item.targetSets,
       targetRepsMin: item.targetRepsMin,
@@ -158,6 +160,7 @@ export interface ExerciseTemplateResponse {
   exerciseVideoUrl?: string;
   exerciseStatus?: string;
   isPendingReview?: boolean;
+  exerciseType?: string;
   order: number;
   targetSets: number;
   targetRepsMin?: number;

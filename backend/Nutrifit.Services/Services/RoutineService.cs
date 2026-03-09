@@ -701,6 +701,7 @@ public class RoutineService : IRoutineService
                             Id = Guid.NewGuid(),
                             CategoryId = defaultCategory.Id,
                             Name = exercisePayload.ExerciseName.Trim(),
+                            ExerciseType = string.IsNullOrWhiteSpace(exercisePayload.ExerciseType) ? "Standard" : exercisePayload.ExerciseType,
                             Instruction = "Exercício importado automaticamente. Revisar nome, categoria e mídia antes de publicar.",
                             CreatedByUserId = userId,
                             IsPublished = false,
@@ -719,6 +720,11 @@ public class RoutineService : IRoutineService
                             WorkoutOrder = workoutTemplate.Order,
                             ExerciseOrder = exercisePayload.Order
                         });
+                    }
+                    else if (!string.IsNullOrWhiteSpace(exercisePayload.ExerciseType)
+                        && exerciseEntity.ExerciseType != exercisePayload.ExerciseType)
+                    {
+                        exerciseEntity.ExerciseType = exercisePayload.ExerciseType;
                     }
 
                     var setType = NormalizeSetType(exercisePayload.SetType);
@@ -809,6 +815,7 @@ public class RoutineService : IRoutineService
                 .Where(wt => wt.RoutineId == routineId && wt.Status == "A")
                 .Include(wt => wt.ExerciseTemplates.Where(et => et.Status == "A"))
                     .ThenInclude(et => et.Exercise)
+                    .ThenInclude(e => e.Steps)
                 .OrderBy(wt => wt.Order)
                 .ToListAsync();
 
@@ -827,6 +834,7 @@ public class RoutineService : IRoutineService
                         .Select(et => new ExportedExerciseResponse
                         {
                             ExerciseName = et.Exercise.Name,
+                            ExerciseType = string.IsNullOrWhiteSpace(et.Exercise.ExerciseType) ? "Standard" : et.Exercise.ExerciseType,
                             Order = et.Order,
                             TargetSets = et.TargetSets,
                             TargetRepsMin = et.SetType == "Time" ? et.TargetDurationSeconds : et.TargetRepsMin,
@@ -836,7 +844,16 @@ public class RoutineService : IRoutineService
                             SetType = et.SetType == "Time" ? "Duration" : et.SetType,
                             WeightUnit = et.WeightUnit,
                             Notes = et.Notes,
-                            IsBisetWithPrevious = et.IsBisetWithPrevious
+                            IsBisetWithPrevious = et.IsBisetWithPrevious,
+                            Steps = et.Exercise.Steps
+                                .OrderBy(s => s.Order)
+                                .Select(s => new ExportedStepResponse
+                                {
+                                    Name = s.Name,
+                                    Order = s.Order,
+                                    DurationSeconds = s.DurationSeconds,
+                                    Notes = s.Notes
+                                }).ToList()
                         }).ToList()
                 }).ToList()
             };

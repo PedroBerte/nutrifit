@@ -12,6 +12,7 @@ namespace Nutrifit.Repository.Entities
         public string? VideoUrl { get; set; }
         public Guid? CreatedByUserId { get; set; }
         public bool IsPublished { get; set; } = false;
+        public string ExerciseType { get; set; } = "Standard";
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string Status { get; set; } = "A";
@@ -20,5 +21,6 @@ namespace Nutrifit.Repository.Entities
         public UserEntity? CreatedByUser { get; set; }
         public ICollection<ExercisePrimaryMuscleEntity> PrimaryMuscles { get; set; } = new List<ExercisePrimaryMuscleEntity>();
         public ICollection<ExerciseSecondaryMuscleEntity> SecondaryMuscles { get; set; } = new List<ExerciseSecondaryMuscleEntity>();
+        public ICollection<ExerciseStepEntity> Steps { get; set; } = new List<ExerciseStepEntity>();
     }
 }

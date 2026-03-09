@@ -40,6 +40,7 @@ export interface LocalExerciseSession {
   isBisetWithPrevious?: boolean;
   targetDurationSeconds?: number;
   targetCalories?: number;
+  exerciseType?: string;
 }
 
 export interface LocalWorkoutSession {

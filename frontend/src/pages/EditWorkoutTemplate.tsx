@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -13,9 +13,11 @@ import {
   useReorderExercises,
   type ExerciseTemplateResponse,
 } from "@/services/api/workoutTemplate";
-import { useGetExercises, useUpdateExerciseMedia } from "@/services/api/exercise";
+import { useGetExercises, useUpdateExerciseMedia, useGetExerciseSteps, useReplaceExerciseSteps } from "@/services/api/exercise";
 import { useUploadExerciseMedia } from "@/services/api/storage";
 import { ExerciseDrawer } from "@/components/exercise/ExerciseDrawer";
+import { ExerciseStepsDrawer } from "@/components/exercise/ExerciseStepsDrawer";
+// ExerciseStepsDrawer kept for non-Mobilidade exercises accessed elsewhere
 import { SortableExerciseItem } from "@/components/exercise/SortableExerciseItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +54,8 @@ import {
   ImageIcon,
   Video,
   Upload,
+  GripVertical,
+  Timer,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useToast } from "@/contexts/ToastContext";
@@ -104,6 +108,7 @@ const exerciseConfigSchema = z.object({
   isBisetWithPrevious: z.boolean().default(false),
   targetDurationSeconds: z.string().optional(),
   targetCalories: z.string().optional(),
+  exerciseType: z.enum(["Standard", "Mobilidade"]).default("Standard"),
 });
 
 type ExerciseConfigForm = z.infer<typeof exerciseConfigSchema>;
@@ -130,6 +135,8 @@ export function EditWorkoutTemplate() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [localExercises, setLocalExercises] = useState<ExerciseTemplateResponse[]>([]);
   const [isReviewingPending, setIsReviewingPending] = useState(false);
+  const [stepsExercise, setStepsExercise] = useState<{ id: string; name: string } | null>(null);
+  // kept for Standard exercises via SortableExerciseItem
 
   const { data: templateResponse, isLoading: loadingTemplate } =
     useGetWorkoutTemplateById(templateId);
@@ -195,6 +202,7 @@ export function EditWorkoutTemplate() {
       isBisetWithPrevious: false,
       targetDurationSeconds: "",
       targetCalories: "",
+      exerciseType: "Standard" as const,
     },
   });
 
@@ -210,6 +218,52 @@ export function EditWorkoutTemplate() {
   }, [template]);
 
   const watchedSetType = useWatch({ control: exerciseForm.control, name: "setType" });
+  const watchedExerciseType = useWatch({ control: exerciseForm.control, name: "exerciseType" });
+
+  // ── Inline steps for Mobilidade exercises ────────────────────────────
+  const configExerciseId = selectedExercise?.id ?? "";
+  const { data: stepsData, isLoading: stepsLoading } = useGetExerciseSteps(
+    watchedExerciseType === "Mobilidade" && configExerciseId ? configExerciseId : null
+  );
+  const replaceSteps = useReplaceExerciseSteps(configExerciseId);
+  const stepsForm = useForm<{ steps: { name: string; order: number; durationSeconds?: number; notes?: string }[] }>({
+    defaultValues: { steps: [] },
+  });
+  const { fields: stepFields, append: appendStep, remove: removeStep } = useFieldArray({
+    control: stepsForm.control,
+    name: "steps",
+  });
+  useEffect(() => {
+    if (watchedExerciseType === "Mobilidade" && configDrawerOpen && stepsData?.data) {
+      stepsForm.reset({
+        steps: stepsData.data.map((s) => ({
+          name: s.name,
+          order: s.order,
+          durationSeconds: s.durationSeconds,
+          notes: s.notes ?? "",
+        })),
+      });
+    }
+    if (!configDrawerOpen) stepsForm.reset({ steps: [] });
+  }, [watchedExerciseType, configDrawerOpen, stepsData]);
+
+  const handleSaveSteps = async () => {
+    try {
+      const data = stepsForm.getValues();
+      await replaceSteps.mutateAsync({
+        steps: data.steps.map((s, i) => ({
+          name: s.name,
+          order: i + 1,
+          durationSeconds: s.durationSeconds && !isNaN(s.durationSeconds) ? s.durationSeconds : undefined,
+          notes: s.notes || undefined,
+        })),
+      });
+      toast.success("Steps salvos!");
+    } catch {
+      toast.error("Erro ao salvar steps");
+    }
+  };
+  // ───────────────────────────────────────────────────────────────────
 
   const handleExerciseSelect = (
     exerciseId: string,
@@ -235,6 +289,7 @@ export function EditWorkoutTemplate() {
       isBisetWithPrevious: false,
       targetDurationSeconds: "",
       targetCalories: "",
+      exerciseType: "Standard" as const,
     });
   };
 
@@ -279,6 +334,7 @@ export function EditWorkoutTemplate() {
         exerciseTemplate.targetCalories != null
           ? String(exerciseTemplate.targetCalories)
           : "",
+      exerciseType: (exerciseTemplate.exerciseType as "Standard" | "Mobilidade") ?? "Standard",
     });
   };
 
@@ -316,13 +372,15 @@ export function EditWorkoutTemplate() {
       if (
         shouldPromotePendingExercise ||
         data.imageUrl !== currentImageUrl ||
-        data.videoUrl !== currentVideoUrl
+        data.videoUrl !== currentVideoUrl ||
+        data.exerciseType !== (editingExerciseTemplate?.exerciseType ?? "Standard")
       ) {
         await updateExerciseMedia.mutateAsync({
           exerciseId: selectedExercise.id,
           data: {
             imageUrl: data.imageUrl || undefined,
             videoUrl: data.videoUrl || undefined,
+            exerciseType: data.exerciseType,
           },
         });
       }
@@ -763,6 +821,29 @@ export function EditWorkoutTemplate() {
                   )}
                 />
 
+                {/* Tipo de exercício */}
+                <FormField
+                  control={exerciseForm.control}
+                  name="exerciseType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de exercício</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Standard">Padrão (séries e repetições)</SelectItem>
+                          <SelectItem value="Mobilidade">Mobilidade / Alongamento (timer por step)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {watchedSetType === "Reps" && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
@@ -963,6 +1044,100 @@ export function EditWorkoutTemplate() {
                   )}
                 />
 
+                {/* Steps inline — apenas para Mobilidade */}
+                {watchedExerciseType === "Mobilidade" && configExerciseId && (
+                  <div className="border-t border-neutral-dark-03 pt-4 mt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-neutral-white-01 flex items-center gap-2">
+                        <Timer className="h-4 w-4" />
+                        Steps / Sequência de movimentos
+                      </h4>
+                      {(() => {
+                        const total = stepsForm
+                          .watch("steps")
+                          .reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0);
+                        if (total === 0) return null;
+                        const m = Math.floor(total / 60), s = total % 60;
+                        const label = m === 0 ? `${s}s` : s === 0 ? `${m}min` : `${m}min ${s}s`;
+                        return <span className="text-xs text-muted-foreground">Total: {label}</span>;
+                      })()}
+                    </div>
+
+                    {stepsLoading ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {stepFields.length === 0 && (
+                          <p className="text-center text-sm text-muted-foreground py-3">
+                            Nenhum step ainda. Adicione abaixo.
+                          </p>
+                        )}
+                        {stepFields.map((field, index) => (
+                          <div key={field.id} className="rounded-lg border bg-card p-3 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <span className="text-xs font-semibold text-muted-foreground w-5">{index + 1}.</span>
+                              <Input
+                                placeholder="Nome do movimento"
+                                {...stepsForm.register(`steps.${index}.name`)}
+                                className="flex-1"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeStep(index)}
+                                className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                            <div className="flex gap-2 pl-7">
+                              <div className="flex items-center gap-1.5 flex-1">
+                                <Timer className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  placeholder="Duração (seg)"
+                                  {...stepsForm.register(`steps.${index}.durationSeconds`, { valueAsNumber: true })}
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <Textarea
+                                placeholder="Notas opcionais..."
+                                rows={1}
+                                {...stepsForm.register(`steps.${index}.notes`)}
+                                className="flex-[2] h-8 min-h-8 resize-none text-sm py-1.5"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => appendStep({ name: "", order: stepFields.length + 1, durationSeconds: undefined, notes: "" })}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Adicionar step
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full"
+                          disabled={replaceSteps.isPending}
+                          onClick={handleSaveSteps}
+                        >
+                          {replaceSteps.isPending ? (
+                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</>
+                          ) : "Salvar steps"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Seção de Mídia */}
                 <div className="border-t border-neutral-dark-03 pt-4 mt-4">
                   <h4 className="text-sm font-medium text-neutral-white-01 mb-3 flex items-center gap-2">
@@ -1038,6 +1213,13 @@ export function EditWorkoutTemplate() {
           </div>
         </DrawerContent>
       </Drawer>
+
+      {/* Drawer de Steps */}
+      <ExerciseStepsDrawer
+        open={!!stepsExercise}
+        onOpenChange={(open) => { if (!open) setStepsExercise(null); }}
+        exercise={stepsExercise ? { id: stepsExercise.id, name: stepsExercise.name } : null}
+      />
 
       {/* Dialog de Confirmação de Remoção de Exercício */}
       <Dialog

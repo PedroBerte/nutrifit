@@ -1,5 +1,14 @@
 namespace Nutrifit.Services.ViewModel.Response;
 
+public class ExerciseStepResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int Order { get; set; }
+    public int? DurationSeconds { get; set; }
+    public string? Notes { get; set; }
+}
+
 public class ExerciseResponse
 {
     public Guid Id { get; set; }
@@ -12,9 +21,11 @@ public class ExerciseResponse
     public bool IsCustom { get; set; }
     public string Status { get; set; } = "A";
     public bool IsPendingReview { get; set; }
+    public string ExerciseType { get; set; } = "Standard";
     public string CategoryName { get; set; } = string.Empty;
     public List<string> PrimaryMuscles { get; set; } = new();
     public List<string> SecondaryMuscles { get; set; } = new();
+    public List<ExerciseStepResponse> Steps { get; set; } = new();
 }
 
 public class ExerciseCategoryResponse

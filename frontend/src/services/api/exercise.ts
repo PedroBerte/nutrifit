@@ -1,10 +1,13 @@
 import { api } from "@/lib/axios";
 import type {
   ExerciseType,
+  ExerciseStep,
   ExerciseCategory,
   MuscleGroup,
   CreateExerciseRequest,
   UpdateExerciseRequest,
+  CreateExerciseStepRequest,
+  ReplaceExerciseStepsRequest,
 } from "@/types/exercise";
 import type { ApiResponse } from "@/types/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -105,6 +108,7 @@ export function useUpdateExercise(exerciseId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["getExercises"] });
+      queryClient.invalidateQueries({ queryKey: ["getMyExercises"] });
       queryClient.invalidateQueries({
         queryKey: ["getExerciseById", exerciseId],
       });
@@ -115,6 +119,7 @@ export function useUpdateExercise(exerciseId: string) {
 export interface UpdateExerciseMediaRequest {
   imageUrl?: string;
   videoUrl?: string;
+  exerciseType?: string;
 }
 
 export function useUpdateExerciseMedia() {
@@ -152,6 +157,93 @@ export function useDeleteExercise() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["getExercises"] });
+    },
+  });
+}
+
+export function useGetMyExercises(page: number = 1, pageSize: number = 100) {
+  return useQuery({
+    queryKey: ["getMyExercises", page, pageSize],
+    queryFn: async () => {
+      const request = await api.get<ExerciseType[]>(
+        `/exercise/my-exercises?page=${page}&pageSize=${pageSize}`
+      );
+      return ok(toArrayPayload<ExerciseType>(request.data));
+    },
+    retry: 1,
+  });
+}
+
+// ── Exercise Steps ──────────────────────────────────────────────────────────
+
+export function useGetExerciseSteps(exerciseId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["getExerciseSteps", exerciseId],
+    queryFn: async () => {
+      const response = await api.get<ExerciseStep[]>(`/exercise/${exerciseId}/steps`);
+      return ok(toArrayPayload<ExerciseStep>(response.data));
+    },
+    enabled: !!exerciseId,
+    retry: 1,
+  });
+}
+
+export function useAddExerciseStep(exerciseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateExerciseStepRequest) => {
+      const response = await api.post<ExerciseStep>(`/exercise/${exerciseId}/steps`, data);
+      return ok(response.data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getExerciseSteps", exerciseId] });
+      queryClient.invalidateQueries({ queryKey: ["getExerciseById", exerciseId] });
+    },
+  });
+}
+
+export function useUpdateExerciseStep(exerciseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ stepId, data }: { stepId: string; data: CreateExerciseStepRequest }) => {
+      const response = await api.put<ExerciseStep>(`/exercise/${exerciseId}/steps/${stepId}`, data);
+      return ok(response.data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getExerciseSteps", exerciseId] });
+      queryClient.invalidateQueries({ queryKey: ["getExerciseById", exerciseId] });
+    },
+  });
+}
+
+export function useDeleteExerciseStep(exerciseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (stepId: string) => {
+      await api.delete(`/exercise/${exerciseId}/steps/${stepId}`);
+      return ok(true);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getExerciseSteps", exerciseId] });
+      queryClient.invalidateQueries({ queryKey: ["getExerciseById", exerciseId] });
+    },
+  });
+}
+
+export function useReplaceExerciseSteps(exerciseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: ReplaceExerciseStepsRequest) => {
+      const response = await api.put<ExerciseStep[]>(`/exercise/${exerciseId}/steps`, data);
+      return ok(response.data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getExerciseSteps", exerciseId] });
+      queryClient.invalidateQueries({ queryKey: ["getExerciseById", exerciseId] });
     },
   });
 }

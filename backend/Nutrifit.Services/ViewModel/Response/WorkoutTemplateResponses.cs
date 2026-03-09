@@ -27,6 +27,7 @@ namespace Nutrifit.Services.ViewModel.Response
         public string? ExerciseVideoUrl { get; set; }
         public string ExerciseStatus { get; set; } = "A";
         public bool IsPendingReview { get; set; }
+        public string ExerciseType { get; set; } = "Standard";
         public int Order { get; set; }
         public int TargetSets { get; set; }
         public int? TargetRepsMin { get; set; }

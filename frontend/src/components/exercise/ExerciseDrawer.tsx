@@ -8,9 +8,10 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { Plus, Search, X, ChevronDown, Filter, Check } from "lucide-react";
+import { Plus, Search, X, ChevronDown, Filter, Check, ListOrdered } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CreateExerciseDrawer } from "./CreateExerciseDrawer";
+import { ExerciseStepsDrawer } from "./ExerciseStepsDrawer";
 import { motion, AnimatePresence } from "motion/react";
 
 interface ExerciseDrawerProps {
@@ -47,6 +48,7 @@ export function ExerciseDrawer({
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+  const [stepsDrawerExercise, setStepsDrawerExercise] = useState<ExerciseType | null>(null);
 
   const { data: exercises, isLoading: exercisesLoading } = useGetExercises();
 
@@ -346,6 +348,19 @@ export function ExerciseDrawer({
                             </p>
                           )}
                       </div>
+                      {exercise.isCustom && (
+                        <button
+                          type="button"
+                          className="ml-1 flex-shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                          title="Editar steps"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setStepsDrawerExercise(exercise);
+                          }}
+                        >
+                          <ListOrdered className="w-4 h-4" />
+                        </button>
+                      )}
                       {isAdded && (
                         <div className="ml-2 flex-shrink-0 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                           <Check className="w-4 h-4 text-primary-foreground" />
@@ -379,6 +394,14 @@ export function ExerciseDrawer({
         }}
         onSuccess={handleCreateSuccess}
         exerciseToEdit={exerciseToEdit}
+      />
+
+      <ExerciseStepsDrawer
+        open={!!stepsDrawerExercise}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setStepsDrawerExercise(null);
+        }}
+        exercise={stepsDrawerExercise}
       />
     </>
   );

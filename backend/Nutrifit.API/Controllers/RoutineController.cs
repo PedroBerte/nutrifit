@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nutrifit.Services.Services.Interfaces;
 using Nutrifit.Services.ViewModel.Request;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Security.Claims;
 
@@ -335,7 +336,8 @@ public class RoutineController : ControllerBase
             var json = JsonSerializer.Serialize(exportPayload, new JsonSerializerOptions
             {
                 WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
 
             return File(System.Text.Encoding.UTF8.GetBytes(json), "application/json", fileName);

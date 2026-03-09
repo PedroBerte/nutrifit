@@ -24,6 +24,7 @@ namespace Nutrifit.Repository
         public DbSet<MuscleGroupEntity> MuscleGroups => Set<MuscleGroupEntity>();
         public DbSet<MuscleEntity> Muscles => Set<MuscleEntity>();
         public DbSet<ExerciseEntity> Exercises => Set<ExerciseEntity>();
+        public DbSet<ExerciseStepEntity> ExerciseSteps => Set<ExerciseStepEntity>();
         public DbSet<ExercisePrimaryMuscleEntity> ExercisePrimaryMuscles => Set<ExercisePrimaryMuscleEntity>();
         public DbSet<ExerciseSecondaryMuscleEntity> ExerciseSecondaryMuscles => Set<ExerciseSecondaryMuscleEntity>();
         public DbSet<RoutineEntity> Routines => Set<RoutineEntity>();
@@ -374,6 +375,25 @@ namespace Nutrifit.Repository
                     .WithMany()
                     .HasForeignKey(x => x.CreatedByUserId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            b.Entity<ExerciseStepEntity>(e =>
+            {
+                e.ToTable("ExerciseSteps");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.Id).ValueGeneratedOnAdd();
+
+                e.Property(x => x.Name).IsRequired().HasMaxLength(300);
+                e.Property(x => x.Notes).HasMaxLength(1000);
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("timestamp without time zone")
+                    .HasDefaultValueSql("timezone('utc', now())");
+
+                e.HasOne(x => x.Exercise)
+                    .WithMany(x => x.Steps)
+                    .HasForeignKey(x => x.ExerciseId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             b.Entity<ExercisePrimaryMuscleEntity>(e =>

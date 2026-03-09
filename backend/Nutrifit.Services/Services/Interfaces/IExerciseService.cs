@@ -16,4 +16,9 @@ public interface IExerciseService
     Task<ApiResponse> UpdateExerciseMediaAsync(Guid exerciseId, UpdateExerciseMediaRequest request);
     Task<ApiResponse> DeleteExerciseAsync(Guid exerciseId, Guid userId);
     Task<ApiResponse> GetUserExercisesAsync(Guid userId, int page = 1, int pageSize = 50);
+    Task<ApiResponse> GetExerciseStepsAsync(Guid exerciseId);
+    Task<ApiResponse> AddExerciseStepAsync(Guid exerciseId, CreateExerciseStepRequest request, Guid userId);
+    Task<ApiResponse> UpdateExerciseStepAsync(Guid exerciseId, Guid stepId, UpdateExerciseStepRequest request, Guid userId);
+    Task<ApiResponse> DeleteExerciseStepAsync(Guid exerciseId, Guid stepId, Guid userId);
+    Task<ApiResponse> ReplaceExerciseStepsAsync(Guid exerciseId, ReplaceExerciseStepsRequest request, Guid userId);
 }

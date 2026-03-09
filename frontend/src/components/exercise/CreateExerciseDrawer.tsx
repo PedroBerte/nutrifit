@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -8,8 +8,11 @@ import {
   useGetExerciseCategories,
   useGetMuscleGroups,
   useDeleteExercise,
+  useGetExerciseSteps,
+  useReplaceExerciseSteps,
 } from "@/services/api/exercise";
 import type { ExerciseType } from "@/types/exercise";
+import { ExerciseStepsDrawer } from "./ExerciseStepsDrawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,13 +48,14 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/contexts/ToastContext";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2, ListOrdered, Plus, GripVertical, Timer } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ExerciseMediaUploader } from "./ExerciseMediaUploader";
 
 const exerciseSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
   categoryId: z.string().min(1, "Selecione uma categoria"),
+  exerciseType: z.enum(["Standard", "Mobilidade"]),
   instruction: z.string(),
   videoUrl: z.string(),
   isPublished: z.boolean(),
@@ -62,6 +66,15 @@ const exerciseSchema = z.object({
 });
 
 type ExerciseForm = z.infer<typeof exerciseSchema>;
+
+const stepItemSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  order: z.number().int().min(1),
+  durationSeconds: z.number().int().min(1).optional(),
+  notes: z.string().optional(),
+});
+const stepsFormSchema = z.object({ steps: z.array(stepItemSchema) });
+type StepsForm = z.infer<typeof stepsFormSchema>;
 
 interface CreateExerciseDrawerProps {
   open: boolean;
@@ -79,6 +92,7 @@ export function CreateExerciseDrawer({
   const toast = useToast();
   const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showStepsDrawer, setShowStepsDrawer] = useState(false);
 
   const { data: categories } = useGetExerciseCategories();
   const { data: muscleGroups } = useGetMuscleGroups();
@@ -91,11 +105,70 @@ export function CreateExerciseDrawer({
 
   const isEditing = !!exerciseToEdit;
 
+  // ── Steps inline (Mobilidade type) ──────────────────────────────────
+  const exerciseId = exerciseToEdit?.id ?? "";
+  const { data: stepsData, isLoading: stepsLoading } = useGetExerciseSteps(
+    isEditing && exerciseId ? exerciseId : null
+  );
+  const replaceSteps = useReplaceExerciseSteps(exerciseId);
+  const stepsForm = useForm<StepsForm>({
+    resolver: zodResolver(stepsFormSchema),
+    defaultValues: { steps: [] },
+  });
+  const { fields: stepFields, append: appendStep, remove: removeStep } = useFieldArray({
+    control: stepsForm.control,
+    name: "steps",
+  });
+
+  useEffect(() => {
+    if (isEditing && open && stepsData?.data) {
+      stepsForm.reset({
+        steps: stepsData.data.map((s) => ({
+          name: s.name,
+          order: s.order,
+          durationSeconds: s.durationSeconds,
+          notes: s.notes ?? "",
+        })),
+      });
+    }
+    if (!open) stepsForm.reset({ steps: [] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, open, stepsData]);
+
+  const handleSaveSteps = async (data: StepsForm) => {
+    try {
+      await replaceSteps.mutateAsync({
+        steps: data.steps.map((s, i) => ({
+          name: s.name,
+          order: i + 1,
+          durationSeconds:
+            s.durationSeconds != null && !isNaN(s.durationSeconds)
+              ? s.durationSeconds
+              : undefined,
+          notes: s.notes || undefined,
+        })),
+      });
+      toast.success("Steps salvos!");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Erro ao salvar steps");
+    }
+  };
+
+  const formatStepDuration = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    if (m === 0) return `${s}s`;
+    if (s === 0) return `${m}min`;
+    return `${m}min ${s}s`;
+  };
+  // ────────────────────────────────────────────────────────────────────
+
   const form = useForm<ExerciseForm>({
     resolver: zodResolver(exerciseSchema),
     defaultValues: {
       name: "",
       categoryId: "",
+      exerciseType: "Standard" as const,
       instruction: "",
       videoUrl: "",
       isPublished: false,
@@ -103,6 +176,7 @@ export function CreateExerciseDrawer({
       secondaryMuscleIds: [],
     },
   });
+  const watchedExerciseType = form.watch("exerciseType");
 
   // Preencher formulário ao editar
   useEffect(() => {
@@ -136,6 +210,7 @@ export function CreateExerciseDrawer({
         isPublished: exerciseToEdit.isPublished || false,
         primaryMuscleIds: primaryIds,
         secondaryMuscleIds: secondaryIds,
+        exerciseType: (exerciseToEdit.exerciseType as "Standard" | "Mobilidade") ?? "Standard",
       });
 
       setUploadedMediaUrl(exerciseToEdit.videoUrl || null);
@@ -262,6 +337,28 @@ export function CreateExerciseDrawer({
 
               <FormField
                 control={form.control}
+                name="exerciseType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de exercício</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Standard">Padrão (séries e repetições)</SelectItem>
+                        <SelectItem value="Mobilidade">Mobilidade / Alongamento (timer por step)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="instruction"
                 render={({ field }) => (
                   <FormItem>
@@ -302,6 +399,135 @@ export function CreateExerciseDrawer({
                     💡 Crie o exercício primeiro, depois você poderá adicionar
                     imagens/GIFs editando-o
                   </p>
+                </div>
+              )}
+
+              {isEditing && watchedExerciseType !== "Mobilidade" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowStepsDrawer(true)}
+                >
+                  <ListOrdered className="h-4 w-4 mr-2" />
+                  Editar steps / sequência de movimentos
+                </Button>
+              )}
+
+              {isEditing && watchedExerciseType === "Mobilidade" && (
+                <div className="space-y-3 rounded-lg border border-dashed p-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <ListOrdered className="h-4 w-4" />
+                      Steps / Sequência de movimentos
+                    </Label>
+                    {(() => {
+                      const total = stepsForm
+                        .watch("steps")
+                        .reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0);
+                      return total > 0 ? (
+                        <span className="text-xs text-muted-foreground">
+                          Total: {formatStepDuration(total)}
+                        </span>
+                      ) : null;
+                    })()}
+                  </div>
+
+                  {stepsLoading ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {stepFields.length === 0 && (
+                        <p className="text-center text-sm text-muted-foreground py-3">
+                          Nenhum step ainda. Adicione abaixo.
+                        </p>
+                      )}
+
+                      {stepFields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className="rounded-lg border bg-card p-3 space-y-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="text-xs font-semibold text-muted-foreground w-5">
+                              {index + 1}.
+                            </span>
+                            <Input
+                              placeholder="Nome do movimento"
+                              {...stepsForm.register(`steps.${index}.name`)}
+                              className="flex-1"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeStep(index)}
+                              className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <div className="flex gap-2 pl-7">
+                            <div className="flex items-center gap-1.5 flex-1">
+                              <Timer className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <Input
+                                type="number"
+                                min={1}
+                                placeholder="Duração (seg)"
+                                {...stepsForm.register(
+                                  `steps.${index}.durationSeconds`,
+                                  { valueAsNumber: true }
+                                )}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <Textarea
+                              placeholder="Notas opcionais..."
+                              rows={1}
+                              {...stepsForm.register(`steps.${index}.notes`)}
+                              className="flex-[2] h-8 min-h-8 resize-none text-sm py-1.5"
+                            />
+                          </div>
+                        </div>
+                      ))}
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() =>
+                          appendStep({
+                            name: "",
+                            order: stepFields.length + 1,
+                            durationSeconds: undefined,
+                            notes: "",
+                          })
+                        }
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Adicionar step
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="w-full"
+                        disabled={replaceSteps.isPending}
+                        onClick={stepsForm.handleSubmit(handleSaveSteps)}
+                      >
+                        {replaceSteps.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : (
+                          "Salvar steps"
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -436,6 +662,7 @@ export function CreateExerciseDrawer({
                     : "Criar"}
                 </Button>
               </div>
+
             </form>
           </Form>
         </div>
@@ -471,6 +698,12 @@ export function CreateExerciseDrawer({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ExerciseStepsDrawer
+        open={showStepsDrawer}
+        onOpenChange={setShowStepsDrawer}
+        exercise={exerciseToEdit ?? null}
+      />
     </Drawer>
   );
 }

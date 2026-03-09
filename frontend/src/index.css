@@ -166,7 +166,17 @@ select:-webkit-autofill:focus {
   transition: background-color 9999s ease-in-out 0s;
 }
 
-/* Hide scrollbar but keep functionality */
+/* Hide scrollbar globally but keep functionality */
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Keep as utility class for explicit use */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

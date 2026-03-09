@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { GripVertical, Edit, Trash2, Link } from "lucide-react";
+import { GripVertical, Edit, Trash2, Link, ListOrdered } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -22,6 +22,7 @@ export interface SortableExerciseData {
   isBisetWithPrevious?: boolean;
   targetDurationSeconds?: number;
   targetCalories?: number;
+  exerciseType?: string;
 }
 
 interface SortableExerciseItemProps<T extends SortableExerciseData> {
@@ -29,6 +30,7 @@ interface SortableExerciseItemProps<T extends SortableExerciseData> {
   onEdit: (exercise: T) => void;
   onRemove: (exercise: T) => void;
   formatSummary: (exercise: T) => string;
+  onSteps?: (exercise: T) => void;
 }
 
 export function SortableExerciseItem<T extends SortableExerciseData>({
@@ -36,6 +38,7 @@ export function SortableExerciseItem<T extends SortableExerciseData>({
   onEdit,
   onRemove,
   formatSummary,
+  onSteps,
 }: SortableExerciseItemProps<T>) {
   const {
     attributes,
@@ -112,6 +115,18 @@ export function SortableExerciseItem<T extends SortableExerciseData>({
 
       {/* Botões de ação - vertical */}
       <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+        {onSteps && exercise.exerciseType !== "Mobilidade" && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 xs:h-8 xs:w-8"
+            title="Editar steps"
+            onClick={() => onSteps(exercise)}
+          >
+            <ListOrdered className="h-3.5 w-3.5 xs:h-4 xs:w-4" />
+          </Button>
+        )}
         <Button
           type="button"
           variant="ghost"

@@ -30,6 +30,7 @@ public class ImportedWorkoutPayload
 public class ImportedExercisePayload
 {
     public string ExerciseName { get; set; } = string.Empty;
+    public string ExerciseType { get; set; } = "Standard";
     public int Order { get; set; }
     public int TargetSets { get; set; }
     public int? TargetRepsMin { get; set; }

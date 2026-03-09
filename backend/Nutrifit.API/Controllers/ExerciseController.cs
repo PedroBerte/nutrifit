@@ -269,4 +269,110 @@ public class ExerciseController : ControllerBase
             return StatusCode(500, new { message = $"Erro ao buscar exercícios do usuário: {ex.Message}" });
         }
     }
+
+    /// <summary>
+    /// Lista os steps (passos) de um exercício
+    /// </summary>
+    [HttpGet("{exerciseId}/steps")]
+    public async Task<IActionResult> GetExerciseSteps(Guid exerciseId)
+    {
+        try
+        {
+            var result = await _exerciseService.GetExerciseStepsAsync(exerciseId);
+            if (!result.Success) return NotFound(result);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao buscar steps: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Adiciona um step a um exercício personalizado
+    /// </summary>
+    [HttpPost("{exerciseId}/steps")]
+    public async Task<IActionResult> AddExerciseStep(Guid exerciseId, [FromBody] CreateExerciseStepRequest request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "Usuário não autenticado" });
+
+            var result = await _exerciseService.AddExerciseStepAsync(exerciseId, request, userId);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao adicionar step: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Atualiza um step de um exercício personalizado
+    /// </summary>
+    [HttpPut("{exerciseId}/steps/{stepId}")]
+    public async Task<IActionResult> UpdateExerciseStep(Guid exerciseId, Guid stepId, [FromBody] UpdateExerciseStepRequest request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "Usuário não autenticado" });
+
+            var result = await _exerciseService.UpdateExerciseStepAsync(exerciseId, stepId, request, userId);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao atualizar step: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Remove um step de um exercício personalizado
+    /// </summary>
+    [HttpDelete("{exerciseId}/steps/{stepId}")]
+    public async Task<IActionResult> DeleteExerciseStep(Guid exerciseId, Guid stepId)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "Usuário não autenticado" });
+
+            var result = await _exerciseService.DeleteExerciseStepAsync(exerciseId, stepId, userId);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao remover step: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Substitui todos os steps de um exercício (replace completo)
+    /// </summary>
+    [HttpPut("{exerciseId}/steps")]
+    public async Task<IActionResult> ReplaceExerciseSteps(Guid exerciseId, [FromBody] ReplaceExerciseStepsRequest request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "Usuário não autenticado" });
+
+            var result = await _exerciseService.ReplaceExerciseStepsAsync(exerciseId, request, userId);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Erro ao substituir steps: {ex.Message}" });
+        }
+    }
 }

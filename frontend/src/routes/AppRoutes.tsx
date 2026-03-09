@@ -33,6 +33,7 @@ import ProfessionalAgenda from "@/pages/ProfessionalAgenda";
 import SelfManagedWorkoutNew from "@/pages/SelfManagedWorkoutNew";
 import SelfManagedWorkoutSession from "@/pages/SelfManagedWorkoutSession";
 import AdminBackoffice from "@/pages/AdminBackoffice";
+import MyExercises from "@/pages/MyExercises";
 
 export function AppRoutes() {
   return (
@@ -52,7 +53,18 @@ export function AppRoutes() {
             {/* Shared Routes - Both profiles can access */}
             <Route path="home" element={<Home />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="diet" element={<Diet />} />
+            <Route
+              path="my-exercises"
+              element={
+                <RoleGuard allowedProfiles={[UserProfiles.PERSONAL, UserProfiles.SELF_MANAGED, UserProfiles.STUDENT]}>
+                  <MyExercises />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="diet"
+              element={<Diet />}
+            />
             <Route
               path="admin"
               element={

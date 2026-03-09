@@ -72,6 +72,12 @@ const items: {
     profiles: [UserProfiles.SELF_MANAGED],
   },
   {
+    title: "Meus exercícios",
+    url: "/my-exercises",
+    icon: Dumbbell,
+    profiles: [UserProfiles.PERSONAL, UserProfiles.SELF_MANAGED, UserProfiles.STUDENT],
+  },
+  {
     title: "Gerenciar rotinas",
     url: "/routines",
     icon: Dumbbell,

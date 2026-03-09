@@ -28,6 +28,7 @@ public class CreateExerciseRequest
     public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public bool IsPublished { get; set; } = false;
+    public string ExerciseType { get; set; } = "Standard";
     public List<Guid> PrimaryMuscleIds { get; set; } = new();
     public List<Guid> SecondaryMuscleIds { get; set; } = new();
 }
@@ -40,6 +41,7 @@ public class UpdateExerciseRequest
     public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public bool IsPublished { get; set; }
+    public string ExerciseType { get; set; } = "Standard";
     public List<Guid> PrimaryMuscleIds { get; set; } = new();
     public List<Guid> SecondaryMuscleIds { get; set; } = new();
 }
@@ -48,6 +50,38 @@ public class UpdateExerciseMediaRequest
 {
     public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
+    public string? ExerciseType { get; set; }
+}
+
+public class ExerciseStepDto
+{
+    public Guid Id { get; set; }
+    public Guid ExerciseId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int Order { get; set; }
+    public int? DurationSeconds { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class CreateExerciseStepRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public int Order { get; set; }
+    public int? DurationSeconds { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class UpdateExerciseStepRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public int Order { get; set; }
+    public int? DurationSeconds { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class ReplaceExerciseStepsRequest
+{
+    public List<CreateExerciseStepRequest> Steps { get; set; } = new();
 }
 
 public class ExerciseCategoryDto

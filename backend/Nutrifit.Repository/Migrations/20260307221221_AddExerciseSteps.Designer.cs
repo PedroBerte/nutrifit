@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrifit.Repository;
@@ -11,9 +12,11 @@ using Nutrifit.Repository;
 namespace Nutrifit.Repository.Migrations
 {
     [DbContext(typeof(NutrifitContext))]
-    partial class NutrifitContextModelSnapshot : ModelSnapshot
+    [Migration("20260307221221_AddExerciseSteps")]
+    partial class AddExerciseSteps
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -312,10 +315,6 @@ namespace Nutrifit.Repository.Migrations
                     b.Property<Guid?>("CreatedByUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ExerciseType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
@@ -358,7 +357,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("e9f0a1b2-c3d4-0d1e-6f5a-7b8c9d0e1f2a"),
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Deite-se no banco, pegue a barra com as mãos na largura dos ombros, abaixe até o peito e empurre para cima.",
                             IsPublished = false,
                             Name = "Supino Reto",
@@ -369,7 +367,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("f0a1b2c3-d4e5-1e2f-7a6b-8c9d0e1f2a3b"),
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Com os pés na largura dos ombros, desça flexionando os joelhos até as coxas ficarem paralelas ao chão.",
                             IsPublished = false,
                             Name = "Agachamento Livre",
@@ -380,7 +377,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("a1b2c3d4-e5f6-2f3a-8b7c-9d0e1f2a3b4c"),
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Com a barra no chão, segure-a e levante mantendo as costas retas até ficar em pé.",
                             IsPublished = false,
                             Name = "Levantamento Terra",
@@ -391,7 +387,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("b2c3d4e5-f6a7-3a4b-9c8d-0e1f2a3b4c5d"),
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Segure a barra com as mãos pronadas e puxe o corpo até o queixo passar a barra.",
                             IsPublished = false,
                             Name = "Barra Fixa",
@@ -402,7 +397,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("c3d4e5f6-a7b8-4b5c-0d9e-1f2a3b4c5d6e"),
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Sentado, empurre os halteres acima da cabeça até estender os braços completamente.",
                             IsPublished = false,
                             Name = "Desenvolvimento com Halteres",
@@ -413,7 +407,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("d4e5f6a7-b8c9-5c6d-1e0f-2a3b4c5d6e7f"),
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Em pé, segure a barra e flexione os cotovelos levando a barra até o peito.",
                             IsPublished = false,
                             Name = "Rosca Direta",
@@ -424,7 +417,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("e5f6a7b8-c9d0-6d7e-2f1a-3b4c5d6e7f8a"),
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Nas barras paralelas, desça flexionando os cotovelos e empurre para cima.",
                             IsPublished = false,
                             Name = "Mergulho em Paralelas",
@@ -435,7 +427,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("f6a7b8c9-d0e1-7e8f-3a2b-4c5d6e7f8a9b"),
                             CategoryId = new Guid("d4e5f6a7-b8c9-7d8e-1f0a-2b3c4d5e6f7a"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Apoie-se nos antebraços e pontas dos pés, mantendo o corpo reto por tempo determinado.",
                             IsPublished = false,
                             Name = "Prancha",
@@ -446,7 +437,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("a7b8c9d0-e1f2-8f9a-4b3c-5d6e7f8a9b0c"),
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Dê um passo à frente e desça flexionando ambos os joelhos em 90 graus.",
                             IsPublished = false,
                             Name = "Afundo",
@@ -457,7 +447,6 @@ namespace Nutrifit.Repository.Migrations
                             Id = new Guid("b8c9d0e1-f2a3-9a0b-5c4d-6e7f8a9b0c1d"),
                             CategoryId = new Guid("b2c3d4e5-f6a7-5b6c-9d8e-0f1a2b3c4d5e"),
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ExerciseType = "Standard",
                             Instruction = "Em pé, levante os halteres lateralmente até a altura dos ombros.",
                             IsPublished = false,
                             Name = "Elevação Lateral",

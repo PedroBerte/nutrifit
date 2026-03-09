@@ -38,6 +38,7 @@ public class ExportedWorkoutResponse
 public class ExportedExerciseResponse
 {
     public string ExerciseName { get; set; } = string.Empty;
+    public string ExerciseType { get; set; } = "Standard";
     public int Order { get; set; }
     public int TargetSets { get; set; }
     public int? TargetRepsMin { get; set; }
@@ -48,4 +49,13 @@ public class ExportedExerciseResponse
     public string WeightUnit { get; set; } = "kg";
     public string? Notes { get; set; }
     public bool IsBisetWithPrevious { get; set; }
+    public List<ExportedStepResponse> Steps { get; set; } = new();
+}
+
+public class ExportedStepResponse
+{
+    public string Name { get; set; } = string.Empty;
+    public int Order { get; set; }
+    public int? DurationSeconds { get; set; }
+    public string? Notes { get; set; }
 }

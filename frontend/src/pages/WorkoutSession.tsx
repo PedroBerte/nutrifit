@@ -7,6 +7,7 @@ import {
 } from "@/services/api/workoutSession";
 import { api } from "@/lib/axios";
 import type { ApiResponse } from "@/types/api";
+import { useGetExerciseSteps } from "@/services/api/exercise";
 import {
   getLocalWorkout,
   saveLocalWorkout,
@@ -64,6 +65,8 @@ import {
   ChartBar,
   Video,
   X,
+  ListOrdered,
+  RotateCcw,
 } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import { motion, AnimatePresence } from "motion/react";
@@ -173,6 +176,7 @@ export default function WorkoutSession() {
             isBisetWithPrevious: et.isBisetWithPrevious ?? false,
             targetDurationSeconds: et.targetDurationSeconds,
             targetCalories: et.targetCalories,
+            exerciseType: et.exerciseType ?? "Standard",
           })) || [],
       };
 
@@ -783,16 +787,23 @@ export default function WorkoutSession() {
 
         {groupExercises(localWorkout.exercises).map((group) =>
           group.type === "single" ? (
-            <ExerciseCard
-              key={group.exercise.id}
-              exercise={group.exercise}
-              onRegisterSet={handleRegisterSet}
-              onUpdateNotes={handleUpdateExerciseNotes}
-              onAddSet={handleAddSet}
-              isExpanded={expandedExerciseIds.has(group.exercise.id)}
-              navigate={navigate}
-              templateId={templateId}
-            />
+            group.exercise.exerciseType === "Mobilidade" ? (
+              <MobilityCircuitCard
+                key={group.exercise.id}
+                exercise={group.exercise}
+              />
+            ) : (
+              <ExerciseCard
+                key={group.exercise.id}
+                exercise={group.exercise}
+                onRegisterSet={handleRegisterSet}
+                onUpdateNotes={handleUpdateExerciseNotes}
+                onAddSet={handleAddSet}
+                isExpanded={expandedExerciseIds.has(group.exercise.id)}
+                navigate={navigate}
+                templateId={templateId}
+              />
+            )
           ) : (
             <BisetCard
               key={group.first.id}
@@ -1081,8 +1092,12 @@ function ExerciseCard({
   const [exerciseRestTimer, setExerciseRestTimer] = useState(0);
   const [isExerciseRestRunning, setIsExerciseRestRunning] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [showSteps, setShowSteps] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!isExpanded);
   const [showVideoModal, setShowVideoModal] = useState(false);
+
+  const { data: stepsData } = useGetExerciseSteps(exercise.exerciseId);
+  const steps = stepsData?.data ?? [];
 
   // Timer de descanso do exercício
   useEffect(() => {
@@ -1286,6 +1301,18 @@ function ExerciseCard({
                   <Video size={16} />
                   <span className="hidden xs:inline">Vídeo</span>
                 </Button>
+                {steps.length > 0 && (
+                  <Button
+                    variant={showSteps ? "secondary" : "outline"}
+                    size="sm"
+                    className="flex-shrink-0 px-2 xs:px-3"
+                    onClick={() => setShowSteps(!showSteps)}
+                  >
+                    <ListOrdered size={16} />
+                    <span className="hidden xs:inline">Steps</span>
+                    <span className="ml-1 text-xs">({steps.length})</span>
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -1329,6 +1356,38 @@ function ExerciseCard({
                       }
                       className="min-h-[60px]"
                     />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Steps - Animado */}
+              <AnimatePresence>
+                {showSteps && steps.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="rounded-lg border border-border bg-neutral-dark-01 divide-y divide-border">
+                      {steps.map((step, idx) => (
+                        <div key={step.id} className="flex items-start gap-3 px-3 py-2">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{step.name}</p>
+                            {step.durationSeconds && (
+                              <p className="text-xs text-muted-foreground">{step.durationSeconds}s</p>
+                            )}
+                            {step.notes && (
+                              <p className="text-xs text-muted-foreground italic">{step.notes}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1382,6 +1441,238 @@ function ExerciseCard({
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+    </div>
+  );
+}
+
+// ─── MobilityCircuitCard ────────────────────────────────────────────────────
+function MobilityCircuitCard({
+  exercise,
+  isBiset = false,
+}: {
+  exercise: LocalExerciseSession;
+  isBiset?: boolean;
+}) {
+  const [activeStepIndex, setActiveStepIndex] = useState(-1);
+  const [stepTimer, setStepTimer] = useState(0);
+  const [stepDuration, setStepDuration] = useState(0); // full duration for progress bar
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+
+  const { data: stepsData } = useGetExerciseSteps(exercise.exerciseId);
+  const steps = stepsData?.data ?? [];
+
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const goToStep = (index: number) => {
+    const step = steps[index];
+    if (!step) return;
+    const dur = step.durationSeconds ?? 60;
+    setActiveStepIndex(index);
+    setStepTimer(dur);
+    setStepDuration(dur);
+    setIsTimerRunning(true);
+  };
+
+  const handleStepDone = (currentIndex: number) => {
+    setIsTimerRunning(false);
+    setCompletedSteps((prev) => new Set([...prev, currentIndex]));
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    const next = currentIndex + 1;
+    if (next < steps.length) {
+      const dur = steps[next].durationSeconds ?? 60;
+      setActiveStepIndex(next);
+      setStepTimer(dur);
+      setStepDuration(dur);
+      setIsTimerRunning(true);
+    } else {
+      setActiveStepIndex(-1);
+      setStepTimer(0);
+    }
+  };
+
+  useEffect(() => {
+    if (!isTimerRunning || stepTimer <= 0) return;
+    const interval = setInterval(() => {
+      setStepTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          handleStepDone(activeStepIndex);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isTimerRunning, activeStepIndex]);
+
+  const totalCircuitDuration = steps.reduce((acc, s) => acc + (s.durationSeconds ?? 60), 0);
+  const allDone = steps.length > 0 && completedSteps.size >= steps.length;
+  const activeStep = activeStepIndex >= 0 ? steps[activeStepIndex] : null;
+  const isStarted = activeStepIndex >= 0 || completedSteps.size > 0;
+  const timerProgress = stepDuration > 0 ? (stepDuration - stepTimer) / stepDuration : 0;
+
+  return (
+    <div className={`bg-neutral-dark-03 rounded-xl overflow-hidden ${isBiset ? "border-l-2 border-primary" : ""}`}>
+      {/* Title bar */}
+      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+        <div>
+          <h3 className="font-bold text-base">{exercise.exerciseName}</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {completedSteps.size}/{steps.length} steps · {fmt(totalCircuitDuration)} total
+          </p>
+        </div>
+        {isStarted && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            title="Reiniciar circuito"
+            onClick={() => {
+              setCompletedSteps(new Set());
+              setActiveStepIndex(-1);
+              setIsTimerRunning(false);
+              setStepTimer(0);
+              setStepDuration(0);
+            }}
+          >
+            <RotateCcw size={16} />
+          </Button>
+        )}
+      </div>
+
+      <div className="px-4 pb-4 space-y-3">
+        {/* Main display */}
+        {allDone ? (
+          <div className="rounded-xl bg-green-500/10 border border-green-500/30 p-6 text-center space-y-1">
+            <p className="text-3xl">✅</p>
+            <p className="font-bold text-green-400 text-lg">Circuito completo!</p>
+            <p className="text-xs text-muted-foreground">{steps.length} steps · {fmt(totalCircuitDuration)}</p>
+          </div>
+        ) : activeStep ? (
+          <div className="rounded-xl bg-primary/5 border border-primary/20 p-5 space-y-3">
+            {/* Step info */}
+            <div className="text-center space-y-0.5">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                Step {activeStepIndex + 1} de {steps.length}
+              </p>
+              <p className="text-xl font-bold leading-snug">{activeStep.name}</p>
+              {activeStep.notes && (
+                <p className="text-xs text-muted-foreground italic">{activeStep.notes}</p>
+              )}
+            </div>
+
+            {/* Big countdown */}
+            <p className={`text-center text-7xl font-mono font-bold tabular-nums leading-none ${
+              isTimerRunning ? "text-primary" : "text-muted-foreground"
+            }`}>
+              {fmt(stepTimer)}
+            </p>
+
+            {/* Progress bar */}
+            <div className="h-2 rounded-full bg-primary/10 overflow-hidden">
+              <motion.div
+                className="h-full bg-primary rounded-full origin-left"
+                animate={{ scaleX: timerProgress }}
+                transition={{ duration: 0.4, ease: "linear" }}
+                style={{ transformOrigin: "left" }}
+              />
+            </div>
+
+            {/* Next up */}
+            {steps[activeStepIndex + 1] && (
+              <p className="text-center text-xs text-muted-foreground">
+                A seguir →{" "}
+                <span className="font-semibold text-foreground/80">
+                  {steps[activeStepIndex + 1].name}
+                </span>
+                {steps[activeStepIndex + 1].durationSeconds && (
+                  <span className="ml-1 opacity-60">({fmt(steps[activeStepIndex + 1].durationSeconds!)})</span>
+                )}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border p-6 text-center space-y-1">
+            <p className="text-sm text-muted-foreground">Toque em Iniciar para começar</p>
+            <p className="text-xs text-muted-foreground opacity-60">
+              {steps.length} steps · {fmt(totalCircuitDuration)}
+            </p>
+          </div>
+        )}
+
+        {/* Controls */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant={isTimerRunning ? "secondary" : "default"}
+            className="flex-1"
+            onClick={() => {
+              if (activeStepIndex < 0) goToStep(0);
+              else setIsTimerRunning(!isTimerRunning);
+            }}
+            disabled={allDone && activeStepIndex < 0}
+          >
+            {isTimerRunning
+              ? <><Pause size={18} className="mr-2" />Pausar</>
+              : <><Play size={18} className="mr-2" />{!isStarted ? "Iniciar" : "Continuar"}</>}
+          </Button>
+          {isStarted && activeStep && (
+            <Button
+              variant="outline"
+              size="icon"
+              title="Pular step"
+              onClick={() => handleStepDone(activeStepIndex)}
+            >
+              <ChevronRight size={18} />
+            </Button>
+          )}
+        </div>
+
+        {/* Steps list */}
+        <div className="rounded-lg border border-border divide-y divide-border overflow-hidden">
+          {steps.map((step, idx) => {
+            const isActive = idx === activeStepIndex;
+            const isDone = completedSteps.has(idx);
+            return (
+              <button
+                key={step.id}
+                type="button"
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                  isActive
+                    ? "bg-primary/10"
+                    : isDone
+                    ? "opacity-40"
+                    : "hover:bg-neutral-dark-01"
+                }`}
+                onClick={() => goToStep(idx)}
+              >
+                <span className={`flex-shrink-0 w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold ${
+                  isDone
+                    ? "bg-green-500/20 text-green-400"
+                    : isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-primary/10 text-primary"
+                }`}>
+                  {isDone ? "✓" : idx + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{step.name}</p>
+                  {step.notes && (
+                    <p className="text-xs text-muted-foreground truncate italic">{step.notes}</p>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground shrink-0 font-mono">
+                  {step.durationSeconds ? fmt(step.durationSeconds) : "—"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

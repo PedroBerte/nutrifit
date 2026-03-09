@@ -48,6 +48,7 @@ public class ExerciseService : IExerciseService
             IsCustom = e.CreatedByUserId != null,
             Status = e.Status,
             IsPendingReview = e.Status == "P",
+            ExerciseType = e.ExerciseType,
             CategoryName = e.Category.Name,
             PrimaryMuscles = e.PrimaryMuscles.Select(pm => pm.Muscle.Name).ToList(),
             SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
@@ -70,6 +71,7 @@ public class ExerciseService : IExerciseService
                 .ThenInclude(pm => pm.Muscle)
             .Include(e => e.SecondaryMuscles)
                 .ThenInclude(sm => sm.Muscle)
+            .Include(e => e.Steps.OrderBy(s => s.Order))
             .FirstOrDefaultAsync();
 
         if (exercise == null)
@@ -92,8 +94,17 @@ public class ExerciseService : IExerciseService
             IsPublished = exercise.IsPublished,
             IsCustom = exercise.CreatedByUserId != null,
             CategoryName = exercise.Category.Name,
+            ExerciseType = exercise.ExerciseType,
             PrimaryMuscles = exercise.PrimaryMuscles.Select(pm => pm.Muscle.Name).ToList(),
-            SecondaryMuscles = exercise.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
+            SecondaryMuscles = exercise.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList(),
+            Steps = exercise.Steps.OrderBy(s => s.Order).Select(s => new ExerciseStepResponse
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Order = s.Order,
+                DurationSeconds = s.DurationSeconds,
+                Notes = s.Notes
+            }).ToList()
         };
 
         return new ApiResponse
@@ -147,8 +158,7 @@ public class ExerciseService : IExerciseService
             IsPublished = e.IsPublished,
             IsCustom = e.CreatedByUserId != null,
             Status = e.Status,
-            IsPendingReview = e.Status == "P",
-            CategoryName = e.Category.Name,
+            IsPendingReview = e.Status == "P",            ExerciseType = e.ExerciseType,            CategoryName = e.Category.Name,
             PrimaryMuscles = e.PrimaryMuscles.Select(pm => pm.Muscle.Name).ToList(),
             SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
         }).ToList();
@@ -240,6 +250,7 @@ public class ExerciseService : IExerciseService
             CreatedByUserId = e.CreatedByUserId,
             IsPublished = e.IsPublished,
             IsCustom = e.CreatedByUserId != null,
+            ExerciseType = e.ExerciseType,
             CategoryName = e.Category.Name,
             PrimaryMuscles = e.PrimaryMuscles.Select(pm => pm.Muscle.Name).ToList(),
             SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
@@ -310,6 +321,7 @@ public class ExerciseService : IExerciseService
             VideoUrl = request.VideoUrl,
             CreatedByUserId = userId,
             IsPublished = request.IsPublished,
+            ExerciseType = request.ExerciseType ?? "Standard",
             CreatedAt = DateTime.UtcNow,
             Status = "A"
         };
@@ -424,6 +436,7 @@ public class ExerciseService : IExerciseService
         exercise.ImageUrl = request.ImageUrl;
         exercise.VideoUrl = request.VideoUrl;
         exercise.IsPublished = request.IsPublished;
+        exercise.ExerciseType = request.ExerciseType ?? "Standard";
         if (exercise.Status == "P")
             exercise.Status = "A";
         exercise.UpdatedAt = DateTime.UtcNow;
@@ -519,6 +532,9 @@ public class ExerciseService : IExerciseService
         if (request.VideoUrl != null)
             exercise.VideoUrl = string.IsNullOrWhiteSpace(request.VideoUrl) ? null : request.VideoUrl;
 
+        if (request.ExerciseType != null)
+            exercise.ExerciseType = request.ExerciseType;
+
         if (exercise.Status == "P")
             exercise.Status = "A";
 
@@ -561,6 +577,7 @@ public class ExerciseService : IExerciseService
             IsCustom = true,
             Status = e.Status,
             IsPendingReview = e.Status == "P",
+            ExerciseType = e.ExerciseType,
             CategoryName = e.Category.Name,
             PrimaryMuscles = e.PrimaryMuscles.Select(pm => pm.Muscle.Name).ToList(),
             SecondaryMuscles = e.SecondaryMuscles.Select(sm => sm.Muscle.Name).ToList()
@@ -572,5 +589,163 @@ public class ExerciseService : IExerciseService
             Message = "Exercícios do usuário recuperados com sucesso",
             Data = response
         };
+    }
+
+    public async Task<ApiResponse> GetExerciseStepsAsync(Guid exerciseId)
+    {
+        var exerciseExists = await _context.Exercises
+            .AnyAsync(e => e.Id == exerciseId && e.Status == "A");
+
+        if (!exerciseExists)
+            return new ApiResponse { Success = false, Message = "Exercício não encontrado" };
+
+        var steps = await _context.ExerciseSteps
+            .Where(s => s.ExerciseId == exerciseId)
+            .OrderBy(s => s.Order)
+            .Select(s => new ExerciseStepResponse
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Order = s.Order,
+                DurationSeconds = s.DurationSeconds,
+                Notes = s.Notes
+            })
+            .ToListAsync();
+
+        return new ApiResponse { Success = true, Message = "Steps recuperados com sucesso", Data = steps };
+    }
+
+    public async Task<ApiResponse> AddExerciseStepAsync(Guid exerciseId, CreateExerciseStepRequest request, Guid userId)
+    {
+        var exercise = await _context.Exercises
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && (e.Status == "A" || e.Status == "P"));
+
+        if (exercise == null)
+            return new ApiResponse { Success = false, Message = "Exercício não encontrado" };
+
+        if (exercise.CreatedByUserId != userId)
+            return new ApiResponse { Success = false, Message = "Você não tem permissão para editar este exercício" };
+
+        var step = new ExerciseStepEntity
+        {
+            Id = Guid.NewGuid(),
+            ExerciseId = exerciseId,
+            Name = request.Name,
+            Order = request.Order,
+            DurationSeconds = request.DurationSeconds,
+            Notes = request.Notes,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.ExerciseSteps.Add(step);
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse
+        {
+            Success = true,
+            Message = "Step adicionado com sucesso",
+            Data = new ExerciseStepResponse
+            {
+                Id = step.Id,
+                Name = step.Name,
+                Order = step.Order,
+                DurationSeconds = step.DurationSeconds,
+                Notes = step.Notes
+            }
+        };
+    }
+
+    public async Task<ApiResponse> UpdateExerciseStepAsync(Guid exerciseId, Guid stepId, UpdateExerciseStepRequest request, Guid userId)
+    {
+        var exercise = await _context.Exercises
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && (e.Status == "A" || e.Status == "P"));
+
+        if (exercise == null)
+            return new ApiResponse { Success = false, Message = "Exercício não encontrado" };
+
+        if (exercise.CreatedByUserId != userId)
+            return new ApiResponse { Success = false, Message = "Você não tem permissão para editar este exercício" };
+
+        var step = await _context.ExerciseSteps
+            .FirstOrDefaultAsync(s => s.Id == stepId && s.ExerciseId == exerciseId);
+
+        if (step == null)
+            return new ApiResponse { Success = false, Message = "Step não encontrado" };
+
+        step.Name = request.Name;
+        step.Order = request.Order;
+        step.DurationSeconds = request.DurationSeconds;
+        step.Notes = request.Notes;
+        step.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse { Success = true, Message = "Step atualizado com sucesso" };
+    }
+
+    public async Task<ApiResponse> DeleteExerciseStepAsync(Guid exerciseId, Guid stepId, Guid userId)
+    {
+        var exercise = await _context.Exercises
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && (e.Status == "A" || e.Status == "P"));
+
+        if (exercise == null)
+            return new ApiResponse { Success = false, Message = "Exercício não encontrado" };
+
+        if (exercise.CreatedByUserId != userId)
+            return new ApiResponse { Success = false, Message = "Você não tem permissão para editar este exercício" };
+
+        var step = await _context.ExerciseSteps
+            .FirstOrDefaultAsync(s => s.Id == stepId && s.ExerciseId == exerciseId);
+
+        if (step == null)
+            return new ApiResponse { Success = false, Message = "Step não encontrado" };
+
+        _context.ExerciseSteps.Remove(step);
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse { Success = true, Message = "Step removido com sucesso" };
+    }
+
+    public async Task<ApiResponse> ReplaceExerciseStepsAsync(Guid exerciseId, ReplaceExerciseStepsRequest request, Guid userId)
+    {
+        var exercise = await _context.Exercises
+            .FirstOrDefaultAsync(e => e.Id == exerciseId && (e.Status == "A" || e.Status == "P"));
+
+        if (exercise == null)
+            return new ApiResponse { Success = false, Message = "Exercício não encontrado" };
+
+        if (exercise.CreatedByUserId != userId)
+            return new ApiResponse { Success = false, Message = "Você não tem permissão para editar este exercício" };
+
+        var existing = await _context.ExerciseSteps
+            .Where(s => s.ExerciseId == exerciseId)
+            .ToListAsync();
+
+        _context.ExerciseSteps.RemoveRange(existing);
+
+        var newSteps = request.Steps.Select((s, i) => new ExerciseStepEntity
+        {
+            Id = Guid.NewGuid(),
+            ExerciseId = exerciseId,
+            Name = s.Name,
+            Order = s.Order > 0 ? s.Order : i + 1,
+            DurationSeconds = s.DurationSeconds,
+            Notes = s.Notes,
+            CreatedAt = DateTime.UtcNow
+        }).ToList();
+
+        _context.ExerciseSteps.AddRange(newSteps);
+        await _context.SaveChangesAsync();
+
+        var response = newSteps.OrderBy(s => s.Order).Select(s => new ExerciseStepResponse
+        {
+            Id = s.Id,
+            Name = s.Name,
+            Order = s.Order,
+            DurationSeconds = s.DurationSeconds,
+            Notes = s.Notes
+        }).ToList();
+
+        return new ApiResponse { Success = true, Message = "Steps substituídos com sucesso", Data = response };
     }
 }

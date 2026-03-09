@@ -1,3 +1,22 @@
+export interface ExerciseStep {
+  id: string;
+  name: string;
+  order: number;
+  durationSeconds?: number;
+  notes?: string;
+}
+
+export interface CreateExerciseStepRequest {
+  name: string;
+  order: number;
+  durationSeconds?: number;
+  notes?: string;
+}
+
+export interface ReplaceExerciseStepsRequest {
+  steps: CreateExerciseStepRequest[];
+}
+
 export interface ExerciseType {
   id: string;
   name: string;
@@ -10,8 +29,10 @@ export interface ExerciseType {
   createdByUserId?: string;
   isPublished?: boolean;
   isCustom?: boolean;
+  exerciseType?: string;
   status?: string;
   isPendingReview?: boolean;
+  steps?: ExerciseStep[];
 }
 
 export interface ExerciseCategory {
@@ -38,6 +59,7 @@ export interface CreateExerciseRequest {
   imageUrl?: string;
   videoUrl?: string;
   isPublished?: boolean;
+  exerciseType?: string;
   primaryMuscleIds: string[];
   secondaryMuscleIds: string[];
 }
