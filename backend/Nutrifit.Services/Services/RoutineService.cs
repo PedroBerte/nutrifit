@@ -906,6 +906,7 @@ public class RoutineService : IRoutineService
             "calories" => "Calories",
             "calorie" => "Calories",
             "amrap" => "Reps",
+            "isometric" => "Isometric",
             _ => "Reps"
         };
     }

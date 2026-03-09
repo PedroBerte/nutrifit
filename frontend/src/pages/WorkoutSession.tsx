@@ -82,8 +82,13 @@ export default function WorkoutSession() {
   const [, forceUpdate] = useState(0); // Para forçar re-render
   const [workoutTimer, setWorkoutTimer] = useState(0);
   const [isWorkoutTimerRunning, setIsWorkoutTimerRunning] = useState(false);
-  const [restTimer, setRestTimer] = useState<number | null>(null);
-  const [isRestTimerRunning, setIsRestTimerRunning] = useState(false);
+  const [globalTimer, setGlobalTimer] = useState<{
+    kind: "rest" | "exercise";
+    label: string | null;
+    target: number;
+    elapsed: number;
+    isRunning: boolean;
+  } | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
@@ -99,7 +104,6 @@ export default function WorkoutSession() {
   });
   const [showEditSwipeHint, setShowEditSwipeHint] = useState(false);
   const [showHelpSheet, setShowHelpSheet] = useState(false);
-  const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
 
   // Queries
   const {
@@ -286,22 +290,50 @@ export default function WorkoutSession() {
     return () => clearInterval(interval);
   }, [isWorkoutTimerRunning]);
 
-  // Timer de descanso
+  // Timer global (descanso + steps de mobilidade)
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRestTimerRunning && restTimer !== null && restTimer > 0) {
-      interval = setInterval(() => {
-        setRestTimer((prev) => {
-          if (prev === null || prev <= 1) {
-            setIsRestTimerRunning(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    if (!globalTimer?.isRunning) return;
+    const interval = setInterval(() => {
+      setGlobalTimer((prev) => {
+        if (!prev) return null;
+        const next = prev.elapsed + 1;
+        if (next >= prev.target) {
+          if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+          return { ...prev, elapsed: prev.target, isRunning: false };
+        }
+        return { ...prev, elapsed: next };
+      });
+    }, 1000);
     return () => clearInterval(interval);
-  }, [isRestTimerRunning, restTimer]);
+  }, [globalTimer?.isRunning]);
+
+  // Listeners de eventos para o timer global
+  useEffect(() => {
+    const handleRest = (e: Event) => {
+      const { duration, label } = (e as CustomEvent).detail;
+      if (!duration) return;
+      setGlobalTimer({ kind: "rest", label: label ?? null, target: duration, elapsed: 0, isRunning: true });
+    };
+    const handleExercise = (e: Event) => {
+      const { duration, label } = (e as CustomEvent).detail;
+      setGlobalTimer({ kind: "exercise", label: label ?? null, target: duration, elapsed: 0, isRunning: true });
+    };
+    const handlePause = () => setGlobalTimer((prev) => prev ? { ...prev, isRunning: false } : null);
+    const handleResume = () => setGlobalTimer((prev) => prev ? { ...prev, isRunning: true } : null);
+    const handleClear = () => setGlobalTimer(null);
+    window.addEventListener("startRestTimer", handleRest);
+    window.addEventListener("startExerciseTimer", handleExercise);
+    window.addEventListener("exerciseTimerPaused", handlePause);
+    window.addEventListener("exerciseTimerResumed", handleResume);
+    window.addEventListener("clearGlobalTimer", handleClear);
+    return () => {
+      window.removeEventListener("startRestTimer", handleRest);
+      window.removeEventListener("startExerciseTimer", handleExercise);
+      window.removeEventListener("exerciseTimerPaused", handlePause);
+      window.removeEventListener("exerciseTimerResumed", handleResume);
+      window.removeEventListener("clearGlobalTimer", handleClear);
+    };
+  }, [])
 
   // Listener para mudanças no localStorage (quando SetRow atualiza)
   useEffect(() => {
@@ -357,7 +389,7 @@ export default function WorkoutSession() {
           order: exercise.order,
           startedAt: exercise.startedAt,
           completedAt: exercise.completedAt || completedAt,
-          status: exercise.sets.length > 0 ? "C" : "SK", // Se tem séries, completou, senão pulou
+          status: exercise.status === "C" || exercise.sets.length > 0 ? "C" : "SK", // Mobilidade sem séries pode ter status "C" via circuito
           notes: exercise.notes,
           sets: exercise.sets.map((set) => ({
             setNumber: set.setNumber,
@@ -420,12 +452,6 @@ export default function WorkoutSession() {
     });
 
     setLocalWorkout(updatedWorkout);
-
-    // Inicia timer de descanso se definido
-    if (restSeconds && restSeconds > 0) {
-      setRestTimer(restSeconds);
-      setIsRestTimerRunning(true);
-    }
   };
 
   const handleUpdateExerciseNotes = (exerciseId: string, notes: string) => {
@@ -457,6 +483,16 @@ export default function WorkoutSession() {
       load: undefined, reps: undefined, restSeconds, completed: false, startedAt: new Date().toISOString(),
     });
     setLocalWorkout(updatedWorkout);
+  };
+
+  const handleMobilityComplete = (exerciseId: string) => {
+    if (!localWorkout) return;
+    const updatedExercises = localWorkout.exercises.map((ex) =>
+      ex.id === exerciseId ? { ...ex, status: "C" as const } : ex
+    );
+    const updatedWorkout = { ...localWorkout, exercises: updatedExercises };
+    setLocalWorkout(updatedWorkout);
+    saveLocalWorkout(updatedWorkout);
   };
 
   const formatTime = (seconds: number) => {
@@ -537,138 +573,87 @@ export default function WorkoutSession() {
     >
       {/* Header */}
       <div className="sticky rounded-lg top-0 z-10 bg-primary/30 backdrop-blur-sm border-b border-neutral-dark-02/30">
-        {/* Header principal - clicável */}
-        <div
-          className="px-4 pt-3 pb-3 cursor-pointer hover:bg-neutral-dark-03/30 transition-colors"
-          onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
-        >
+        <div className="px-4 pt-3 pb-3">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold">{template.title}</h1>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowHelpSheet(true);
-                }}
-                variant="ghost"
-                size="sm"
-              >
-                <HelpCircle className="size-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Indicador sutil de expansão */}
-          <div className="flex justify-center mt-3">
-            <motion.div
-              animate={{
-                opacity: isHeaderExpanded ? 0 : 0.5,
-              }}
-              transition={{
-                duration: 0.3,
-              }}
-              className="flex gap-1"
+            <Button
+              onClick={() => setShowHelpSheet(true)}
+              variant="ghost"
+              size="sm"
             >
-              <div className="h-1 w-1 bg-muted-foreground rounded-full" />
-              <div className="h-1 w-1 bg-muted-foreground rounded-full" />
-              <div className="h-1 w-1 bg-muted-foreground rounded-full" />
-            </motion.div>
+              <HelpCircle className="size-5" />
+            </Button>
           </div>
         </div>
 
-        {/* Conteúdo expandido */}
-        <AnimatePresence initial={false}>
-          {isHeaderExpanded && (
+        {/* Timer global: descanso ou step de mobilidade */}
+        <AnimatePresence>
+          {globalTimer && globalTimer.elapsed < globalTimer.target && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="overflow-hidden border-t border-neutral-dark-02/30"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
             >
-              <div className="px-4 py-4 space-y-3">
-                {/* Estatísticas detalhadas */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-neutral-dark-03 backdrop-blur-sm rounded-lg p-3 border border-primary/20">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Clock size={14} />
-                      <span className="text-xs font-medium">Tempo Total</span>
-                    </div>
-                    <p className="text-lg font-bold font-mono text-foreground">
-                      {formatTime(workoutTimer)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {Math.floor(workoutTimer / 60)} minutos
-                    </p>
+              <div className="mx-4 mb-3 rounded-xl bg-neutral-dark-01 border border-neutral-dark-02/50 overflow-hidden">
+                <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className={`shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                      globalTimer.kind === "rest" ? "bg-blue-500/15 text-blue-400" : "bg-primary/15 text-primary"
+                    }`}>
+                      {globalTimer.kind === "rest" ? "Descanso" : "Execução"}
+                    </span>
+                    {globalTimer.label && (
+                      <span className="text-xs text-muted-foreground truncate">{globalTimer.label}</span>
+                    )}
                   </div>
-
-                  <div className="bg-neutral-dark-03 backdrop-blur-sm rounded-lg p-3 border border-primary/20">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Dumbbell size={14} />
-                      <span className="text-xs font-medium">Carga Total</span>
-                    </div>
-                    <p className="text-lg font-bold text-foreground">
-                      {calculateTotalVolume(localWorkout).toFixed(1)} kg
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Volume levantado
-                    </p>
+                  <div className="flex items-center gap-1 shrink-0 ml-2">
+                    <span className="text-lg font-mono font-bold tabular-nums">
+                      {formatTime(globalTimer.target - globalTimer.elapsed)}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        const next = !globalTimer.isRunning;
+                        setGlobalTimer((prev) => prev ? { ...prev, isRunning: next } : null);
+                        if (globalTimer.kind === "exercise") {
+                          window.dispatchEvent(new CustomEvent(next ? "exerciseTimerResumed" : "exerciseTimerPaused"));
+                        }
+                      }}
+                    >
+                      {globalTimer.isRunning ? <Pause size={14} /> : <Play size={14} />}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-muted-foreground hover:text-red-400"
+                      onClick={() => {
+                        setGlobalTimer(null);
+                        if (globalTimer.kind === "exercise") {
+                          window.dispatchEvent(new CustomEvent("exerciseTimerPaused"));
+                        }
+                      }}
+                    >
+                      <X size={14} />
+                    </Button>
                   </div>
-
-                  <div className="bg-neutral-dark-03 backdrop-blur-sm rounded-lg p-3 border border-primary/20">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <CheckCircle2 size={14} />
-                      <span className="text-xs font-medium">Séries Totais</span>
-                    </div>
-                    <p className="text-lg font-bold text-foreground">
-                      {getTotalSets(localWorkout)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Séries completadas
-                    </p>
-                  </div>
-
-                  <div className="bg-neutral-dark-03 backdrop-blur-sm rounded-lg p-3 border border-primary/20">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Dumbbell size={14} />
-                      <span className="text-xs font-medium">Exercícios</span>
-                    </div>
-                    <p className="text-lg font-bold text-foreground">
-                      {
-                        localWorkout.exercises.filter((ex) =>
-                          ex.sets.some((s) => s.completed)
-                        ).length
-                      }
-                      /{localWorkout.exercises.length}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Exercícios iniciados
-                    </p>
-                  </div>
+                </div>
+                <div className="h-1.5 mx-3 mb-2.5 rounded-full bg-neutral-dark-02/60 overflow-hidden">
+                  <motion.div
+                    className={`h-full rounded-full ${
+                      globalTimer.kind === "rest" ? "bg-blue-500" : "bg-primary"
+                    }`}
+                    animate={{ width: `${Math.min((globalTimer.elapsed / globalTimer.target) * 100, 100)}%` }}
+                    transition={{ duration: 0.9, ease: "linear" }}
+                  />
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Timer de descanso */}
-        {restTimer !== null && restTimer > 0 && (
-          <div className="mx-4 mb-3 p-3 bg-primary/10 rounded-lg flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Timer size={20} className="text-primary" />
-              <span className="font-bold text-lg">{formatTime(restTimer)}</span>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setIsRestTimerRunning(!isRestTimerRunning);
-              }}
-            >
-              {isRestTimerRunning ? <Pause size={16} /> : <Play size={16} />}
-            </Button>
-          </div>
-        )}
 
         {/* Dica de swipe - aparece apenas na primeira vez */}
         <AnimatePresence>
@@ -791,6 +776,8 @@ export default function WorkoutSession() {
               <MobilityCircuitCard
                 key={group.exercise.id}
                 exercise={group.exercise}
+                onComplete={handleMobilityComplete}
+                isExpanded={expandedExerciseIds.has(group.exercise.id)}
               />
             ) : (
               <ExerciseCard
@@ -1034,8 +1021,6 @@ export default function WorkoutSession() {
         </DrawerContent>
       </Drawer>
 
-      {/* Balão flutuante de timer */}
-      <FloatingTimer />
     </motion.div>
   );
 }
@@ -1108,7 +1093,11 @@ function ExerciseCard({
   ).length;
 
   return (
-    <div className={`bg-neutral-dark-03 rounded-lg overflow-hidden ${isBiset ? "border-l-2 border-primary" : ""}`}>
+    <div className={`rounded-lg overflow-hidden transition-colors ${
+      allSetsCompleted
+        ? "bg-green-950/40 border border-green-700/50"
+        : "bg-neutral-dark-03"
+    } ${isBiset ? "border-l-2 border-primary" : ""}`}>
       {/* Cabeçalho do Exercício - Clicável para colapsar */}
       <div
         className="flex items-center justify-between p-4 cursor-pointer hover:bg-neutral-dark-03/50 transition-colors"
@@ -1119,10 +1108,11 @@ function ExerciseCard({
             animate={{ rotate: isCollapsed ? 0 : 90 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronRight
-              size={20}
-              className="text-muted-foreground flex-shrink-0"
-            />
+            {allSetsCompleted ? (
+              <CheckCircle2 size={20} className="text-green-500 flex-shrink-0" />
+            ) : (
+              <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
+            )}
           </motion.div>
 
           <div className="flex-1 min-w-0 group relative">
@@ -1134,8 +1124,12 @@ function ExerciseCard({
             >
               {exercise.exerciseName}
             </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {completedSetsCount} de {exercise.targetSets || exercise.sets.length} séries
+            <p className={`text-xs mt-0.5 ${
+              allSetsCompleted ? "text-green-500/70" : "text-muted-foreground"
+            }`}>
+              {allSetsCompleted
+                ? `✓ ${completedSetsCount} séries concluídas`
+                : `${completedSetsCount} de ${exercise.targetSets || exercise.sets.length} séries`}
             </p>
           </div>
         </div>
@@ -1180,7 +1174,7 @@ function ExerciseCard({
                     {exercise.setType === "Time" ? "SEG" : exercise.setType === "Calories" ? "CAL" : (exercise.weightUnit ?? "KG").toUpperCase()}
                   </span>
                   <span className="text-center">
-                    {exercise.setType === "Time" || exercise.setType === "Calories" ? "" : "REPS"}
+                    {exercise.setType === "Isometric" ? "SEG" : exercise.setType === "Time" || exercise.setType === "Calories" ? "" : "REPS"}
                   </span>
                 </div>
 
@@ -1375,10 +1369,15 @@ function ExerciseCard({
 function MobilityCircuitCard({
   exercise,
   isBiset = false,
+  onComplete,
+  isExpanded = false,
 }: {
   exercise: LocalExerciseSession;
   isBiset?: boolean;
+  onComplete?: (exerciseId: string) => void;
+  isExpanded?: boolean;
 }) {
+  const [isCollapsed, setIsCollapsed] = useState(!isExpanded);
   const [activeStepIndex, setActiveStepIndex] = useState(-1);
   const [stepTimer, setStepTimer] = useState(0);
   const [stepDuration, setStepDuration] = useState(0); // full duration for progress bar
@@ -1402,6 +1401,11 @@ function MobilityCircuitCard({
     setStepTimer(dur);
     setStepDuration(dur);
     setIsTimerRunning(true);
+    window.dispatchEvent(
+      new CustomEvent("startExerciseTimer", {
+        detail: { duration: dur, label: `${step.name} • ${index + 1}/${steps.length}` },
+      })
+    );
   };
 
   const handleStepDone = (currentIndex: number) => {
@@ -1424,46 +1428,89 @@ function MobilityCircuitCard({
   useEffect(() => {
     if (!isTimerRunning || stepTimer <= 0) return;
     const interval = setInterval(() => {
-      setStepTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleStepDone(activeStepIndex);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setStepTimer((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
     return () => clearInterval(interval);
   }, [isTimerRunning, activeStepIndex]);
 
+  // Avança para o próximo step quando o timer zera (fora do setState updater)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (stepTimer !== 0 || activeStepIndex < 0 || !isTimerRunning) return;
+    handleStepDone(activeStepIndex);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepTimer]);
+
   const totalCircuitDuration = steps.reduce((acc, s) => acc + (s.durationSeconds ?? 60), 0);
   const allDone = steps.length > 0 && completedSteps.size >= steps.length;
+
+  // Sync pause/resume from the global header timer
+  useEffect(() => {
+    const handlePause = () => setIsTimerRunning(false);
+    const handleResume = () => setIsTimerRunning(true);
+    window.addEventListener("exerciseTimerPaused", handlePause);
+    window.addEventListener("exerciseTimerResumed", handleResume);
+    return () => {
+      window.removeEventListener("exerciseTimerPaused", handlePause);
+      window.removeEventListener("exerciseTimerResumed", handleResume);
+    };
+  }, []);
+
+  // Notifica o pai quando o circuito é concluído
+  useEffect(() => {
+    if (allDone) {
+      window.dispatchEvent(new CustomEvent("clearGlobalTimer"));
+      if (onComplete) onComplete(exercise.id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allDone]);
   const activeStep = activeStepIndex >= 0 ? steps[activeStepIndex] : null;
   const isStarted = activeStepIndex >= 0 || completedSteps.size > 0;
-  const timerProgress = stepDuration > 0 ? (stepDuration - stepTimer) / stepDuration : 0;
 
   return (
-    <div className={`bg-neutral-dark-03 rounded-xl overflow-hidden ${isBiset ? "border-l-2 border-primary" : ""}`}>
-      {/* Title bar */}
-      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-        <div>
-          <h3 className="font-bold text-base">{exercise.exerciseName}</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {completedSteps.size}/{steps.length} steps · {fmt(totalCircuitDuration)} total
-          </p>
+    <div className={`rounded-xl overflow-hidden transition-colors ${
+      allDone ? "bg-green-950/40 border border-green-700/50" : "bg-neutral-dark-03"
+    } ${isBiset ? "border-l-2 border-primary" : ""}`}>
+      {/* Title bar – clicável para colapsar */}
+      <div
+        className="px-4 pt-4 pb-3 flex items-center justify-between cursor-pointer hover:bg-neutral-dark-03/50 transition-colors"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <motion.div animate={{ rotate: isCollapsed ? 0 : 90 }} transition={{ duration: 0.2 }}>
+            {allDone ? (
+              <CheckCircle2 size={20} className="text-green-500 flex-shrink-0" />
+            ) : (
+              <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
+            )}
+          </motion.div>
+          <div className="flex-1 min-w-0">
+            <h3 className={`font-bold text-lg ${isCollapsed ? "truncate" : ""}`}>{exercise.exerciseName}</h3>
+            <p className={`text-xs mt-0.5 ${
+              allDone ? "text-green-500/70" : "text-muted-foreground"
+            }`}>
+              {allDone
+                ? `✓ Circuito completo · ${steps.length} steps`
+                : activeStep && isTimerRunning
+                ? `${completedSteps.size + 1}/${steps.length} • ${activeStep.name}`
+                : `${completedSteps.size}/${steps.length} steps · ${fmt(totalCircuitDuration)} total`}
+            </p>
+          </div>
         </div>
         {isStarted && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground flex-shrink-0"
             title="Reiniciar circuito"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setCompletedSteps(new Set());
               setActiveStepIndex(-1);
               setIsTimerRunning(false);
               setStepTimer(0);
               setStepDuration(0);
+              window.dispatchEvent(new CustomEvent("clearGlobalTimer"));
             }}
           >
             <RotateCcw size={16} />
@@ -1471,92 +1518,54 @@ function MobilityCircuitCard({
         )}
       </div>
 
+      <AnimatePresence initial={false}>
+      {!isCollapsed && (
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: "auto", opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="overflow-hidden"
+      >
       <div className="px-4 pb-4 space-y-3">
-        {/* Main display */}
+        {/* Controls */}
         {allDone ? (
-          <div className="rounded-xl bg-green-500/10 border border-green-500/30 p-6 text-center space-y-1">
-            <p className="text-3xl">✅</p>
-            <p className="font-bold text-green-400 text-lg">Circuito completo!</p>
+          <div className="rounded-xl bg-green-500/10 border border-green-500/30 p-4 text-center space-y-1">
+            <p className="text-2xl">✅</p>
+            <p className="font-bold text-green-400">Circuito completo!</p>
             <p className="text-xs text-muted-foreground">{steps.length} steps · {fmt(totalCircuitDuration)}</p>
           </div>
-        ) : activeStep ? (
-          <div className="rounded-xl bg-primary/5 border border-primary/20 p-5 space-y-3">
-            {/* Step info */}
-            <div className="text-center space-y-0.5">
-              <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
-                Step {activeStepIndex + 1} de {steps.length}
-              </p>
-              <p className="text-xl font-bold leading-snug">{activeStep.name}</p>
-              {activeStep.notes && (
-                <p className="text-xs text-muted-foreground italic">{activeStep.notes}</p>
-              )}
-            </div>
-
-            {/* Big countdown */}
-            <p className={`text-center text-7xl font-mono font-bold tabular-nums leading-none ${
-              isTimerRunning ? "text-primary" : "text-muted-foreground"
-            }`}>
-              {fmt(stepTimer)}
-            </p>
-
-            {/* Progress bar */}
-            <div className="h-2 rounded-full bg-primary/10 overflow-hidden">
-              <motion.div
-                className="h-full bg-primary rounded-full origin-left"
-                animate={{ scaleX: timerProgress }}
-                transition={{ duration: 0.4, ease: "linear" }}
-                style={{ transformOrigin: "left" }}
-              />
-            </div>
-
-            {/* Next up */}
-            {steps[activeStepIndex + 1] && (
-              <p className="text-center text-xs text-muted-foreground">
-                A seguir →{" "}
-                <span className="font-semibold text-foreground/80">
-                  {steps[activeStepIndex + 1].name}
-                </span>
-                {steps[activeStepIndex + 1].durationSeconds && (
-                  <span className="ml-1 opacity-60">({fmt(steps[activeStepIndex + 1].durationSeconds!)})</span>
-                )}
-              </p>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button
+              variant={isTimerRunning ? "secondary" : "default"}
+              className="flex-1"
+              onClick={() => {
+                if (activeStepIndex < 0) {
+                  goToStep(0);
+                } else {
+                  const next = !isTimerRunning;
+                  setIsTimerRunning(next);
+                  window.dispatchEvent(new CustomEvent(next ? "exerciseTimerResumed" : "exerciseTimerPaused"));
+                }
+              }}
+            >
+              {isTimerRunning
+                ? <><Pause size={18} className="mr-2" />Pausar</>
+                : <><Play size={18} className="mr-2" />{!isStarted ? "Iniciar" : "Continuar"}</>}
+            </Button>
+            {isStarted && activeStep && (
+              <Button
+                variant="outline"
+                size="icon"
+                title="Pular step"
+                onClick={() => handleStepDone(activeStepIndex)}
+              >
+                <ChevronRight size={18} />
+              </Button>
             )}
           </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border p-6 text-center space-y-1">
-            <p className="text-sm text-muted-foreground">Toque em Iniciar para começar</p>
-            <p className="text-xs text-muted-foreground opacity-60">
-              {steps.length} steps · {fmt(totalCircuitDuration)}
-            </p>
-          </div>
         )}
-
-        {/* Controls */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant={isTimerRunning ? "secondary" : "default"}
-            className="flex-1"
-            onClick={() => {
-              if (activeStepIndex < 0) goToStep(0);
-              else setIsTimerRunning(!isTimerRunning);
-            }}
-            disabled={allDone && activeStepIndex < 0}
-          >
-            {isTimerRunning
-              ? <><Pause size={18} className="mr-2" />Pausar</>
-              : <><Play size={18} className="mr-2" />{!isStarted ? "Iniciar" : "Continuar"}</>}
-          </Button>
-          {isStarted && activeStep && (
-            <Button
-              variant="outline"
-              size="icon"
-              title="Pular step"
-              onClick={() => handleStepDone(activeStepIndex)}
-            >
-              <ChevronRight size={18} />
-            </Button>
-          )}
-        </div>
 
         {/* Steps list */}
         <div className="rounded-lg border border-border divide-y divide-border overflow-hidden">
@@ -1599,6 +1608,9 @@ function MobilityCircuitCard({
           })}
         </div>
       </div>
+      </motion.div>
+      )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1655,7 +1667,7 @@ function BisetCard({
           {exercise.setType === "Time" ? "SEG" : exercise.setType === "Calories" ? "CAL" : (exercise.weightUnit ?? "KG").toUpperCase()}
         </span>
         <span className="text-center">
-          {exercise.setType === "Time" || exercise.setType === "Calories" ? "" : "REPS"}
+          {exercise.setType === "Isometric" ? "SEG" : exercise.setType === "Time" || exercise.setType === "Calories" ? "" : "REPS"}
         </span>
       </div>
 
@@ -1906,253 +1918,6 @@ function BisetCard({
   );
 }
 
-// ─── FloatingTimer ─────────────────────────────────────────────────────────
-
-function FloatingTimer() {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [mode, setMode] = useState<"stopwatch" | "countdown">("stopwatch");
-  const [countdownTarget, setCountdownTarget] = useState(30);
-  const [countdownInput, setCountdownInput] = useState("30");
-  const [exerciseLabel, setExerciseLabel] = useState<string | null>(null);
-  const [timerKind, setTimerKind] = useState<"exercise" | "rest" | "manual">("manual");
-
-  const isFinished = mode === "countdown" && elapsed >= countdownTarget;
-  const displaySeconds =
-    mode === "countdown" ? Math.max(0, countdownTarget - elapsed) : elapsed;
-  const minutes = Math.floor(displaySeconds / 60);
-  const secs = displaySeconds % 60;
-  const timeStr = `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-
-  useEffect(() => {
-    if (!isRunning) return;
-    const interval = setInterval(() => {
-      setElapsed((prev) => {
-        if (mode === "countdown" && prev >= countdownTarget) {
-          setIsRunning(false);
-          if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
-          return countdownTarget;
-        }
-        return prev + 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isRunning, mode, countdownTarget]);
-
-  useEffect(() => {
-    const handleExercise = (e: Event) => {
-      const { duration, label } = (e as CustomEvent<{ duration: number; label?: string }>).detail;
-      setMode("countdown");
-      setCountdownTarget(duration);
-      setCountdownInput(String(duration));
-      setElapsed(0);
-      setIsRunning(true);
-      setIsExpanded(true);
-      setExerciseLabel(label ?? null);
-      setTimerKind("exercise");
-    };
-    window.addEventListener("startExerciseTimer", handleExercise);
-    return () => window.removeEventListener("startExerciseTimer", handleExercise);
-  }, []);
-
-  useEffect(() => {
-    const handleRest = (e: Event) => {
-      const { duration, label } = (e as CustomEvent<{ duration: number; label?: string }>).detail;
-      if (!duration) return;
-      setMode("countdown");
-      setCountdownTarget(duration);
-      setCountdownInput(String(duration));
-      setElapsed(0);
-      setIsRunning(true);
-      setIsExpanded(true);
-      setExerciseLabel(label ?? null);
-      setTimerKind("rest");
-    };
-    window.addEventListener("startRestTimer", handleRest);
-    return () => window.removeEventListener("startRestTimer", handleRest);
-  }, []);
-
-  const handleReset = () => {
-    setElapsed(0);
-    setIsRunning(false);
-    setExerciseLabel(null);
-    setTimerKind("manual");
-  };
-
-  const handlePlayPause = () => {
-    if (isFinished) {
-      setElapsed(0);
-      setIsRunning(true);
-    } else {
-      setIsRunning((prev) => !prev);
-    }
-  };
-
-  const radius = 34;
-  const circumference = 2 * Math.PI * radius;
-  const progress =
-    mode === "countdown" && countdownTarget > 0
-      ? Math.min(elapsed / countdownTarget, 1)
-      : 0;
-  const strokeDashoffset = circumference * (1 - progress);
-
-  return (
-    <div className="fixed bottom-6 right-4 z-50 flex flex-col items-end gap-3">
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="bg-neutral-900 border border-neutral-700 rounded-2xl p-4 shadow-2xl w-52"
-          >
-            {/* Label de contexto (exercício ou descanso) */}
-            {timerKind !== "manual" && (
-              <div className="flex items-center justify-center gap-1.5 mb-2">
-                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                  timerKind === "rest"
-                    ? "bg-blue-500/15 text-blue-400"
-                    : "bg-primary/15 text-primary"
-                }`}>
-                  {timerKind === "rest" ? "Descanso" : "Execução"}
-                </span>
-              </div>
-            )}
-            {exerciseLabel && (
-              <p className="text-[10px] text-muted-foreground mb-3 text-center truncate">
-                {exerciseLabel}
-              </p>
-            )}
-
-            {/* Mode tabs */}
-            <div className="flex gap-1 mb-4">
-              <button
-                onClick={() => { setMode("stopwatch"); handleReset(); }}
-                className={`flex-1 text-xs py-1.5 rounded-lg font-medium transition-colors ${
-                  mode === "stopwatch"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-neutral-800 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Cronômetro
-              </button>
-              <button
-                onClick={() => { setMode("countdown"); handleReset(); }}
-                className={`flex-1 text-xs py-1.5 rounded-lg font-medium transition-colors ${
-                  mode === "countdown"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-neutral-800 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Contagem
-              </button>
-            </div>
-
-            {/* Timer display */}
-            <div className="relative flex items-center justify-center mb-4 h-20">
-              {mode === "countdown" && (
-                <svg className="absolute w-20 h-20 -rotate-90" viewBox="0 0 88 88">
-                  <circle cx="44" cy="44" r={radius} fill="none" stroke="#262626" strokeWidth="5" />
-                  <circle
-                    cx="44"
-                    cy="44"
-                    r={radius}
-                    fill="none"
-                    stroke={isFinished ? "#ef4444" : timerKind === "rest" ? "#3b82f6" : "#22c55e"}
-                    strokeWidth="5"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    style={{ transition: "stroke-dashoffset 0.9s linear" }}
-                  />
-                </svg>
-              )}
-              <span
-                className={`text-3xl font-mono font-bold z-10 ${
-                  isFinished
-                    ? "text-red-500"
-                    : isRunning
-                    ? "text-green-400"
-                    : "text-foreground"
-                }`}
-              >
-                {timeStr}
-              </span>
-            </div>
-
-            {/* Countdown target input (only when stopped) */}
-            {mode === "countdown" && !isRunning && (
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">Meta (s):</span>
-                <Input
-                  type="number"
-                  value={countdownInput}
-                  onChange={(e) => {
-                    setCountdownInput(e.target.value);
-                    const val = parseInt(e.target.value);
-                    if (!isNaN(val) && val > 0) {
-                      setCountdownTarget(val);
-                      setElapsed(0);
-                    }
-                  }}
-                  className="h-7 text-xs text-center"
-                />
-              </div>
-            )}
-
-            {/* Controls */}
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={handleReset} className="flex-1">
-                <RotateCcw size={13} />
-              </Button>
-              <Button size="sm" onClick={handlePlayPause} className="flex-1">
-                {isRunning ? <Pause size={13} /> : <Play size={13} />}
-              </Button>
-            </div>
-
-            {/* Descartar */}
-            <button
-              onClick={() => { handleReset(); setIsExpanded(false); }}
-              className="w-full mt-2 text-[11px] text-muted-foreground hover:text-red-400 transition-colors flex items-center justify-center gap-1"
-            >
-              <X size={11} />
-              descartar
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* FAB */}
-      <motion.button
-        onClick={() => setIsExpanded((p) => !p)}
-        whileTap={{ scale: 0.88 }}
-        animate={isRunning ? { scale: [1, 1.04, 1] } : { scale: 1 }}
-        transition={
-          isRunning
-            ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
-            : {}
-        }
-        className={`w-14 h-14 rounded-full shadow-xl flex flex-col items-center justify-center gap-0.5 border-2 transition-colors ${
-          isFinished
-            ? "bg-red-900/80 border-red-500 text-red-400"
-            : isRunning && timerKind === "rest"
-            ? "bg-blue-900/80 border-blue-500 text-blue-300"
-            : isRunning
-            ? "bg-green-900/80 border-green-500 text-green-300"
-            : isExpanded
-            ? "bg-neutral-800 border-primary text-primary"
-            : "bg-neutral-900 border-neutral-700 text-foreground"
-        }`}
-      >
-        <Timer size={18} />
-        <span className="text-[10px] font-mono leading-none">{timeStr}</span>
-      </motion.button>
-    </div>
-  );
-}
-
 // ─── SetRow ──────────────────────────────────────────────────────────────────
 
 // Componente de Linha de Série
@@ -2265,7 +2030,9 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
             <span className="text-sm font-bold">{set.setNumber}</span>
           </div>
           <span className="text-xs xs:text-sm text-muted-foreground">
-            {set.previousLoad && set.previousReps
+            {setType === "Isometric"
+              ? set.previousLoad ? `${set.previousLoad}${weightUnit}` : "-"
+              : set.previousLoad && set.previousReps
               ? `${set.previousLoad}${weightUnit} x ${set.previousReps}`
               : "-"}
           </span>
@@ -2277,7 +2044,9 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
               : set.load ? `${set.load}${weightUnit}` : "-"}
           </span>
           <span className="text-xs xs:text-sm font-mono font-bold text-green-500 text-center">
-            {setType === "Time" || setType === "Calories" ? "✓" : set.reps || "-"}
+            {setType === "Isometric"
+              ? set.durationSeconds ? `${set.durationSeconds}s` : "-"
+              : setType === "Time" || setType === "Calories" ? "✓" : set.reps || "-"}
           </span>
         </motion.div>
       </motion.div>
@@ -2354,9 +2123,9 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
 
             updatedWorkout.exercises[exerciseIndex].sets[setIndex] = {
               ...set,
-              load: setType === "Reps" ? finalLoad : undefined,
+              load: setType === "Reps" || setType === "Isometric" ? finalLoad : undefined,
               reps: setType === "Reps" ? finalReps : undefined,
-              durationSeconds: setType === "Time" ? finalDurationSeconds : undefined,
+              durationSeconds: setType === "Time" || setType === "Isometric" ? finalDurationSeconds : undefined,
               calories: setType === "Calories" ? finalCalories : undefined,
               completed: true,
               completedAt: new Date().toISOString(),
@@ -2386,7 +2155,9 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
           <span className="text-sm font-bold">{set.setNumber}</span>
         </div>
         <span className="text-xs xs:text-sm text-muted-foreground">
-          {set.previousLoad && set.previousReps
+          {setType === "Isometric"
+            ? set.previousLoad ? `${set.previousLoad}${weightUnit}` : "-"
+            : set.previousLoad && set.previousReps
             ? `${set.previousLoad}${weightUnit} x ${set.previousReps}`
             : "-"}
         </span>
@@ -2441,7 +2212,7 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
               if (set.previousReps) return `${set.previousReps}`;
               if (targetReps) return `0 de ${targetReps}`;
               return "reps";
-            })()}
+            })()} 
             className="h-8 text-xs xs:text-sm text-center"
             value={editData.reps || ""}
             onChange={(e) =>
@@ -2451,23 +2222,39 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
               }))
             }
           />
-        ) : setType === "Time" ? (
-          <button
-            className="flex items-center justify-center w-full h-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
-            onClick={() => {
-              const dur = editData.durationSeconds || targetDurationSeconds || 30;
-              if (!editData.durationSeconds && targetDurationSeconds) {
-                setEditData((prev) => ({ ...prev, durationSeconds: targetDurationSeconds }));
-              }
-              window.dispatchEvent(
-                new CustomEvent("startExerciseTimer", {
-                  detail: { duration: dur },
-                })
-              );
-            }}
-          >
-            <Play size={14} />
-          </button>
+        ) : setType === "Time" || setType === "Isometric" ? (
+          <div className={setType === "Isometric" ? "flex gap-1" : ""}>
+            {setType === "Isometric" && (
+              <Input
+                type="number"
+                placeholder={targetDurationSeconds ? `${targetDurationSeconds}s` : "seg"}
+                className="h-8 text-xs xs:text-sm text-center"
+                value={editData.durationSeconds || ""}
+                onChange={(e) =>
+                  setEditData((prev) => ({
+                    ...prev,
+                    durationSeconds: parseInt(e.target.value) || undefined,
+                  }))
+                }
+              />
+            )}
+            <button
+              className="flex items-center justify-center w-full h-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+              onClick={() => {
+                const dur = editData.durationSeconds || targetDurationSeconds || 30;
+                if (!editData.durationSeconds && targetDurationSeconds) {
+                  setEditData((prev) => ({ ...prev, durationSeconds: targetDurationSeconds }));
+                }
+                window.dispatchEvent(
+                  new CustomEvent("startExerciseTimer", {
+                    detail: { duration: dur },
+                  })
+                );
+              }}
+            >
+              <Play size={14} />
+            </button>
+          </div>
         ) : (
           <span className="text-xs text-muted-foreground text-center self-center">cal</span>
         )}

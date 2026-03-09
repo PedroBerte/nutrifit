@@ -103,7 +103,7 @@ const exerciseConfigSchema = z.object({
   notes: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().url("URL inválida").optional().or(z.literal("")),
-  setType: z.enum(["Reps", "Time", "Calories"]).default("Reps"),
+  setType: z.enum(["Reps", "Time", "Calories", "Isometric"]).default("Reps"),
   weightUnit: z.enum(["kg", "lbs"]).default("kg"),
   isBisetWithPrevious: z.boolean().default(false),
   targetDurationSeconds: z.string().optional(),
@@ -323,7 +323,7 @@ export function EditWorkoutTemplate() {
       notes: exerciseTemplate.notes || "",
       imageUrl: exerciseTemplate.exerciseImageUrl || "",
       videoUrl: exerciseTemplate.exerciseVideoUrl || "",
-      setType: (exerciseTemplate.setType as "Reps" | "Time" | "Calories") || "Reps",
+      setType: (exerciseTemplate.setType as "Reps" | "Time" | "Calories" | "Isometric") || "Reps",
       weightUnit: (exerciseTemplate.weightUnit as "kg" | "lbs") || "kg",
       isBisetWithPrevious: exerciseTemplate.isBisetWithPrevious ?? false,
       targetDurationSeconds:
@@ -812,7 +812,8 @@ export function EditWorkoutTemplate() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="Reps">Repetições</SelectItem>
-                          <SelectItem value="Time">Tempo / Isometria</SelectItem>
+                          <SelectItem value="Time">Tempo (cardio, etc)</SelectItem>
+                          <SelectItem value="Isometric">Isometria (carga + tempo)</SelectItem>
                           <SelectItem value="Calories">Calorias (AirBike, etc)</SelectItem>
                         </SelectContent>
                       </Select>
@@ -935,7 +936,7 @@ export function EditWorkoutTemplate() {
                   </>
                 )}
 
-                {watchedSetType === "Time" && (
+                {(watchedSetType === "Time" || watchedSetType === "Isometric") && (
                   <FormField
                     control={exerciseForm.control}
                     name="targetDurationSeconds"
@@ -955,6 +956,53 @@ export function EditWorkoutTemplate() {
                       </FormItem>
                     )}
                   />
+                )}
+
+                {watchedSetType === "Isometric" && (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <FormField
+                        control={exerciseForm.control}
+                        name="suggestedLoad"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Carga Sugerida</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="20"
+                                {...field}
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={exerciseForm.control}
+                      name="weightUnit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unidade</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="kg">kg</SelectItem>
+                              <SelectItem value="lbs">lbs</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 )}
 
                 {watchedSetType === "Calories" && (
