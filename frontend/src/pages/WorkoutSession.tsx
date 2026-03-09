@@ -1033,6 +1033,9 @@ export default function WorkoutSession() {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      {/* Balão flutuante de timer */}
+      <FloatingTimer />
     </motion.div>
   );
 }
@@ -1089,8 +1092,6 @@ function ExerciseCard({
   templateId,
   isBiset = false,
 }: ExerciseCardProps) {
-  const [exerciseRestTimer, setExerciseRestTimer] = useState(0);
-  const [isExerciseRestRunning, setIsExerciseRestRunning] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showSteps, setShowSteps] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!isExpanded);
@@ -1098,61 +1099,6 @@ function ExerciseCard({
 
   const { data: stepsData } = useGetExerciseSteps(exercise.exerciseId);
   const steps = stepsData?.data ?? [];
-
-  // Timer de descanso do exercício
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isExerciseRestRunning && exerciseRestTimer > 0) {
-      interval = setInterval(() => {
-        setExerciseRestTimer((prev) => {
-          if (prev <= 1) {
-            setIsExerciseRestRunning(false);
-            // Vibra quando o timer termina
-            if (navigator.vibrate) {
-              navigator.vibrate([200, 100, 200]); // Padrão de vibração: vibra-pausa-vibra
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isExerciseRestRunning, exerciseRestTimer]);
-
-  // Listener para iniciar o timer de descanso automaticamente
-  useEffect(() => {
-    const handleStartRestTimer = (event: CustomEvent) => {
-      if (event.detail.exerciseId === exercise.id) {
-        startRestTimer();
-      }
-    };
-
-    window.addEventListener(
-      "startRestTimer",
-      handleStartRestTimer as EventListener
-    );
-    return () =>
-      window.removeEventListener(
-        "startRestTimer",
-        handleStartRestTimer as EventListener
-      );
-  }, [exercise.id, exercise.restSeconds]);
-
-  const startRestTimer = () => {
-    if (exercise.restSeconds) {
-      setExerciseRestTimer(exercise.restSeconds);
-      setIsExerciseRestRunning(true);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
 
   // Verifica se todas as séries foram completadas
   const allSetsCompleted =
@@ -1194,43 +1140,23 @@ function ExerciseCard({
           </div>
         </div>
 
-        {/* Timer de descanso - Retângulo com tempo - Apenas quando expandido */}
+        {/* Indicador de descanso - apenas mostra o valor configurado */}
         {!isCollapsed && exercise.restSeconds && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className={`h-auto px-3 py-1.5 rounded border transition-all flex-shrink-0 ${
-              exerciseRestTimer > 0
-                ? "bg-primary/10 border-primary hover:bg-primary/20"
-                : "bg-neutral-dark-01 border-neutral-dark-03"
-            }`}
+          <button
+            className="flex items-center gap-1.5 h-auto px-2 py-1 rounded border border-neutral-dark-03 bg-neutral-dark-01 text-muted-foreground flex-shrink-0 hover:border-primary/50 transition-colors"
             onClick={(e) => {
-              e.stopPropagation(); // Previne colapsar ao clicar no timer
-              if (exerciseRestTimer > 0) {
-                setExerciseRestTimer(0);
-                setIsExerciseRestRunning(false);
-              } else {
-                startRestTimer();
-              }
+              e.stopPropagation();
+              window.dispatchEvent(
+                new CustomEvent("startRestTimer", {
+                  detail: { exerciseId: exercise.id, duration: exercise.restSeconds, label: exercise.exerciseName },
+                })
+              );
             }}
+            title="Iniciar timer de descanso"
           >
-            <span
-              className={`text-sm font-mono font-bold ${
-                exerciseRestTimer > 0 ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              {exerciseRestTimer > 0
-                ? formatTime(exerciseRestTimer)
-                : `${exercise.restSeconds}s`}
-            </span>
-            <span className="ml-2">
-              {exerciseRestTimer > 0 ? (
-                <Trash2 size={14} />
-              ) : (
-                <Play size={14} />
-              )}
-            </span>
-          </Button>
+            <Clock size={12} />
+            <span className="text-xs font-mono">{exercise.restSeconds}s</span>
+          </button>
         )}
       </div>
 
@@ -1700,57 +1626,12 @@ function BisetCard({
   navigate,
   templateId,
 }: BisetCardProps) {
-  const [restTimer, setRestTimer] = useState(0);
-  const [isRestRunning, setIsRestRunning] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!isExpanded);
   const [showVideoModal, setShowVideoModal] = useState<"first" | "second" | null>(null);
   const [showNotesFirst, setShowNotesFirst] = useState(false);
   const [showNotesSecond, setShowNotesSecond] = useState(false);
 
   const restSeconds = second.restSeconds ?? first.restSeconds;
-
-  // Countdown do timer de descanso
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRestRunning && restTimer > 0) {
-      interval = setInterval(() => {
-        setRestTimer((prev) => {
-          if (prev <= 1) {
-            setIsRestRunning(false);
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isRestRunning, restTimer]);
-
-  // Escuta o evento do segundo exercício para iniciar o descanso
-  useEffect(() => {
-    const handleStartRestTimer = (event: CustomEvent) => {
-      if (event.detail.exerciseId === second.id && restSeconds) {
-        setRestTimer(restSeconds);
-        setIsRestRunning(true);
-      }
-    };
-    window.addEventListener("startRestTimer", handleStartRestTimer as EventListener);
-    return () => window.removeEventListener("startRestTimer", handleStartRestTimer as EventListener);
-  }, [second.id, restSeconds]);
-
-  const startRestTimer = () => {
-    if (restSeconds) {
-      setRestTimer(restSeconds);
-      setIsRestRunning(true);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
 
   const completedRounds = Math.min(
     first.sets.filter((s) => s.completed).length,
@@ -1888,33 +1769,23 @@ function BisetCard({
           </div>
         </div>
 
-        {/* Timer de descanso */}
+        {/* Indicador de descanso */}
         {!isCollapsed && restSeconds && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className={`h-auto px-3 py-1.5 rounded border transition-all flex-shrink-0 ${
-              restTimer > 0
-                ? "bg-primary/10 border-primary hover:bg-primary/20"
-                : "bg-neutral-dark-01 border-neutral-dark-03"
-            }`}
+          <button
+            className="flex items-center gap-1.5 h-auto px-2 py-1 rounded border border-neutral-dark-03 bg-neutral-dark-01 text-muted-foreground flex-shrink-0 hover:border-primary/50 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              if (restTimer > 0) {
-                setRestTimer(0);
-                setIsRestRunning(false);
-              } else {
-                startRestTimer();
-              }
+              window.dispatchEvent(
+                new CustomEvent("startRestTimer", {
+                  detail: { exerciseId: second.id, duration: restSeconds, label: `${first.exerciseName} + ${second.exerciseName}` },
+                })
+              );
             }}
+            title="Iniciar timer de descanso"
           >
-            <span className={`text-sm font-mono font-bold ${restTimer > 0 ? "text-primary" : "text-muted-foreground"}`}>
-              {restTimer > 0 ? formatTime(restTimer) : `${restSeconds}s`}
-            </span>
-            <span className="ml-2">
-              {restTimer > 0 ? <Trash2 size={14} /> : <Play size={14} />}
-            </span>
-          </Button>
+            <Clock size={12} />
+            <span className="text-xs font-mono">{restSeconds}s</span>
+          </button>
         )}
       </div>
 
@@ -2031,6 +1902,253 @@ function BisetCard({
           <DrawerFooter><Button onClick={() => setShowVideoModal(null)}>Fechar</Button></DrawerFooter>
         </DrawerContent>
       </Drawer>
+    </div>
+  );
+}
+
+// ─── FloatingTimer ─────────────────────────────────────────────────────────
+
+function FloatingTimer() {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [mode, setMode] = useState<"stopwatch" | "countdown">("stopwatch");
+  const [countdownTarget, setCountdownTarget] = useState(30);
+  const [countdownInput, setCountdownInput] = useState("30");
+  const [exerciseLabel, setExerciseLabel] = useState<string | null>(null);
+  const [timerKind, setTimerKind] = useState<"exercise" | "rest" | "manual">("manual");
+
+  const isFinished = mode === "countdown" && elapsed >= countdownTarget;
+  const displaySeconds =
+    mode === "countdown" ? Math.max(0, countdownTarget - elapsed) : elapsed;
+  const minutes = Math.floor(displaySeconds / 60);
+  const secs = displaySeconds % 60;
+  const timeStr = `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+
+  useEffect(() => {
+    if (!isRunning) return;
+    const interval = setInterval(() => {
+      setElapsed((prev) => {
+        if (mode === "countdown" && prev >= countdownTarget) {
+          setIsRunning(false);
+          if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+          return countdownTarget;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isRunning, mode, countdownTarget]);
+
+  useEffect(() => {
+    const handleExercise = (e: Event) => {
+      const { duration, label } = (e as CustomEvent<{ duration: number; label?: string }>).detail;
+      setMode("countdown");
+      setCountdownTarget(duration);
+      setCountdownInput(String(duration));
+      setElapsed(0);
+      setIsRunning(true);
+      setIsExpanded(true);
+      setExerciseLabel(label ?? null);
+      setTimerKind("exercise");
+    };
+    window.addEventListener("startExerciseTimer", handleExercise);
+    return () => window.removeEventListener("startExerciseTimer", handleExercise);
+  }, []);
+
+  useEffect(() => {
+    const handleRest = (e: Event) => {
+      const { duration, label } = (e as CustomEvent<{ duration: number; label?: string }>).detail;
+      if (!duration) return;
+      setMode("countdown");
+      setCountdownTarget(duration);
+      setCountdownInput(String(duration));
+      setElapsed(0);
+      setIsRunning(true);
+      setIsExpanded(true);
+      setExerciseLabel(label ?? null);
+      setTimerKind("rest");
+    };
+    window.addEventListener("startRestTimer", handleRest);
+    return () => window.removeEventListener("startRestTimer", handleRest);
+  }, []);
+
+  const handleReset = () => {
+    setElapsed(0);
+    setIsRunning(false);
+    setExerciseLabel(null);
+    setTimerKind("manual");
+  };
+
+  const handlePlayPause = () => {
+    if (isFinished) {
+      setElapsed(0);
+      setIsRunning(true);
+    } else {
+      setIsRunning((prev) => !prev);
+    }
+  };
+
+  const radius = 34;
+  const circumference = 2 * Math.PI * radius;
+  const progress =
+    mode === "countdown" && countdownTarget > 0
+      ? Math.min(elapsed / countdownTarget, 1)
+      : 0;
+  const strokeDashoffset = circumference * (1 - progress);
+
+  return (
+    <div className="fixed bottom-6 right-4 z-50 flex flex-col items-end gap-3">
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="bg-neutral-900 border border-neutral-700 rounded-2xl p-4 shadow-2xl w-52"
+          >
+            {/* Label de contexto (exercício ou descanso) */}
+            {timerKind !== "manual" && (
+              <div className="flex items-center justify-center gap-1.5 mb-2">
+                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                  timerKind === "rest"
+                    ? "bg-blue-500/15 text-blue-400"
+                    : "bg-primary/15 text-primary"
+                }`}>
+                  {timerKind === "rest" ? "Descanso" : "Execução"}
+                </span>
+              </div>
+            )}
+            {exerciseLabel && (
+              <p className="text-[10px] text-muted-foreground mb-3 text-center truncate">
+                {exerciseLabel}
+              </p>
+            )}
+
+            {/* Mode tabs */}
+            <div className="flex gap-1 mb-4">
+              <button
+                onClick={() => { setMode("stopwatch"); handleReset(); }}
+                className={`flex-1 text-xs py-1.5 rounded-lg font-medium transition-colors ${
+                  mode === "stopwatch"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-neutral-800 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Cronômetro
+              </button>
+              <button
+                onClick={() => { setMode("countdown"); handleReset(); }}
+                className={`flex-1 text-xs py-1.5 rounded-lg font-medium transition-colors ${
+                  mode === "countdown"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-neutral-800 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Contagem
+              </button>
+            </div>
+
+            {/* Timer display */}
+            <div className="relative flex items-center justify-center mb-4 h-20">
+              {mode === "countdown" && (
+                <svg className="absolute w-20 h-20 -rotate-90" viewBox="0 0 88 88">
+                  <circle cx="44" cy="44" r={radius} fill="none" stroke="#262626" strokeWidth="5" />
+                  <circle
+                    cx="44"
+                    cy="44"
+                    r={radius}
+                    fill="none"
+                    stroke={isFinished ? "#ef4444" : timerKind === "rest" ? "#3b82f6" : "#22c55e"}
+                    strokeWidth="5"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    style={{ transition: "stroke-dashoffset 0.9s linear" }}
+                  />
+                </svg>
+              )}
+              <span
+                className={`text-3xl font-mono font-bold z-10 ${
+                  isFinished
+                    ? "text-red-500"
+                    : isRunning
+                    ? "text-green-400"
+                    : "text-foreground"
+                }`}
+              >
+                {timeStr}
+              </span>
+            </div>
+
+            {/* Countdown target input (only when stopped) */}
+            {mode === "countdown" && !isRunning && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Meta (s):</span>
+                <Input
+                  type="number"
+                  value={countdownInput}
+                  onChange={(e) => {
+                    setCountdownInput(e.target.value);
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val > 0) {
+                      setCountdownTarget(val);
+                      setElapsed(0);
+                    }
+                  }}
+                  className="h-7 text-xs text-center"
+                />
+              </div>
+            )}
+
+            {/* Controls */}
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={handleReset} className="flex-1">
+                <RotateCcw size={13} />
+              </Button>
+              <Button size="sm" onClick={handlePlayPause} className="flex-1">
+                {isRunning ? <Pause size={13} /> : <Play size={13} />}
+              </Button>
+            </div>
+
+            {/* Descartar */}
+            <button
+              onClick={() => { handleReset(); setIsExpanded(false); }}
+              className="w-full mt-2 text-[11px] text-muted-foreground hover:text-red-400 transition-colors flex items-center justify-center gap-1"
+            >
+              <X size={11} />
+              descartar
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* FAB */}
+      <motion.button
+        onClick={() => setIsExpanded((p) => !p)}
+        whileTap={{ scale: 0.88 }}
+        animate={isRunning ? { scale: [1, 1.04, 1] } : { scale: 1 }}
+        transition={
+          isRunning
+            ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
+            : {}
+        }
+        className={`w-14 h-14 rounded-full shadow-xl flex flex-col items-center justify-center gap-0.5 border-2 transition-colors ${
+          isFinished
+            ? "bg-red-900/80 border-red-500 text-red-400"
+            : isRunning && timerKind === "rest"
+            ? "bg-blue-900/80 border-blue-500 text-blue-300"
+            : isRunning
+            ? "bg-green-900/80 border-green-500 text-green-300"
+            : isExpanded
+            ? "bg-neutral-800 border-primary text-primary"
+            : "bg-neutral-900 border-neutral-700 text-foreground"
+        }`}
+      >
+        <Timer size={18} />
+        <span className="text-[10px] font-mono leading-none">{timeStr}</span>
+      </motion.button>
     </div>
   );
 }
@@ -2252,7 +2370,7 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
             if (!wasAlreadyCompleted && restSeconds && restSeconds > 0) {
               window.dispatchEvent(
                 new CustomEvent("startRestTimer", {
-                  detail: { exerciseId },
+                  detail: { exerciseId, duration: restSeconds },
                 })
               );
             }
@@ -2333,10 +2451,25 @@ function SetRow({ set, exerciseId, restSeconds, targetRepsMin, targetRepsMax, ta
               }))
             }
           />
+        ) : setType === "Time" ? (
+          <button
+            className="flex items-center justify-center w-full h-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+            onClick={() => {
+              const dur = editData.durationSeconds || targetDurationSeconds || 30;
+              if (!editData.durationSeconds && targetDurationSeconds) {
+                setEditData((prev) => ({ ...prev, durationSeconds: targetDurationSeconds }));
+              }
+              window.dispatchEvent(
+                new CustomEvent("startExerciseTimer", {
+                  detail: { duration: dur },
+                })
+              );
+            }}
+          >
+            <Play size={14} />
+          </button>
         ) : (
-          <span className="text-xs text-muted-foreground text-center self-center">
-            {setType === "Time" ? "seg" : "cal"}
-          </span>
+          <span className="text-xs text-muted-foreground text-center self-center">cal</span>
         )}
       </motion.div>
     </motion.div>
