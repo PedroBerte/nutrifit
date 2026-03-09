@@ -594,7 +594,7 @@ public class ExerciseService : IExerciseService
     public async Task<ApiResponse> GetExerciseStepsAsync(Guid exerciseId)
     {
         var exerciseExists = await _context.Exercises
-            .AnyAsync(e => e.Id == exerciseId && e.Status == "A");
+            .AnyAsync(e => e.Id == exerciseId && (e.Status == "A" || e.Status == "P"));
 
         if (!exerciseExists)
             return new ApiResponse { Success = false, Message = "Exercício não encontrado" };
